@@ -85,14 +85,17 @@ export async function sendHeartbeat(params: HeartbeatParams): Promise<{ todaySec
   return { todaySeconds: data.today_seconds ?? 0, language: lang };
 }
 
+const MAX_STATUS_LENGTH = 100;
+
 export async function updateStatusMessage(apiKey: string, message: string): Promise<boolean> {
+  const truncated = message.slice(0, MAX_STATUS_LENGTH);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/update_status_message`, {
       method: 'POST',
       headers: HEADERS,
-      body: JSON.stringify({ p_key: apiKey, p_message: message }),
+      body: JSON.stringify({ p_key: apiKey, p_message: truncated }),
       signal: controller.signal,
     });
     return res.ok;
