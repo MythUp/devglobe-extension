@@ -48,6 +48,22 @@
       {
         "command": "devglobe.setStatus",
         "title": "DevGlobe: Set Status Message"
+      },
+      {
+        "command": "devglobe.toggleAnonymous",
+        "title": "DevGlobe: Toggle Anonymous Mode"
+      },
+      {
+        "command": "devglobe.toggleShareRepo",
+        "title": "DevGlobe: Toggle Repo Sharing"
+      },
+      {
+        "command": "devglobe.showCodingTime",
+        "title": "DevGlobe: Show Coding Time"
+      },
+      {
+        "command": "devglobe.openGlobe",
+        "title": "DevGlobe: Open Globe"
       }
     ],
     "configuration": {

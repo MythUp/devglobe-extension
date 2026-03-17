@@ -133,6 +133,41 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         })
     );
 
+    context.subscriptions.push(
+        vscode.commands.registerCommand('devglobe.toggleAnonymous', async () => {
+            const config = vscode.workspace.getConfiguration('devglobe');
+            const current = config.get<boolean>('anonymousMode', false);
+            await config.update('anonymousMode', !current, vscode.ConfigurationTarget.Global);
+            client.setConfig('anonymousMode', !current);
+            client.updatePreference('anonymousMode', !current);
+            vscode.window.showInformationMessage(`DevGlobe: Anonymous mode ${!current ? 'enabled' : 'disabled'}`);
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('devglobe.toggleShareRepo', async () => {
+            const config = vscode.workspace.getConfiguration('devglobe');
+            const current = config.get<boolean>('shareRepo', false);
+            await config.update('shareRepo', !current, vscode.ConfigurationTarget.Global);
+            client.setConfig('shareRepo', !current);
+            client.updatePreference('shareRepo', !current);
+            vscode.window.showInformationMessage(`DevGlobe: Repo sharing ${!current ? 'enabled' : 'disabled'}`);
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('devglobe.showCodingTime', () => {
+            const state = client.getState();
+            vscode.window.showInformationMessage(`DevGlobe: ${state.codingTime} today${state.language ? ` — ${state.language}` : ''}`);
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('devglobe.openGlobe', () => {
+            vscode.env.openExternal(vscode.Uri.parse('https://devglobe.xyz/explore'));
+        })
+    );
+
     const savedConfig = vscode.workspace.getConfiguration('devglobe');
     const apiKey = await getApiKey(context);
     const trackingEnabled = savedConfig.get<boolean>('trackingEnabled', true);
