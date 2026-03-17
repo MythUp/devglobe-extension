@@ -15,10 +15,13 @@ Show your live coding presence on the [DevGlobe](https://devglobe.xyz) world map
 ```lua
 {
   "Nako0/devglobe-extension",
-  subdir = "neovim-plugin",
   event = "BufEnter",
   build = "cd devglobe-core && npm install && npm run build",
-  opts = {},
+  config = function()
+    vim.opt.rtp:append(vim.fn.stdpath("data") .. "/lazy/devglobe-extension/neovim-plugin")
+    vim.cmd("runtime plugin/devglobe.lua")
+    require("devglobe").setup()
+  end,
 }
 ```
 

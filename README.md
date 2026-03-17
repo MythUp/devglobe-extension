@@ -212,10 +212,13 @@ Open a project in Zed, trust the worktree when prompted, and start coding. You'l
 ```lua
 {
   "Nako0/devglobe-extension",
-  subdir = "neovim-plugin",
   event = "BufEnter",
   build = "cd devglobe-core && npm install && npm run build",
-  opts = {},
+  config = function()
+    vim.opt.rtp:append(vim.fn.stdpath("data") .. "/lazy/devglobe-extension/neovim-plugin")
+    vim.cmd("runtime plugin/devglobe.lua")
+    require("devglobe").setup()
+  end,
 }
 ```
 
