@@ -94,7 +94,7 @@ function M.command(args)
 
   elseif sub == "today" then
     local s = daemon.get_state()
-    local lang = s.language and (" — " .. s.language) or ""
+    local lang = (s.language and s.language ~= vim.NIL) and (" — " .. s.language) or ""
     vim.notify("[DevGlobe] " .. s.coding_time .. " today" .. lang, vim.log.levels.INFO)
 
   elseif sub == "open" then
@@ -119,6 +119,6 @@ function M.statusline()
   if not s.tracking then return "" end
   local lang = s.language and (" — " .. s.language) or ""
   return s.coding_time .. lang
-end
+  end
 
 return M

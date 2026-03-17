@@ -50,10 +50,10 @@ local function handle_message(raw)
     state.connected = d.connected or false
     state.tracking = d.tracking or false
     state.coding_time = d.coding_time or "0m"
-    state.language = d.language
+    state.language = (d.language ~= vim.NIL) and d.language or nil
     state.share_repo = d.share_repo or false
     state.anonymous_mode = d.anonymous_mode or false
-    state.status_message = d.status_message or ""
+    state.status_message = (d.status_message ~= vim.NIL) and d.status_message or ""
     state.offline = d.offline or false
     if state.on_state_change then state.on_state_change(M.get_state()) end
   elseif msg.event == "heartbeat_ok" and type(msg.data) == "table" then
@@ -61,7 +61,7 @@ local function handle_message(raw)
     local h = math.floor(secs / 3600)
     local m = math.floor((secs % 3600) / 60)
     state.coding_time = h > 0 and string.format("%dh %dm", h, m) or string.format("%dm", m)
-    state.language = msg.data.language
+    state.language = (msg.data.language ~= vim.NIL) and msg.data.language or nil
     if state.on_state_change then state.on_state_change(M.get_state()) end
   elseif msg.event == "offline" then
     state.offline = true
