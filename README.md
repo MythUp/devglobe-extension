@@ -15,6 +15,7 @@
   <a href="#vs-code">VS Code</a> &nbsp;·&nbsp;
   <a href="#jetbrains">JetBrains</a> &nbsp;·&nbsp;
   <a href="#zed">Zed</a> &nbsp;·&nbsp;
+  <a href="#neovim">NeoVim</a> &nbsp;·&nbsp;
   <a href="#claude-code">Claude Code</a>
 </p>
 
@@ -202,6 +203,63 @@ Open a project in Zed, trust the worktree when prompted, and start coding. You'l
 
 ---
 
+### NeoVim
+
+#### Installation
+
+**lazy.nvim:**
+
+```lua
+{
+  "Nako0/devglobe-extension",
+  subdir = "neovim-plugin",
+  event = "BufEnter",
+  build = "cd devglobe-core && npm install && npm run build",
+  opts = {},
+}
+```
+
+devglobe-core is built automatically on install. Requires Node.js 18+.
+
+#### Setup
+
+```vim
+:DevGlobe setup devglobe_YOUR_KEY_HERE
+```
+
+Or create `~/.devglobe/api_key` manually (same as Zed / Claude Code).
+
+#### Features
+
+| Feature | Description |
+|---------|-------------|
+| **Live heartbeat** | 30s interval via devglobe-core daemon. Pauses after 1 min of inactivity. |
+| **Language detection** | Uses NeoVim's filetype detection. |
+| **Git integration** | Detects your repo from the git remote. |
+| **Anonymous mode** | `:DevGlobe anonymous` to toggle. |
+| **Status message** | `:DevGlobe status Working on X` |
+| **Repo sharing** | `:DevGlobe share-repo` to toggle. |
+| **Lualine integration** | Add `"devglobe"` to your lualine sections. Displays coding time + language. |
+| **Health check** | `:checkhealth devglobe` — verifies Node.js, API key, daemon status. |
+
+#### Commands
+
+| Command | Description |
+|---------|-------------|
+| `:DevGlobe setup KEY` | Configure your API key |
+| `:DevGlobe status MSG` | Set your status message |
+| `:DevGlobe anonymous` | Toggle anonymous mode |
+| `:DevGlobe share-repo` | Toggle repo sharing |
+| `:DevGlobe today` | Show your coding time today |
+| `:DevGlobe open` | Open devglobe.xyz |
+
+#### Requirements
+
+- NeoVim 0.9+
+- [Node.js](https://nodejs.org) 18+
+
+---
+
 ### Claude Code
 
 #### Installation
@@ -278,7 +336,7 @@ On [devglobe.xyz](https://devglobe.xyz), you'll find:
 
 **What we NEVER touch:** source code, file contents, file names, folder paths, keystrokes, commit messages, Git branches, environment variables, SSH keys. Your IP is used once for geolocation then discarded — never sent to DevGlobe.
 
-**API keys** are stored in your OS keychain (VS Code SecretStorage, JetBrains PasswordSafe) or local config file (Claude Code).
+**API keys** are stored in your OS keychain (VS Code SecretStorage, JetBrains PasswordSafe) or local config file (Zed, NeoVim, Claude Code).
 
 **Network:** HTTPS only (TLS 1.2+), no intermediary server, Content Security Policy on webviews, Row Level Security on the database. No telemetry.
 
@@ -324,6 +382,30 @@ cd ../zed-extension/server && npm install && npm run build
 
 In Zed: `Cmd+Shift+P` → "zed: install dev extension" → select the `zed-extension/` folder.
 
+### NeoVim
+
+```bash
+cd devglobe-core && npm install && npm run build
+```
+
+Then add to your NeoVim config:
+
+```lua
+{ dir = "/path/to/devglobe-extension/neovim-plugin", opts = {} }
+```
+
+Or install from GitHub (build is automatic):
+
+```lua
+{
+  "Nako0/devglobe-extension",
+  subdir = "neovim-plugin",
+  event = "BufEnter",
+  build = "cd devglobe-core && npm install && npm run build",
+  opts = {},
+}
+```
+
 ### Claude Code
 
 ```bash
@@ -351,7 +433,7 @@ Contributions are welcome — fixes, new features, documentation.
 If you like DevGlobe, help us spread the word!
 
 <p align="center">
-  <a href="https://twitter.com/intent/tweet?text=I%20just%20discovered%20DevGlobe%20%E2%80%94%20a%20free%20open-source%203D%20globe%20that%20shows%20developers%20coding%20in%20real%20time.%20Extensions%20for%20VS%20Code%2C%20JetBrains%20%26%20Claude%20Code.&url=https%3A%2F%2Fgithub.com%2FNako0%2Fdevglobe-extension"><img src="https://img.shields.io/badge/Share_on-X%20(Twitter)-000000?style=for-the-badge&logo=x" alt="Share on X" /></a>&nbsp;
+  <a href="https://twitter.com/intent/tweet?text=I%20just%20discovered%20DevGlobe%20%E2%80%94%20a%20free%20open-source%203D%20globe%20that%20shows%20developers%20coding%20in%20real%20time.%20Extensions%20for%20VS%20Code%2C%20JetBrains%2C%20Zed%2C%20NeoVim%20%26%20Claude%20Code.&url=https%3A%2F%2Fgithub.com%2FNako0%2Fdevglobe-extension"><img src="https://img.shields.io/badge/Share_on-X%20(Twitter)-000000?style=for-the-badge&logo=x" alt="Share on X" /></a>&nbsp;
   <a href="https://www.reddit.com/submit?url=https%3A%2F%2Fgithub.com%2FNako0%2Fdevglobe-extension&title=DevGlobe%20%E2%80%94%20See%20developers%20coding%20in%20real%20time%20on%20a%203D%20globe"><img src="https://img.shields.io/badge/Share_on-Reddit-FF4500?style=for-the-badge&logo=reddit&logoColor=white" alt="Share on Reddit" /></a>&nbsp;
   <a href="https://news.ycombinator.com/submitlink?u=https%3A%2F%2Fgithub.com%2FNako0%2Fdevglobe-extension&t=DevGlobe%20%E2%80%94%20See%20developers%20coding%20in%20real%20time%20on%20a%203D%20globe"><img src="https://img.shields.io/badge/Share_on-Hacker%20News-F0652F?style=for-the-badge&logo=ycombinator&logoColor=white" alt="Share on HN" /></a>&nbsp;
   <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fgithub.com%2FNako0%2Fdevglobe-extension"><img src="https://img.shields.io/badge/Share_on-LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" alt="Share on LinkedIn" /></a>
