@@ -66,4 +66,36 @@
         <notificationGroup id="DevGlobe"
             displayType="BALLOON"/>
     </extensions>
+
+    <actions>
+        <group id="DevGlobe.Actions" text="DevGlobe" popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <action id="DevGlobe.ToggleAnonymous"
+                class="xyz.devglobe.plugin.actions.ToggleAnonymousAction"
+                text="Enable Anonymous Mode"
+                description="Toggle anonymous mode — appear on a random city in your country"/>
+            <action id="DevGlobe.ToggleShareRepo"
+                class="xyz.devglobe.plugin.actions.ToggleShareRepoAction"
+                text="Enable Repo Sharing"
+                description="Toggle repo sharing — show your repository on the globe"/>
+            <separator/>
+            <action id="DevGlobe.SetStatus"
+                class="xyz.devglobe.plugin.actions.SetStatusAction"
+                text="Set Status Message"
+                description="Set your status message on DevGlobe"/>
+            <action id="DevGlobe.ShowCodingTime"
+                class="xyz.devglobe.plugin.actions.ShowCodingTimeAction"
+                text="Show Coding Time"
+                description="Show your coding time today"/>
+            <separator/>
+            <action id="DevGlobe.OpenPanel"
+                class="xyz.devglobe.plugin.actions.OpenPanelAction"
+                text="Open Panel"
+                description="Open the DevGlobe tool window"/>
+            <action id="DevGlobe.OpenGlobe"
+                class="xyz.devglobe.plugin.actions.OpenGlobeAction"
+                text="Open Globe"
+                description="Open DevGlobe in your browser"/>
+        </group>
+    </actions>
 </idea-plugin>
