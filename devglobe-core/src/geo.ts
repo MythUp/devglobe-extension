@@ -156,6 +156,41 @@ async function fromIpApiCo(): Promise<GeoResult | null> {
   };
 }
 
+async function fromIpWhoIs(): Promise<GeoResult | null> {
+  const data = (await fetchJson("https://ipwho.is/")) as {
+    success?: boolean;
+    city?: string;
+    country?: string;
+    country_code?: string;
+    latitude?: unknown;
+    longitude?: unknown;
+  } | null;
+  if (!data || data.success === false) return null;
+
+  const lat = typeof data.latitude === "number" ? data.latitude : null;
+  const lon = typeof data.longitude === "number" ? data.longitude : null;
+  if (lat == null || lon == null || !validCoords(lat, lon)) return null;
+
+  const city =
+    data.city && data.country
+      ? `${data.city}, ${data.country}`
+      : (data.city ?? data.country ?? null);
+
+  const [snappedLat, snappedLon] = snapToCity(
+    data.city,
+    data.country_code,
+    lat,
+    lon,
+  );
+  return {
+    city,
+    lat: snappedLat,
+    lon: snappedLon,
+    countryCode: data.country_code ?? null,
+    countryName: data.country ?? null,
+  };
+}
+
 function titleCase(s: string): string {
   return s.replace(/(?:^|[\s-])\S/g, (c) => c.toUpperCase());
 }
@@ -209,7 +244,8 @@ export async function fetchGeolocation(
     return anonymous ? getAnonymousLocationMemory(memCached) : memCached;
   }
 
-  const next = (await fromFreeIpApi()) ?? (await fromIpApiCo());
+  const next =
+    (await fromFreeIpApi()) ?? (await fromIpApiCo()) ?? (await fromIpWhoIs());
   if (!next) {
     return memCached
       ? anonymous
@@ -249,7 +285,8 @@ export async function fetchGeolocationFile(
     /* no cache */
   }
 
-  const next = (await fromFreeIpApi()) ?? (await fromIpApiCo());
+  const next =
+    (await fromFreeIpApi()) ?? (await fromIpApiCo()) ?? (await fromIpWhoIs());
   if (!next) return null;
 
   try {

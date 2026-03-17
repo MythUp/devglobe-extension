@@ -35,7 +35,7 @@
 
 ## Location: how it works exactly
 
-The extension determines your city from your IP address via an external geolocation service (freeipapi.com, with fallback to ipapi.co). Both are free public services, no API key required.
+The extension determines your city from your IP address via external geolocation services (freeipapi.com, with fallback to ipapi.co and ipwho.is). All are free public services, no API key required.
 
 **Coordinates are snapped to your city center** using a database of 152,000+ cities (GeoNames). You appear at your city's canonical center on the globe, not at your address. If the city is not found in the database, coordinates are randomly offset within a 20 km radius.
 
@@ -219,12 +219,13 @@ claude-code-plugin/
 
 ## Third-party services
 
-The extensions rely on two external services. Neither receives your DevGlobe API key or any coding data.
+The extensions rely on three external services for IP geolocation. Neither receives your DevGlobe API key or any coding data.
 
 | Service | Purpose | Data sent | Privacy policy |
 |---------|---------|-----------|----------------|
 | [freeipapi.com](https://freeipapi.com) | IP geolocation (primary) | Your IP address (via standard HTTPS request) | [freeipapi.com/privacy](https://freeipapi.com) |
-| [ipapi.co](https://ipapi.co) | IP geolocation (fallback) | Your IP address (via standard HTTPS request) | [ipapi.co/privacy](https://ipapi.co/privacy/) |
+| [ipapi.co](https://ipapi.co) | IP geolocation (fallback #1) | Your IP address (via standard HTTPS request) | [ipapi.co/privacy](https://ipapi.co/privacy/) |
+| [ipwho.is](https://ipwho.is) | IP geolocation (fallback #2) | Your IP address (via standard HTTPS request) | [ipwho.is](https://ipwho.is) |
 
 Your IP address is used only to determine your city. It is never transmitted to or stored by DevGlobe.
 
