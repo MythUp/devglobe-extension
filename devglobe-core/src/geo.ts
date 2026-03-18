@@ -21,9 +21,16 @@ function round1(n: number): number {
 
 function normalizeCity(name: string): string {
   return name
+    .replace(/\s*\(.*\)$/, "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
+}
+
+function distanceDeg(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const dLat = lat1 - lat2;
+  const dLon = (lon1 - lon2) * Math.cos(((lat1 + lat2) / 2) * (Math.PI / 180));
+  return Math.sqrt(dLat ** 2 + dLon ** 2);
 }
 
 function snapToCity(
@@ -38,7 +45,7 @@ function snapToCity(
     ];
     if (country) {
       const center = country[normalizeCity(cityName)];
-      if (center) return center;
+      if (center && distanceDeg(lat, lon, center[0], center[1]) < 2) return center;
     }
   }
   const angle = Math.random() * 2 * Math.PI;
