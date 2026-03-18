@@ -1,4 +1,3 @@
-import { request as httpsRequest } from "https";
 import { readFileSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
@@ -53,39 +52,27 @@ function validCoords(lat: number, lon: number): boolean {
   return lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
 }
 
-function fetchJson(url: string): Promise<unknown | null> {
-  return new Promise((resolve) => {
-    const timer = setTimeout(() => {
-      req.destroy();
-      resolve(null);
-    }, GEO_TIMEOUT_MS);
+function toNumber(v: unknown): number | null {
+  if (typeof v === "number" && isFinite(v)) return v;
+  if (typeof v === "string") {
+    const n = parseFloat(v);
+    if (isFinite(n)) return n;
+  }
+  return null;
+}
 
-    const req = httpsRequest(
-      url,
-      { timeout: GEO_TIMEOUT_MS } as object,
-      (res) => {
-        const chunks: Buffer[] = [];
-        res.on("data", (c: Buffer) => chunks.push(c));
-        res.on("end", () => {
-          clearTimeout(timer);
-          if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
-            try {
-              resolve(JSON.parse(Buffer.concat(chunks).toString()));
-            } catch {
-              resolve(null);
-            }
-          } else {
-            resolve(null);
-          }
-        });
-      },
-    );
-    req.on("error", () => {
-      clearTimeout(timer);
-      resolve(null);
-    });
-    req.end();
-  });
+async function fetchJson(url: string): Promise<unknown | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), GEO_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function fromFreeIpApi(): Promise<GeoResult | null> {
@@ -98,8 +85,8 @@ async function fromFreeIpApi(): Promise<GeoResult | null> {
   } | null;
   if (!data) return null;
 
-  const lat = typeof data.latitude === "number" ? data.latitude : null;
-  const lon = typeof data.longitude === "number" ? data.longitude : null;
+  const lat = toNumber(data.latitude);
+  const lon = toNumber(data.longitude);
   if (lat == null || lon == null || !validCoords(lat, lon)) return null;
 
   const city =
@@ -132,8 +119,8 @@ async function fromIpApiCo(): Promise<GeoResult | null> {
   } | null;
   if (!data) return null;
 
-  const lat = typeof data.latitude === "number" ? data.latitude : null;
-  const lon = typeof data.longitude === "number" ? data.longitude : null;
+  const lat = toNumber(data.latitude);
+  const lon = toNumber(data.longitude);
   if (lat == null || lon == null || !validCoords(lat, lon)) return null;
 
   const city =
@@ -167,8 +154,8 @@ async function fromIpWhoIs(): Promise<GeoResult | null> {
   } | null;
   if (!data || data.success === false) return null;
 
-  const lat = typeof data.latitude === "number" ? data.latitude : null;
-  const lon = typeof data.longitude === "number" ? data.longitude : null;
+  const lat = toNumber(data.latitude);
+  const lon = toNumber(data.longitude);
   if (lat == null || lon == null || !validCoords(lat, lon)) return null;
 
   const city =
