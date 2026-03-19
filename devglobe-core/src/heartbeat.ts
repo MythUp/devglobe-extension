@@ -24,6 +24,9 @@ const HEADERS = {
   'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
 };
 
+const PLATFORM_MAP: Record<string, string> = { darwin: "macOS", linux: "Linux", win32: "Windows" };
+const PLATFORM = PLATFORM_MAP[process.platform] ?? process.platform;
+
 export type HeartbeatParams = {
   apiKey: string;
   editor: string;
@@ -59,12 +62,13 @@ export async function sendHeartbeat(params: HeartbeatParams): Promise<{ todaySec
   body.p_share_repo = shareRepo;
 
   if (repo && shareRepo) body.p_repo = repo;
+  body.p_platform = PLATFORM;
 
   let res: Response;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    res = await fetch(`${SUPABASE_URL}/functions/v1/heartbeat`, {
+    res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/heartbeat`, {
       method: 'POST',
       headers: HEADERS,
       body: JSON.stringify(body),

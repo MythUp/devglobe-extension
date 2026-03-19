@@ -79,11 +79,14 @@ export async function runOneshot(params: OneshotParams): Promise<void> {
 
   let geo = await fetchGeolocationFile(anonymous, params.session_id);
 
+  const platformMap: Record<string, string> = { darwin: "macOS", linux: "Linux", win32: "Windows" };
+
   const body: Record<string, unknown> = {
     p_key: apiKey,
     p_editor: params.editor,
     p_anonymous: anonymous,
     p_share_repo: config.shareRepo === true,
+    p_platform: platformMap[process.platform] ?? process.platform,
   };
 
   if (language) body.p_lang = language;
