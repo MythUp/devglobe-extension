@@ -20,6 +20,12 @@ jobs:
           node-version: 20
 
       - run: npm install
+        working-directory: devglobe-core
+
+      - run: npm run build
+        working-directory: devglobe-core
+
+      - run: npm install
 
       - run: npm run compile
 
