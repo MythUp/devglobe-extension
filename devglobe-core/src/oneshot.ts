@@ -94,12 +94,13 @@ export async function runOneshot(params: OneshotParams): Promise<void> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/heartbeat`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/heartbeat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'apikey': SUPABASE_ANON_KEY,
         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Prefer': 'return=representation',
       },
       body: JSON.stringify(body),
       signal: controller.signal,
