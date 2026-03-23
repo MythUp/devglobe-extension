@@ -114,6 +114,7 @@ export type OneshotState = {
   lastHeartbeatAt?: number;
   lastLanguage?: string | null;
   lastRepo?: string | null;
+  lastCwd?: string;
 };
 
 export type AnonCache = {

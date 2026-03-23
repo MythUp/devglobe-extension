@@ -48,23 +48,21 @@ export async function runOneshot(params: OneshotParams): Promise<void> {
   const state = readState();
   const now = Date.now();
 
+  const cwdChanged = params.cwd !== state.lastCwd;
+
   const language = params.language
     ?? (params.file_path ? langFromPath(params.file_path) : null)
-    ?? state.lastLanguage
+    ?? (cwdChanged ? null : state.lastLanguage)
     ?? null;
 
-  const gitDirs = params.file_path ? [dirname(params.file_path), params.cwd] : [params.cwd];
+  const repoDirs: string[] = [];
+  if (params.file_path) repoDirs.push(dirname(params.file_path));
+  repoDirs.push(params.cwd);
+
   let repo: string | null = null;
-  for (const dir of gitDirs) {
+  for (const dir of repoDirs) {
     repo = await detectRepo(dir);
     if (repo) break;
-  }
-  if (!repo && !params.file_path && state.lastRepo) {
-    repo = state.lastRepo;
-  }
-
-  if (repo !== state.lastRepo) {
-    writeState({ ...state, lastRepo: repo });
   }
 
   const languageChanged = language && language !== state.lastLanguage;
@@ -113,5 +111,5 @@ export async function runOneshot(params: OneshotParams): Promise<void> {
     clearTimeout(timer);
   }
 
-  writeState({ lastHeartbeatAt: now, lastLanguage: language, lastRepo: repo });
+  writeState({ lastHeartbeatAt: now, lastLanguage: language, lastRepo: repo, lastCwd: params.cwd });
 }

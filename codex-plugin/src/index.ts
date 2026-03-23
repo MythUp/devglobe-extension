@@ -1,22 +1,36 @@
-import { readFileSync, readdirSync, statSync } from 'fs';
-import { join, extname } from 'path';
+import { readFileSync, readdirSync, statSync, existsSync } from 'fs';
+import { join, extname, dirname } from 'path';
 import { runOneshot } from '../../devglobe-core/src/oneshot';
 import { langFromPath } from '../../devglobe-core/src/language';
 import type { Input } from './types';
 
-const FILE_PATH_RE = /(?:^|\s|['"`(])(\/?(?:[\w.@-]+\/)*[\w.@-]+\.\w{1,10})(?=[\s'"`):,]|$)/g;
+const BACKTICK_PATH_RE = /`(\/[^`\n]+\.\w{1,10})`/g;
+
+const BARE_PATH_RE = /(?:^|\s)(\/(?:[\w .@-]+\/)+[\w.@-]+\.\w{1,10})(?=[\s,;:]|$)/gm;
+
+const RELATIVE_PATH_RE = /(?:^|\s|['"`(])((?:[\w.@-]+\/)+[\w.@-]+\.\w{1,10})(?=[\s'"`):,]|$)/g;
 
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'build', '.git', '.next', '__pycache__', 'target', 'vendor']);
 
 function extractFilePaths(text: string | undefined): string[] {
   if (!text) return [];
+  const seen = new Set<string>();
   const paths: string[] = [];
-  for (const match of text.matchAll(FILE_PATH_RE)) {
-    const p = match[1];
-    if (p.includes('/') || langFromPath(p)) {
+
+  function add(p: string): void {
+    if (!seen.has(p)) {
+      seen.add(p);
       paths.push(p);
     }
   }
+
+  for (const m of text.matchAll(BACKTICK_PATH_RE)) add(m[1]);
+  for (const m of text.matchAll(BARE_PATH_RE)) add(m[1].trim());
+  for (const m of text.matchAll(RELATIVE_PATH_RE)) {
+    const p = m[1];
+    if (p.includes('/') || langFromPath(p)) add(p);
+  }
+
   return paths;
 }
 
@@ -50,6 +64,31 @@ function findRecentFile(cwd: string): string | null {
   return best?.path ?? null;
 }
 
+function pickBestFile(paths: string[], cwd: string): { filePath: string; language: string } | null {
+  const codePaths: { filePath: string; language: string }[] = [];
+
+  for (const p of paths) {
+    const resolved = p.startsWith('/') ? p : join(cwd, p);
+    const lang = langFromPath(resolved);
+    if (lang && lang !== 'Markdown' && lang !== 'Plain Text' && lang !== 'JSON' && lang !== 'YAML' && lang !== 'TOML') {
+      codePaths.push({ filePath: resolved, language: lang });
+    }
+  }
+
+  if (codePaths.length > 0) {
+    const existing = codePaths.find((p) => existsSync(p.filePath));
+    return existing ?? codePaths[0];
+  }
+
+  for (const p of paths) {
+    const resolved = p.startsWith('/') ? p : join(cwd, p);
+    const lang = langFromPath(resolved);
+    if (lang) return { filePath: resolved, language: lang };
+  }
+
+  return null;
+}
+
 async function main(): Promise<void> {
   const raw = readFileSync(0, 'utf-8');
   let input: Input;
@@ -64,19 +103,15 @@ async function main(): Promise<void> {
   let filePath: string | undefined;
   let language: string | undefined;
 
-  const textSources = [input.prompt, input.last_assistant_message];
-  for (const text of textSources) {
-    const paths = extractFilePaths(text);
-    for (const p of paths) {
-      const resolved = p.startsWith('/') ? p : join(cwd, p);
-      const lang = langFromPath(resolved);
-      if (lang) {
-        filePath = resolved;
-        language = lang;
-        break;
-      }
-    }
-    if (language) break;
+  const allPaths: string[] = [];
+  for (const text of [input.last_assistant_message, input.prompt]) {
+    allPaths.push(...extractFilePaths(text));
+  }
+
+  const best = pickBestFile(allPaths, cwd);
+  if (best) {
+    filePath = best.filePath;
+    language = best.language;
   }
 
   if (!language) {
