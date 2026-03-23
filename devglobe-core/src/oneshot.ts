@@ -7,6 +7,8 @@ import { fetchGeolocationFile } from './geo.js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, RATE_LIMIT_MS, FETCH_TIMEOUT_MS } from './constants.js';
 import type { OneshotParams, OneshotState, Config } from './types.js';
 
+const STATE_PATH = join(homedir(), '.devglobe', 'oneshot-state.json');
+
 function getApiKey(): string | null {
   const envKey = process.env.DEVGLOBE_API_KEY;
   if (envKey?.trim()) return envKey.trim();
@@ -27,27 +29,23 @@ function getConfig(): Config {
   }
 }
 
-function readState(path: string): OneshotState {
+function readState(): OneshotState {
   try {
-    return JSON.parse(readFileSync(path, 'utf-8'));
+    return JSON.parse(readFileSync(STATE_PATH, 'utf-8'));
   } catch {
     return {};
   }
 }
 
-function writeState(path: string, state: OneshotState): void {
-  try { writeFileSync(path, JSON.stringify(state)); } catch { /* ignore */ }
+function writeState(state: OneshotState): void {
+  try { writeFileSync(STATE_PATH, JSON.stringify(state)); } catch { /* ignore */ }
 }
 
 export async function runOneshot(params: OneshotParams): Promise<void> {
   const apiKey = getApiKey();
   if (!apiKey) return;
 
-  const statePath = params.session_id
-    ? join(homedir(), '.devglobe', `session-${params.session_id}.json`)
-    : undefined;
-
-  const state = statePath ? readState(statePath) : {};
+  const state = readState();
   const now = Date.now();
 
   const language = params.language
@@ -65,8 +63,8 @@ export async function runOneshot(params: OneshotParams): Promise<void> {
     repo = state.lastRepo;
   }
 
-  if (statePath && repo !== state.lastRepo) {
-    writeState(statePath, { ...state, lastRepo: repo });
+  if (repo !== state.lastRepo) {
+    writeState({ ...state, lastRepo: repo });
   }
 
   const languageChanged = language && language !== state.lastLanguage;
@@ -115,7 +113,5 @@ export async function runOneshot(params: OneshotParams): Promise<void> {
     clearTimeout(timer);
   }
 
-  if (statePath) {
-    writeState(statePath, { lastHeartbeatAt: now, lastLanguage: language, lastRepo: repo });
-  }
+  writeState({ lastHeartbeatAt: now, lastLanguage: language, lastRepo: repo });
 }

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# DevGlobe Codex plugin - setup launcher
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ENTRY="$(dirname "$SCRIPT_DIR")/dist/setup.js"
+
+if [ ! -f "$ENTRY" ]; then
+  echo '{"error":"dist/setup.js not found. Run npm run build first."}'
+  exit 1
+fi
+
+NODE="$("$SCRIPT_DIR/find-node")" || { echo '{"error":"Node.js not found"}'; exit 1; }
+exec "$NODE" "$ENTRY"

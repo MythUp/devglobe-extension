@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# DevGlobe Codex plugin - update status launcher
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ENTRY="$(dirname "$SCRIPT_DIR")/dist/update-status.js"
+
+if [ ! -f "$ENTRY" ]; then
+  echo '{"error":"dist/update-status.js not found. Run npm run build first."}'
+  exit 1
+fi
+
+NODE="$("$SCRIPT_DIR/find-node")" || { echo '{"error":"Node.js not found"}'; exit 1; }
+exec "$NODE" "$ENTRY"

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# DevGlobe Codex plugin - heartbeat hook handler
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ENTRY="$(dirname "$SCRIPT_DIR")/dist/index.js"
+
+[ ! -f "$ENTRY" ] && exit 0
+
+NODE="$("$SCRIPT_DIR/find-node")" || exit 0
+exec "$NODE" "$ENTRY"

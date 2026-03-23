@@ -1,0 +1,4 @@
+displayName: DevGlobe
+shortDescription: Track your coding activity on DevGlobe
+defaultPrompt:
+  - "$devglobe setup"

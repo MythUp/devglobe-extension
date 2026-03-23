@@ -16,7 +16,8 @@
   <a href="#jetbrains">JetBrains</a> &nbsp;·&nbsp;
   <a href="#zed">Zed</a> &nbsp;·&nbsp;
   <a href="#neovim">NeoVim</a> &nbsp;·&nbsp;
-  <a href="#claude-code">Claude Code</a>
+  <a href="#claude-code">Claude Code</a> &nbsp;·&nbsp;
+  <a href="#codex">Codex</a>
 </p>
 
 <p align="center">
@@ -313,6 +314,57 @@ Settings are stored in `~/.devglobe/config.json` and can also be edited manually
 
 ---
 
+### Codex
+
+#### Installation
+
+In Codex, run:
+
+```
+$skill-installer --repo Nako0/devglobe-extension --path codex-plugin
+```
+
+After installing, **restart Codex** so the skill and its hooks are loaded.
+
+#### Setup
+
+```
+$devglobe setup YOUR_API_KEY
+```
+
+Get your API key at [devglobe.xyz](https://devglobe.xyz) — sign in, then open your **profile settings**.
+
+This saves your key, installs heartbeat hooks, and enables the `codex_hooks` feature flag.
+
+#### Features
+
+| Feature | Description |
+|---------|-------------|
+| **Live heartbeat** | Hooks into Codex events. Sends a heartbeat at most once per minute. |
+| **Language detection** | Detects the language from file paths in your prompts or recently modified files. |
+| **Git integration** | Detects your repo from the git remote. |
+| **Anonymous mode** | **Enabled by default.** Hides your exact location — placed on a random city in your country (from a database of 152,000+ cities worldwide). Disable with `$devglobe anonymous false`. |
+| **Status message** | Set a custom status on your profile: `$devglobe status Your message here` |
+| **Repo sharing** | Display your repo name on the globe: `$devglobe share-repo true` (disabled by default). |
+
+#### Commands
+
+| Command | Description |
+|---------|-------------|
+| `$devglobe setup YOUR_API_KEY` | Configure the skill with your API key and install hooks |
+| `$devglobe anonymous true/false` | Enable or disable anonymous mode |
+| `$devglobe share-repo true/false` | Enable or disable repo sharing |
+| `$devglobe status MESSAGE` | Set a status message on your DevGlobe profile |
+| `$devglobe check` | Verify the installation |
+| `$devglobe uninstall` | Remove DevGlobe hooks from Codex |
+
+#### Requirements
+
+- [Codex CLI](https://github.com/openai/codex)
+- [Node.js](https://nodejs.org) 18+
+
+---
+
 ## The Globe
 
 On [devglobe.xyz](https://devglobe.xyz), you'll find:
@@ -339,7 +391,7 @@ On [devglobe.xyz](https://devglobe.xyz), you'll find:
 
 **What we NEVER touch:** source code, file contents, file names, folder paths, keystrokes, commit messages, Git branches, environment variables, SSH keys. Your IP is used once for geolocation then discarded — never sent to DevGlobe.
 
-**API keys** are stored in your OS keychain (VS Code SecretStorage, JetBrains PasswordSafe) or local config file (Zed, NeoVim, Claude Code).
+**API keys** are stored in your OS keychain (VS Code SecretStorage, JetBrains PasswordSafe) or local config file (Zed, NeoVim, Claude Code, Codex).
 
 **Network:** HTTPS only (TLS 1.2+), no intermediary server, Content Security Policy on webviews, Row Level Security on the database. No telemetry.
 
@@ -418,6 +470,21 @@ npm install && npm run build
 
 Install locally: `/plugin marketplace add ./claude-code-plugin` then `/plugin install devglobe@devglobe`
 
+### Codex
+
+```bash
+cd codex-plugin
+npm install && npm run build
+```
+
+Install locally:
+```bash
+mkdir -p ~/.codex/skills
+ln -s "$(pwd)" ~/.codex/skills/devglobe
+```
+
+Then in Codex: `$devglobe setup YOUR_API_KEY`
+
 ---
 
 ## Contributing
@@ -436,7 +503,7 @@ Contributions are welcome — fixes, new features, documentation.
 If you like DevGlobe, help us spread the word!
 
 <p align="center">
-  <a href="https://twitter.com/intent/tweet?text=I%20just%20discovered%20DevGlobe%20%E2%80%94%20a%20free%20open-source%203D%20globe%20that%20shows%20developers%20coding%20in%20real%20time.%20Extensions%20for%20VS%20Code%2C%20JetBrains%2C%20Zed%2C%20NeoVim%20%26%20Claude%20Code.&url=https%3A%2F%2Fgithub.com%2FNako0%2Fdevglobe-extension"><img src="https://img.shields.io/badge/Share_on-X%20(Twitter)-000000?style=for-the-badge&logo=x" alt="Share on X" /></a>&nbsp;
+  <a href="https://twitter.com/intent/tweet?text=I%20just%20discovered%20DevGlobe%20%E2%80%94%20a%20free%20open-source%203D%20globe%20that%20shows%20developers%20coding%20in%20real%20time.%20Extensions%20for%20VS%20Code%2C%20JetBrains%2C%20Zed%2C%20NeoVim%2C%20Claude%20Code%20%26%20Codex.&url=https%3A%2F%2Fgithub.com%2FNako0%2Fdevglobe-extension"><img src="https://img.shields.io/badge/Share_on-X%20(Twitter)-000000?style=for-the-badge&logo=x" alt="Share on X" /></a>&nbsp;
   <a href="https://www.reddit.com/submit?url=https%3A%2F%2Fgithub.com%2FNako0%2Fdevglobe-extension&title=DevGlobe%20%E2%80%94%20See%20developers%20coding%20in%20real%20time%20on%20a%203D%20globe"><img src="https://img.shields.io/badge/Share_on-Reddit-FF4500?style=for-the-badge&logo=reddit&logoColor=white" alt="Share on Reddit" /></a>&nbsp;
   <a href="https://news.ycombinator.com/submitlink?u=https%3A%2F%2Fgithub.com%2FNako0%2Fdevglobe-extension&t=DevGlobe%20%E2%80%94%20See%20developers%20coding%20in%20real%20time%20on%20a%203D%20globe"><img src="https://img.shields.io/badge/Share_on-Hacker%20News-F0652F?style=for-the-badge&logo=ycombinator&logoColor=white" alt="Share on HN" /></a>&nbsp;
   <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fgithub.com%2FNako0%2Fdevglobe-extension"><img src="https://img.shields.io/badge/Share_on-LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" alt="Share on LinkedIn" /></a>
