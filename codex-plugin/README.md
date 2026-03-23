@@ -29,7 +29,7 @@ git clone https://github.com/Nako0/devglobe-extension
 
 ```bash
 mkdir -p ~/.codex/skills
-ln -s "$(pwd)/devglobe-extension/codex-plugin" ~/.codex/skills/devglobe
+ln -s "$(pwd)/devglobe-extension/codex-plugin" ~/.codex/skills/codex-plugin
 ```
 
 Restart Codex after installing.

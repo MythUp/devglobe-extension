@@ -7,7 +7,10 @@ description: DevGlobe activity tracker - appear on the interactive developer glo
 
 Track your coding activity on [devglobe.xyz](https://devglobe.xyz) — an interactive 3D globe showing developers coding in real-time.
 
-The skill is installed at `~/.codex/skills/devglobe/`.
+Before running any command below, locate the installed skill directory:
+```bash
+DEVGLOBE_SKILL="$(find ~/.codex/skills -name SKILL.md -path '*/devglobe*' -o -name SKILL.md -path '*/codex-plugin*' 2>/dev/null | head -1 | xargs dirname)"
+```
 
 ## Setup
 
@@ -16,7 +19,7 @@ The skill is installed at `~/.codex/skills/devglobe/`.
 Configure DevGlobe with your API key. Get your key at [devglobe.xyz](https://devglobe.xyz).
 
 ```bash
-echo '{"api_key":"<API_KEY>"}' | ~/.codex/skills/devglobe/scripts/setup
+echo '{"api_key":"<API_KEY>"}' | "$DEVGLOBE_SKILL/scripts/setup"
 ```
 
 This will:
@@ -63,7 +66,7 @@ Set a status message displayed on the globe next to your avatar.
 
 ```bash
 API_KEY=$(cat "$HOME/.devglobe/api_key" 2>/dev/null)
-echo "{\"api_key\":\"$API_KEY\",\"message\":\"<MESSAGE>\"}" | ~/.codex/skills/devglobe/scripts/update-status
+echo "{\"api_key\":\"$API_KEY\",\"message\":\"<MESSAGE>\"}" | "$DEVGLOBE_SKILL/scripts/update-status"
 ```
 
 ## Diagnostics
@@ -83,5 +86,5 @@ echo "Feature flag: $(grep codex_hooks ~/.codex/config.toml 2>/dev/null || echo 
 
 Remove DevGlobe hooks from Codex:
 ```bash
-echo '{}' | ~/.codex/skills/devglobe/scripts/uninstall
+echo '{}' | "$DEVGLOBE_SKILL/scripts/uninstall"
 ```

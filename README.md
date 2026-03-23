@@ -480,7 +480,7 @@ npm install && npm run build
 Install locally:
 ```bash
 mkdir -p ~/.codex/skills
-ln -s "$(pwd)" ~/.codex/skills/devglobe
+ln -s "$(pwd)" ~/.codex/skills/codex-plugin
 ```
 
 Then in Codex: `$devglobe setup YOUR_API_KEY`
