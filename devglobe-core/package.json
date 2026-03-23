@@ -1,6 +1,6 @@
 {
   "name": "devglobe-core",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Shared core for DevGlobe IDE extensions — heartbeat, geolocation, git detection",
   "private": true,
   "type": "module",

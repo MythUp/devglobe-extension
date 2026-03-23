@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "xyz.devglobe"
-version = "0.1.8"
+version = "1.1.0"
 
 repositories {
     mavenCentral()

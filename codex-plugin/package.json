@@ -1,6 +1,6 @@
 {
   "name": "devglobe-codex-plugin",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "DevGlobe skill for Codex CLI - appear active on the globe while coding with AI",
   "private": true,
   "scripts": {

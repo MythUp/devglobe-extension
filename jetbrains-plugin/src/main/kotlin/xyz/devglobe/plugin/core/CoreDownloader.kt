@@ -14,7 +14,7 @@ object CoreDownloader {
 
     private val LOG = Logger.getInstance(CoreDownloader::class.java)
 
-    const val CORE_VERSION = "1.0.0"
+    const val CORE_VERSION = "1.1.0"
 
     private val BASE_URL = "https://github.com/Nako0/devglobe-extension/releases/download/core-v$CORE_VERSION"
 
