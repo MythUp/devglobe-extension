@@ -33,8 +33,11 @@ async function main(): Promise<void> {
   const hooksPath = join(codexDir, 'hooks.json');
 
   const skillDir = join(dirname(__filename), '..');
-  const heartbeatScript = join(skillDir, 'scripts', 'heartbeat');
-  try { chmodSync(heartbeatScript, 0o755); } catch { /* script may not exist yet in dev */ }
+  const scriptsDir = join(skillDir, 'scripts');
+  for (const script of ['heartbeat', 'setup', 'uninstall', 'update-status', 'find-node']) {
+    try { chmodSync(join(scriptsDir, script), 0o755); } catch { /* ignore */ }
+  }
+  const heartbeatScript = join(scriptsDir, 'heartbeat');
 
   const hookEntry: HookEntry = {
     matcher: '',

@@ -9,7 +9,7 @@ Track your coding activity on [devglobe.xyz](https://devglobe.xyz) — an intera
 
 Before running any command below, locate the installed skill directory:
 ```bash
-DEVGLOBE_SKILL="$(find ~/.codex/skills -name SKILL.md -path '*/devglobe*' -o -name SKILL.md -path '*/codex-plugin*' 2>/dev/null | head -1 | xargs dirname)"
+DEVGLOBE_SKILL="$(find ~/.codex/skills -name SKILL.md \( -path '*devglobe*' -o -path '*codex-plugin*' \) 2>/dev/null | head -1 | xargs dirname)"
 ```
 
 ## Setup
@@ -19,7 +19,7 @@ DEVGLOBE_SKILL="$(find ~/.codex/skills -name SKILL.md -path '*/devglobe*' -o -na
 Configure DevGlobe with your API key. Get your key at [devglobe.xyz](https://devglobe.xyz).
 
 ```bash
-echo '{"api_key":"<API_KEY>"}' | "$DEVGLOBE_SKILL/scripts/setup"
+echo '{"api_key":"<API_KEY>"}' | node "$DEVGLOBE_SKILL/dist/setup.js"
 ```
 
 This will:
@@ -66,7 +66,7 @@ Set a status message displayed on the globe next to your avatar.
 
 ```bash
 API_KEY=$(cat "$HOME/.devglobe/api_key" 2>/dev/null)
-echo "{\"api_key\":\"$API_KEY\",\"message\":\"<MESSAGE>\"}" | "$DEVGLOBE_SKILL/scripts/update-status"
+echo "{\"api_key\":\"$API_KEY\",\"message\":\"<MESSAGE>\"}" | node "$DEVGLOBE_SKILL/dist/update-status.js"
 ```
 
 ## Diagnostics
@@ -78,7 +78,7 @@ Verify the installation is working:
 echo "=== DevGlobe Status ==="
 echo "API key: $(cat ~/.devglobe/api_key 2>/dev/null | head -c 15 && echo '... OK' || echo 'NOT SET')"
 echo "Config: $(cat ~/.devglobe/config.json 2>/dev/null || echo 'NOT SET')"
-echo "Hooks: $(grep -c devglobe ~/.codex/hooks.json 2>/dev/null || echo 0) references in hooks.json"
+echo "Hooks: $(grep -cE 'devglobe|codex-plugin' ~/.codex/hooks.json 2>/dev/null || echo 0) references in hooks.json"
 echo "Feature flag: $(grep codex_hooks ~/.codex/config.toml 2>/dev/null || echo 'NOT SET')"
 ```
 
@@ -86,5 +86,5 @@ echo "Feature flag: $(grep codex_hooks ~/.codex/config.toml 2>/dev/null || echo 
 
 Remove DevGlobe hooks from Codex:
 ```bash
-echo '{}' | "$DEVGLOBE_SKILL/scripts/uninstall"
+echo '{}' | node "$DEVGLOBE_SKILL/dist/uninstall.js"
 ```

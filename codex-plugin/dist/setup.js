@@ -28,11 +28,14 @@ async function main() {
   (0, import_fs.mkdirSync)(codexDir, { recursive: true });
   const hooksPath = (0, import_path.join)(codexDir, "hooks.json");
   const skillDir = (0, import_path.join)((0, import_path.dirname)(__filename), "..");
-  const heartbeatScript = (0, import_path.join)(skillDir, "scripts", "heartbeat");
-  try {
-    (0, import_fs.chmodSync)(heartbeatScript, 493);
-  } catch {
+  const scriptsDir = (0, import_path.join)(skillDir, "scripts");
+  for (const script of ["heartbeat", "setup", "uninstall", "update-status", "find-node"]) {
+    try {
+      (0, import_fs.chmodSync)((0, import_path.join)(scriptsDir, script), 493);
+    } catch {
+    }
   }
+  const heartbeatScript = (0, import_path.join)(scriptsDir, "heartbeat");
   const hookEntry = {
     matcher: "",
     hooks: [{ type: "command", command: heartbeatScript, timeout: 30 }]
