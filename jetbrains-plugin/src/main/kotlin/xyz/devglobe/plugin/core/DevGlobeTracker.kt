@@ -36,31 +36,36 @@ class DevGlobeTracker : Disposable {
     }
 
     fun start(apiKey: String) {
-        started.set(true)
+        if (!started.compareAndSet(false, true)) return
         currentApiKey = apiKey
         val settings = DevGlobeSettings.getInstance()
 
-        ensureCore()
-        coreClient?.sendInit(apiKey, settings.state.shareRepo, settings.state.anonymousMode, settings.state.statusMessage)
-        coreClient?.sendResume()
-
-        registerDocumentListener()
+        ApplicationManager.getApplication().executeOnPooledThread {
+            ensureCore()
+            coreClient?.sendInit(apiKey, settings.state.shareRepo, settings.state.anonymousMode, settings.state.statusMessage)
+            coreClient?.sendResume()
+            ApplicationManager.getApplication().invokeLater { registerDocumentListener() }
+        }
     }
 
+    @Synchronized
     fun pause() {
+        started.set(false)
         coreClient?.sendPause()
         state = state.copy(tracking = false)
         pushState()
     }
 
+    @Synchronized
     fun stop() {
         started.set(false)
-        pause()
+        coreClient?.sendPause()
+        state = state.copy(tracking = false, connected = false)
         currentApiKey = null
-        state = state.copy(connected = false)
         pushState()
     }
 
+    @Synchronized
     fun reset() {
         started.set(false)
         coreClient?.sendShutdown()
@@ -71,6 +76,7 @@ class DevGlobeTracker : Disposable {
         pushState()
     }
 
+    @Synchronized
     fun restoreConnected(apiKey: String) {
         currentApiKey = apiKey
         val settings = DevGlobeSettings.getInstance()
@@ -84,16 +90,20 @@ class DevGlobeTracker : Disposable {
         pushState()
     }
 
+    @Synchronized
     fun setStatusMessage(message: String) {
         state = state.copy(statusMessage = message)
         pushState()
     }
 
     fun sendSetStatus(message: String) {
-        ensureCore()
-        coreClient?.sendSetStatus(message)
+        ApplicationManager.getApplication().executeOnPooledThread {
+            ensureCore()
+            coreClient?.sendSetStatus(message)
+        }
     }
 
+    @Synchronized
     fun updatePreference(key: String, value: Boolean) {
         state = when (key) {
             "shareRepo" -> state.copy(shareRepo = value)
@@ -108,6 +118,7 @@ class DevGlobeTracker : Disposable {
         }
     }
 
+    @Synchronized
     private fun ensureCore() {
         if (coreClient != null) return
 
@@ -125,7 +136,7 @@ class DevGlobeTracker : Disposable {
 
         val client = CoreClient(CoreDownloader.getBinaryPath())
         client.onState = { newState ->
-            state = newState
+            synchronized(this) { state = newState }
             pushState()
         }
         client.onOffline = { msg ->

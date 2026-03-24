@@ -165,10 +165,7 @@ class CoreClient(private val binaryPath: String) : Disposable {
     }
 
     override fun dispose() {
-        try {
-            sendShutdown()
-            process?.waitFor(2, java.util.concurrent.TimeUnit.SECONDS)
-        } catch (_: Exception) { }
+        try { sendShutdown() } catch (_: Exception) { }
         process?.destroyForcibly()
         process = null
         writer = null
