@@ -6,7 +6,7 @@ import com.google.gson.JsonParser
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.util.PlatformUtils
+import com.intellij.openapi.application.ApplicationInfo
 import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.io.InputStreamReader
@@ -147,19 +147,19 @@ class CoreClient(private val binaryPath: String) : Disposable {
     }
 
     private fun detectEditor(): String {
-        val prefix = PlatformUtils.getPlatformPrefix()
-        return when {
-            prefix.equals("idea", ignoreCase = true) || prefix == "IdeaEdu" -> "intellij"
-            prefix == "WebStorm" -> "webstorm"
-            prefix == "Python" || prefix == "PyCharmCore" || prefix == "PyCharmEdu" -> "pycharm"
-            prefix == "GoLand" -> "goland"
-            prefix == "PhpStorm" -> "phpstorm"
-            prefix == "Ruby" -> "rubymine"
-            prefix == "CLion" -> "clion"
-            prefix == "Rider" -> "rider"
-            prefix == "DataGrip" -> "datagrip"
-            prefix == "AndroidStudio" -> "android-studio"
-            prefix == "RustRover" -> "rustrover"
+        val productCode = ApplicationInfo.getInstance().build.productCode
+        return when (productCode) {
+            "IC", "IU" -> "intellij"
+            "WS" -> "webstorm"
+            "PY", "PC", "PE" -> "pycharm"
+            "GO" -> "goland"
+            "PS" -> "phpstorm"
+            "RM" -> "rubymine"
+            "CL" -> "clion"
+            "RD" -> "rider"
+            "DB" -> "datagrip"
+            "AI" -> "android-studio"
+            "RR" -> "rustrover"
             else -> "jetbrains"
         }
     }
