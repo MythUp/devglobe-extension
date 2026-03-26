@@ -6,7 +6,7 @@ Track your Claude Code activity on the [DevGlobe](https://devglobe.xyz) world ma
 
 - [Claude Code](https://claude.com/claude-code) installed
 - [Node.js](https://nodejs.org) (v18+)
-- A DevGlobe account (sign in with GitHub at [devglobe.xyz](https://devglobe.xyz))
+- A DevGlobe account (sign in at [devglobe.xyz](https://devglobe.xyz) with GitHub, X (Twitter), or Google)
 
 ## Install
 

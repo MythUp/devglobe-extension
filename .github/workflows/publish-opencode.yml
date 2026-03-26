@@ -1,0 +1,32 @@
+name: Publish OpenCode Plugin to npm
+
+on:
+  push:
+    tags:
+      - "opencode-v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: opencode-plugin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - run: npm install
+        working-directory: devglobe-core
+
+      - run: npm install
+
+      - run: npm run build
+
+      - run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

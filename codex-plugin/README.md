@@ -6,7 +6,7 @@ Track your Codex CLI activity on the [DevGlobe](https://devglobe.xyz) world map.
 
 - [Codex CLI](https://github.com/openai/codex) installed
 - [Node.js](https://nodejs.org) (v18+)
-- A DevGlobe account (sign in with GitHub at [devglobe.xyz](https://devglobe.xyz))
+- A DevGlobe account (sign in at [devglobe.xyz](https://devglobe.xyz) with GitHub, X (Twitter), or Google)
 
 ## Install
 

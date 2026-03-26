@@ -46,7 +46,7 @@ DevGlobe is a **free, open-source** platform that lights up a marker on a 3D glo
 ## Quick Start
 
 ```
-1. Sign in on devglobe.xyz with GitHub
+1. Sign in on devglobe.xyz with GitHub, X (Twitter), or Google
 2. Copy your API key from the profile settings
 3. Install the extension in your IDE and paste the key
 ```

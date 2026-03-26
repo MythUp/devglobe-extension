@@ -34,7 +34,7 @@ Then in Zed: `Cmd+Shift+P` → "zed: install dev extension" → select the `zed-
 
 ### 1. Get your API key
 
-Sign in on [devglobe.xyz](https://devglobe.xyz) with GitHub, then copy your API key from profile settings.
+Sign in on [devglobe.xyz](https://devglobe.xyz) with GitHub, X (Twitter), or Google, then copy your API key from profile settings.
 
 ### 2. Configure DevGlobe
 
