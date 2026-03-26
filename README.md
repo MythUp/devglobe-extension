@@ -17,7 +17,8 @@
   <a href="#zed">Zed</a> &nbsp;·&nbsp;
   <a href="#neovim">NeoVim</a> &nbsp;·&nbsp;
   <a href="#claude-code">Claude Code</a> &nbsp;·&nbsp;
-  <a href="#codex">Codex</a>
+  <a href="#codex">Codex</a> &nbsp;·&nbsp;
+  <a href="#opencode">OpenCode</a>
 </p>
 
 <p align="center">
@@ -365,6 +366,58 @@ This saves your key, installs heartbeat hooks, and enables the `codex_hooks` fea
 
 ---
 
+### OpenCode
+
+#### Installation
+
+Add the plugin to your `opencode.json`:
+
+```json
+{
+  "plugin": ["opencode-devglobe"]
+}
+```
+
+OpenCode installs it automatically on startup via npm.
+
+#### Setup
+
+Restart OpenCode and ask:
+
+```
+setup devglobe with my key YOUR_API_KEY
+```
+
+Get your API key at [devglobe.xyz](https://devglobe.xyz) — sign in, then open your **profile settings**.
+
+#### Features
+
+| Feature | Description |
+|---------|-------------|
+| **Live heartbeat** | Hooks into `tool.execute.after` and `file.edited` events. Sends a heartbeat at most once per minute. |
+| **Language detection** | Detects the language from exact file paths provided by OpenCode tool calls. |
+| **Git integration** | Detects your repo from the git remote. |
+| **Anonymous mode** | **Enabled by default.** Hides your exact location — placed on a random city in your country (from a database of 152,000+ cities worldwide). |
+| **Repo sharing** | Ask "share my repo on devglobe" to toggle (disabled by default). |
+
+#### Commands
+
+Just ask in natural language — the plugin registers tools that the AI agent calls on your behalf:
+
+| What you say | Tool | Description |
+|--------------|------|-------------|
+| "setup devglobe with key X" | `devglobe_setup` | Configure API key and create settings |
+| "enable anonymous mode" | `devglobe_anonymous` | Toggle anonymous mode |
+| "share my repo on devglobe" | `devglobe_share_repo` | Toggle repo sharing |
+| "set my devglobe status to X" | `devglobe_status` | Set a status message on the globe |
+| "check devglobe" | `devglobe_check` | Verify installation |
+
+#### Requirements
+
+- [OpenCode](https://github.com/anomalyco/opencode)
+
+---
+
 ## The Globe
 
 On [devglobe.xyz](https://devglobe.xyz), you'll find:
@@ -391,7 +444,7 @@ On [devglobe.xyz](https://devglobe.xyz), you'll find:
 
 **What we NEVER touch:** source code, file contents, file names, folder paths, keystrokes, commit messages, Git branches, environment variables, SSH keys. Your IP is used once for geolocation then discarded — never sent to DevGlobe.
 
-**API keys** are stored in your OS keychain (VS Code SecretStorage, JetBrains PasswordSafe) or local config file (Zed, NeoVim, Claude Code, Codex).
+**API keys** are stored in your OS keychain (VS Code SecretStorage, JetBrains PasswordSafe) or local config file (Zed, NeoVim, Claude Code, Codex, OpenCode).
 
 **Network:** HTTPS only (TLS 1.2+), no intermediary server, Content Security Policy on webviews, Row Level Security on the database. No telemetry.
 
@@ -485,6 +538,18 @@ ln -s "$(pwd)" ~/.codex/skills/codex-plugin
 
 Then in Codex: `$devglobe setup YOUR_API_KEY`
 
+### OpenCode
+
+```bash
+cd opencode-plugin
+npm install && npm run build
+```
+
+Then in your `opencode.json`:
+```json
+{"plugin": ["file:///path/to/devglobe-extension/opencode-plugin/dist/index.js"]}
+```
+
 ---
 
 ## Contributing
@@ -503,7 +568,7 @@ Contributions are welcome — fixes, new features, documentation.
 If you like DevGlobe, help us spread the word!
 
 <p align="center">
-  <a href="https://twitter.com/intent/tweet?text=I%20just%20discovered%20DevGlobe%20%E2%80%94%20a%20free%20open-source%203D%20globe%20that%20shows%20developers%20coding%20in%20real%20time.%20Extensions%20for%20VS%20Code%2C%20JetBrains%2C%20Zed%2C%20NeoVim%2C%20Claude%20Code%20%26%20Codex.&url=https%3A%2F%2Fgithub.com%2FNako0%2Fdevglobe-extension"><img src="https://img.shields.io/badge/Share_on-X%20(Twitter)-000000?style=for-the-badge&logo=x" alt="Share on X" /></a>&nbsp;
+  <a href="https://twitter.com/intent/tweet?text=I%20just%20discovered%20DevGlobe%20%E2%80%94%20a%20free%20open-source%203D%20globe%20that%20shows%20developers%20coding%20in%20real%20time.%20Extensions%20for%20VS%20Code%2C%20JetBrains%2C%20Zed%2C%20NeoVim%2C%20Claude%20Code%2C%20Codex%20%26%20OpenCode.&url=https%3A%2F%2Fgithub.com%2FNako0%2Fdevglobe-extension"><img src="https://img.shields.io/badge/Share_on-X%20(Twitter)-000000?style=for-the-badge&logo=x" alt="Share on X" /></a>&nbsp;
   <a href="https://www.reddit.com/submit?url=https%3A%2F%2Fgithub.com%2FNako0%2Fdevglobe-extension&title=DevGlobe%20%E2%80%94%20See%20developers%20coding%20in%20real%20time%20on%20a%203D%20globe"><img src="https://img.shields.io/badge/Share_on-Reddit-FF4500?style=for-the-badge&logo=reddit&logoColor=white" alt="Share on Reddit" /></a>&nbsp;
   <a href="https://news.ycombinator.com/submitlink?u=https%3A%2F%2Fgithub.com%2FNako0%2Fdevglobe-extension&t=DevGlobe%20%E2%80%94%20See%20developers%20coding%20in%20real%20time%20on%20a%203D%20globe"><img src="https://img.shields.io/badge/Share_on-Hacker%20News-F0652F?style=for-the-badge&logo=ycombinator&logoColor=white" alt="Share on HN" /></a>&nbsp;
   <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fgithub.com%2FNako0%2Fdevglobe-extension"><img src="https://img.shields.io/badge/Share_on-LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" alt="Share on LinkedIn" /></a>
