@@ -25,7 +25,7 @@ Compatible with **all JetBrains IDEs**: IntelliJ IDEA, WebStorm, PyCharm, GoLand
 
 ## How it works
 
-1. Sign in on [devglobe.xyz](https://devglobe.xyz) with GitHub
+1. Sign in on [devglobe.xyz](https://devglobe.xyz) with GitHub, X (Twitter), or Google
 2. Copy your API key from the site settings
 3. Open the **DevGlobe** tool window in your IDE (right sidebar)
 4. Paste your API key → **Connect**
