@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "xyz.devglobe"
-version = "1.1.1"
+version = "1.1.2"
 
 repositories {
     mavenCentral()
@@ -24,7 +24,6 @@ intellijPlatform {
     pluginConfiguration {
         ideaVersion {
             sinceBuild = "233"
-            untilBuild = "253.*"
         }
     }
     publishing {
