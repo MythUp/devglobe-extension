@@ -20,7 +20,8 @@ object CoreDownloader {
 
     fun getBinaryPath(): String {
         val dir = File(System.getProperty("user.home"), ".devglobe/bin")
-        val name = "devglobe-core-$CORE_VERSION"
+        val ext = if (System.getProperty("os.name").lowercase().contains("win")) ".exe" else ""
+        val name = "devglobe-core-$CORE_VERSION$ext"
         return File(dir, name).absolutePath
     }
 
@@ -32,7 +33,8 @@ object CoreDownloader {
             return false
         }
 
-        val url = "$BASE_URL/devglobe-core-$platform"
+        val ext = if (platform.startsWith("win")) ".exe" else ""
+        val url = "$BASE_URL/devglobe-core-$platform$ext"
         val target = File(getBinaryPath())
         target.parentFile.mkdirs()
 

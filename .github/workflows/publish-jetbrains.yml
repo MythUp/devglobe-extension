@@ -8,6 +8,8 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: jetbrains-plugin
@@ -22,6 +24,20 @@ jobs:
 
       - run: ./gradlew buildPlugin
 
-      - run: ./gradlew publishPlugin
+      - run: ./gradlew verifyPlugin
+
+      - run: ./gradlew publishPlugin --info
         env:
           PUBLISH_TOKEN: ${{ secrets.JETBRAINS_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: jetbrains-plugin/build/distributions/*.zip
+          body: |
+            ## JetBrains Plugin
+
+            ### Install manually
+            1. Download the `.zip` file below
+            2. Go to **Settings → Plugins → ⚙️ → Install Plugin from Disk**
+            3. Select the downloaded file
