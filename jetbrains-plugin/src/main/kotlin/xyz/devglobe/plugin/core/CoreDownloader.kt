@@ -1,6 +1,6 @@
 package xyz.devglobe.plugin.core
 
-import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.Logger
 import java.io.File
@@ -67,14 +67,12 @@ object CoreDownloader {
     }
 
     fun notifyDownloadFailed() {
-        NotificationGroupManager.getInstance()
-            .getNotificationGroup("DevGlobe")
-            .createNotification(
-                "DevGlobe",
-                "Failed to download devglobe-core binary. You can download it manually from GitHub Releases and place it at ${getBinaryPath()}",
-                NotificationType.WARNING,
-            )
-            .notify(null)
+        Notification(
+            "DevGlobe",
+            "DevGlobe",
+            "Failed to download devglobe-core binary. You can download it manually from GitHub Releases and place it at ${getBinaryPath()}",
+            NotificationType.WARNING,
+        ).notify(null)
     }
 
     private fun detectPlatform(): String? {

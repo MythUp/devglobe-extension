@@ -24,7 +24,9 @@ jobs:
 
       - run: ./gradlew buildPlugin
 
-      - run: ./gradlew publishPlugin
+      - run: ./gradlew verifyPlugin
+
+      - run: ./gradlew publishPlugin --info
         env:
           PUBLISH_TOKEN: ${{ secrets.JETBRAINS_TOKEN }}
 

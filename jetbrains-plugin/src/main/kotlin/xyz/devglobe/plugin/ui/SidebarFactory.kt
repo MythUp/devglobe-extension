@@ -1,7 +1,7 @@
 package xyz.devglobe.plugin.ui
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -86,9 +86,6 @@ class SidebarFactory : ToolWindowFactory, DumbAware {
     }
 
     private fun notify(project: Project, message: String, type: NotificationType) {
-        NotificationGroupManager.getInstance()
-            .getNotificationGroup("DevGlobe")
-            .createNotification("DevGlobe", message, type)
-            .notify(project)
+        Notification("DevGlobe", "DevGlobe", message, type).notify(project)
     }
 }

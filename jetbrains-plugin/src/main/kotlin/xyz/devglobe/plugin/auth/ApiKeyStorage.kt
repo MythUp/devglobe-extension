@@ -6,9 +6,7 @@ import com.intellij.ide.passwordSafe.PasswordSafe
 
 object ApiKeyStorage {
 
-    private val attributes = CredentialAttributes(
-        generateServiceName("DevGlobe", "apiKey")
-    )
+    private val attributes = CredentialAttributes(generateServiceName("DevGlobe", "apiKey"))
 
     fun get(): String? =
         PasswordSafe.instance.getPassword(attributes)?.takeIf { it.isNotBlank() }

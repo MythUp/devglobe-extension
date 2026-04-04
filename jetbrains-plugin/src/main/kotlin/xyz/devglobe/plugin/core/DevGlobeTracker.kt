@@ -1,5 +1,7 @@
 package xyz.devglobe.plugin.core
 
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -7,8 +9,6 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationType
 import xyz.devglobe.plugin.settings.DevGlobeSettings
 import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
@@ -19,7 +19,7 @@ class DevGlobeTracker : Disposable {
     private val LOG = Logger.getInstance(DevGlobeTracker::class.java)
 
     @Volatile private var state = TrackerState()
-    private var coreClient: CoreClient? = null
+    @Volatile private var coreClient: CoreClient? = null
     private var currentApiKey: String? = null
     private val started = AtomicBoolean(false)
     private var documentListener: DocumentListener? = null
@@ -41,7 +41,11 @@ class DevGlobeTracker : Disposable {
         val settings = DevGlobeSettings.getInstance()
 
         ApplicationManager.getApplication().executeOnPooledThread {
-            ensureCore()
+            val ok = ensureCore()
+            if (!ok) {
+                started.set(false)
+                return@executeOnPooledThread
+            }
             coreClient?.sendInit(apiKey, settings.state.shareRepo, settings.state.anonymousMode, settings.state.statusMessage)
             coreClient?.sendResume()
             ApplicationManager.getApplication().invokeLater { registerDocumentListener() }
@@ -86,6 +90,7 @@ class DevGlobeTracker : Disposable {
             shareRepo = settings.state.shareRepo,
             anonymousMode = settings.state.anonymousMode,
             statusMessage = settings.state.statusMessage,
+            error = null,
         )
         pushState()
     }
@@ -112,15 +117,22 @@ class DevGlobeTracker : Disposable {
         }
         pushState()
 
+        val client = coreClient
         when (key) {
-            "shareRepo" -> coreClient?.sendSetConfig(shareRepo = value, anonymousMode = null)
-            "anonymousMode" -> coreClient?.sendSetConfig(shareRepo = null, anonymousMode = value)
+            "shareRepo" -> client?.sendSetConfig(shareRepo = value, anonymousMode = null)
+            "anonymousMode" -> client?.sendSetConfig(shareRepo = null, anonymousMode = value)
         }
     }
 
     @Synchronized
-    private fun ensureCore() {
-        if (coreClient != null) return
+    private fun ensureCore(): Boolean {
+        if (coreClient != null && coreClient!!.isAlive()) return true
+
+        // Clean up dead client
+        if (coreClient != null) {
+            coreClient!!.dispose()
+            coreClient = null
+        }
 
         if (!CoreDownloader.isInstalled()) {
             LOG.info("devglobe-core not found, downloading...")
@@ -129,14 +141,16 @@ class DevGlobeTracker : Disposable {
             val ok = CoreDownloader.download()
             if (!ok) {
                 CoreDownloader.notifyDownloadFailed()
-                return
+                state = state.copy(error = "Failed to download devglobe-core")
+                pushState()
+                return false
             }
             notify("devglobe-core downloaded successfully", NotificationType.INFORMATION)
         }
 
         val client = CoreClient(CoreDownloader.getBinaryPath())
         client.onState = { newState ->
-            synchronized(this) { state = newState }
+            synchronized(this) { state = newState.copy(error = null) }
             pushState()
         }
         client.onOffline = { msg ->
@@ -152,8 +166,31 @@ class DevGlobeTracker : Disposable {
         client.onStatusError = { msg ->
             notify(msg, NotificationType.ERROR)
         }
-        client.start()
+        client.onError = { msg ->
+            notify(msg, NotificationType.ERROR)
+            synchronized(this) { state = state.copy(error = msg) }
+            pushState()
+        }
+        client.onProcessDied = {
+            LOG.warn("devglobe-core process died unexpectedly")
+            synchronized(this) {
+                coreClient = null
+                started.set(false)
+                state = state.copy(tracking = false, error = "devglobe-core stopped unexpectedly")
+            }
+            pushState()
+            notify("DevGlobe tracking stopped — devglobe-core crashed", NotificationType.WARNING)
+        }
+
+        val ok = client.start()
+        if (!ok) {
+            state = state.copy(error = "Failed to start devglobe-core")
+            pushState()
+            return false
+        }
+
         coreClient = client
+        return true
     }
 
     private fun registerDocumentListener() {
@@ -184,10 +221,7 @@ class DevGlobeTracker : Disposable {
 
     private fun notify(message: String, type: NotificationType) {
         ApplicationManager.getApplication().invokeLater {
-            NotificationGroupManager.getInstance()
-                .getNotificationGroup("DevGlobe")
-                .createNotification("DevGlobe", message, type)
-                .notify(null)
+            Notification("DevGlobe", "DevGlobe", message, type).notify(null)
         }
     }
 

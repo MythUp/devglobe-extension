@@ -1,7 +1,7 @@
 package xyz.devglobe.plugin.actions
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -11,10 +11,7 @@ import xyz.devglobe.plugin.core.DevGlobeTracker
 import xyz.devglobe.plugin.settings.DevGlobeSettings
 
 private fun notify(message: String) {
-    NotificationGroupManager.getInstance()
-        .getNotificationGroup("DevGlobe")
-        .createNotification(message, NotificationType.INFORMATION)
-        .notify(null)
+    Notification("DevGlobe", "DevGlobe", message, NotificationType.INFORMATION).notify(null)
 }
 
 class ToggleAnonymousAction : AnAction() {

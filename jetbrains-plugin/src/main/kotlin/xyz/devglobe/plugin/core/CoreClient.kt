@@ -1,6 +1,5 @@
 package xyz.devglobe.plugin.core
 
-import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.intellij.openapi.Disposable
@@ -26,9 +25,11 @@ class CoreClient(private val binaryPath: String) : Disposable {
     var onOnline: ((String) -> Unit)? = null
     var onStatusOk: ((String) -> Unit)? = null
     var onStatusError: ((String) -> Unit)? = null
+    var onError: ((String) -> Unit)? = null
+    var onProcessDied: (() -> Unit)? = null
 
-    fun start() {
-        if (process != null) return
+    fun start(): Boolean {
+        if (process != null) return true
         try {
             val pb = ProcessBuilder(binaryPath, "daemon")
                 .redirectErrorStream(false)
@@ -45,16 +46,24 @@ class CoreClient(private val binaryPath: String) : Disposable {
                 } catch (_: Exception) {
                     // process closed
                 }
+                ApplicationManager.getApplication().invokeLater {
+                    onProcessDied?.invoke()
+                }
             }, "DevGlobe-CoreReader").apply {
                 isDaemon = true
                 start()
             }
 
             LOG.info("Core daemon started: $binaryPath")
+            return true
         } catch (e: Exception) {
             LOG.error("Failed to start core daemon: ${e.message}")
+            onError?.invoke("Failed to start devglobe-core: ${e.message}")
+            return false
         }
     }
+
+    fun isAlive(): Boolean = process?.isAlive == true
 
     fun sendInit(apiKey: String, shareRepo: Boolean, anonymousMode: Boolean, statusMessage: String) {
         val params = JsonObject().apply {

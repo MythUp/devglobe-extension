@@ -1,11 +1,19 @@
 plugins {
     id("java")
-    id("org.jetbrains.kotlin.jvm") version "1.9.25"
-    id("org.jetbrains.intellij.platform") version "2.3.0"
+    id("org.jetbrains.kotlin.jvm") version "2.0.21"
+    id("org.jetbrains.intellij.platform") version "2.10.5"
 }
 
 group = "xyz.devglobe"
 version = "1.1.2"
+
+kotlin {
+    jvmToolchain(17)
+
+    compilerOptions {
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+    }
+}
 
 repositories {
     mavenCentral()
@@ -16,28 +24,27 @@ repositories {
 
 dependencies {
     intellijPlatform {
-        create("IC", "2023.3.8")
+        create("IC", "2024.2")
+
+        pluginVerifier()
     }
+
+    implementation("com.google.code.gson:gson:2.11.0")
 }
 
 intellijPlatform {
     pluginConfiguration {
         ideaVersion {
-            sinceBuild = "233"
+            sinceBuild = "242"
             untilBuild = "263.*"
         }
     }
     publishing {
         token = providers.environmentVariable("PUBLISH_TOKEN")
     }
-}
-
-tasks {
-    withType<JavaCompile> {
-        sourceCompatibility = "17"
-        targetCompatibility = "17"
-    }
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = "17"
+    pluginVerification {
+        ides {
+            recommended()
+        }
     }
 }

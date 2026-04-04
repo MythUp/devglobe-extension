@@ -42,6 +42,7 @@ class SidebarPanel : JPanel() {
     private val statusButton = JButton("Set")
     private val stopButton = JButton("Stop Tracking")
     private val startButton = JButton("Start Tracking")
+    private val errorLabel = JBLabel()
 
     init {
         layout = BorderLayout()
@@ -65,9 +66,18 @@ class SidebarPanel : JPanel() {
             statusField.text = state.statusMessage
             stopButton.isEnabled = state.tracking
             startButton.isEnabled = !state.tracking
+
+            if (state.error != null) {
+                errorLabel.text = "<html><b>${state.error}</b></html>"
+                errorLabel.foreground = UIManager.getColor("Label.errorForeground") ?: Color(0xCC, 0x33, 0x33)
+                errorLabel.isVisible = true
+            } else {
+                errorLabel.isVisible = false
+            }
         } else {
             cardLayout.show(cards, "login")
             tokenField.text = ""
+            errorLabel.isVisible = false
         }
     }
 
@@ -109,8 +119,14 @@ class SidebarPanel : JPanel() {
         val gbc = fillRow()
         var row = 0
 
-        // --- Stats ---
+        // --- Error ---
         gbc.gridy = row++; gbc.insets = JBUI.emptyInsets()
+        errorLabel.isVisible = false
+        errorLabel.font = errorLabel.font.deriveFont(Font.PLAIN, 11f)
+        panel.add(errorLabel, gbc)
+
+        // --- Stats ---
+        gbc.gridy = row++; gbc.insets = JBUI.insets(4, 0, 0, 0)
         panel.add(sectionHeading("Dashboard"), gbc)
 
         gbc.gridy = row++; gbc.insets = JBUI.insets(4, 0, 0, 0)

@@ -1,7 +1,6 @@
 package xyz.devglobe.plugin.ui
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
@@ -17,10 +16,6 @@ class DevGlobeStatusBarFactory : StatusBarWidgetFactory {
     override fun isAvailable(project: Project): Boolean = true
 
     override fun createWidget(project: Project): StatusBarWidget = DevGlobeStatusBarWidget(project)
-
-    override fun disposeWidget(widget: StatusBarWidget) {
-        Disposer.dispose(widget)
-    }
 }
 
 private class DevGlobeStatusBarWidget(private val project: Project) :

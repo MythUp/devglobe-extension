@@ -9,4 +9,5 @@ data class TrackerState(
     val anonymousMode: Boolean = false,
     val statusMessage: String = "",
     val offline: Boolean = false,
+    val error: String? = null,
 )
