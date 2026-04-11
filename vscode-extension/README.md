@@ -34,8 +34,9 @@ The extension sends a **heartbeat every 30 seconds** as long as you're actively 
 | Feature | Description |
 |---------|-------------|
 | **Live heartbeat** | Sends your activity every 30s. Auto-pauses after 1 min of inactivity. |
-| **Language detection** | Detects 48+ languages from your active editor tab. |
-| **Git integration** | Detects your repo from the git remote. Commit stats (insertions/deletions) are verified server-side via the GitHub API. |
+| **Language detection** | Detects 150+ languages from your active editor tab. |
+| **Platform detection** | Sends your OS (macOS, Windows or Linux) alongside each heartbeat so it appears on your profile. |
+| **Git integration** | Detects your repo from the git remote. Commit data is never read or sent by the extension. |
 | **Anonymous mode** | Hide your exact location — your marker is placed on a random city in your country (from a database of 152,000+ cities worldwide). |
 | **Status message** | Write what you're working on — visible on your globe profile. |
 | **Repo sharing** | **You decide.** Your repo name is never shown unless you explicitly enable this toggle (disabled by default). |
@@ -66,62 +67,27 @@ Two views in the side panel:
 
 ## What DevGlobe brings you
 
-- **Visibility** — Your GitHub profile, your X account, your projects and your links are accessible to all developers on the globe. It's a showcase for what you're building.
-- **Networking** — See who's coding right now and in which language. Click a marker to discover a developer, their projects, their social links.
-- **Motivation** — A weekly leaderboard ranks all developers by coding time. Your streak (consecutive days of coding) is visible on your profile.
-- **Project showcase** — Feature up to 10 projects on the globe. The most active projects appear in a carousel visible to all site visitors.
+- **Enhanced public profile** — Your GitHub, X, projects, activity, tech stack and links on a single shareable page.
+- **Project directory** — Publish your projects, invite teammates, get discovered and upvoted by the community.
+- **Comments & upvotes** — Threaded discussions on every project. Give and get feedback from other developers.
+- **Developer dashboard** — One place to manage your profile, projects and extensions, track coding stats, unlock badges and read notifications.
+- **Discovery** — Browse and filter developers & projects by language, tools and platform.
+- **Networking** — See who's coding right now and in which language. Click a marker to discover a developer, their projects and their links.
+- **Light & dark mode** — Full theme support across the platform.
 
 ---
 
-## GitHub App — Verified commit stats
+## On devglobe.xyz
 
-DevGlobe uses a [GitHub App](https://github.com/apps/devglobeapp) to display **verified** commit statistics (insertions & deletions per week) on featured projects. This replaces the old client-side stats collection, which could be falsified.
-
-### How it works
-
-1. On your DevGlobe profile, click **"Connect repo"** in the Projects section
-2. You're redirected to GitHub to install the [DevGlobe App](https://github.com/apps/devglobeapp) on the repos you choose
-3. DevGlobe syncs commit stats from the GitHub API every 15 minutes using your token
-4. Stats are displayed on your featured projects in the carousel and on your profile
-
-### What the GitHub App can read
-
-The app requests **Metadata: Read-only** — the most minimal GitHub permission available.
-
-| Data | Access |
-|------|--------|
-| Repo name, description, stars, forks | **Read** |
-| Commit statistics (insertions/deletions) | **Read** |
-| Your source code | **No access** |
-| Your issues and pull requests | **No access** |
-| Your repo settings | **No access** |
-| Your actions/workflows | **No access** |
-| Your collaborators list | **No access** |
-
-### What happens if you don't install it
-
-- You can still use DevGlobe normally (heartbeats, coding time, leaderboard)
-- You can still add projects to your profile
-- You just **can't feature a project** in the carousel without connecting its repo
-- No commit stats will be displayed on your profile
-
-### How to uninstall
-
-Go to [github.com/settings/installations](https://github.com/settings/installations), find "DevGlobe", and click **Uninstall**. Your coding time and profile data on DevGlobe remain intact.
-
----
-
-## The globe at a glance
-
-On [devglobe.xyz](https://devglobe.xyz), you'll find:
-
-- **A 3D globe** with active developers in real time (colored markers or GitHub avatars)
-- **Clickable profiles** — active language, session time, bio, tech stack, social links (GitHub, X, Reddit), and repo if the developer chose to share it
-- **A weekly leaderboard** — top developers by coding time, updated live
-- **A featured projects carousel** — the most active projects, ranked by coding time and verified commit stats
-- **An activity feed** — who just connected, who left
-- **A search** — find a developer by name or GitHub username
+- **3D globe** with active developers in real time (colored markers or GitHub avatars)
+- **Enhanced public profiles** — projects, activity, tech stack, links, fully shareable
+- **Project directory** — browse, filter and upvote projects by language, tools and platform
+- **Threaded comments & upvotes** on every project
+- **Developer dashboard** — profile, projects, extensions, coding stats, badges and notifications in one place
+- **Discovery** — search and filter developers by stack
 - **Detailed stats** — today's time, streak, language breakdown over 30 days
+- **Light & dark mode** across the platform
+- **Activity feed** — who just connected, who left
 
 **Account deletion** — If you delete your account, all your data is erased. No information is kept.
 
@@ -134,6 +100,7 @@ On [devglobe.xyz](https://devglobe.xyz), you'll find:
 | Data | Sent | Detail |
 |------|------|--------|
 | Programming language | Yes | The language name of your active tab (e.g. "TypeScript"). Nothing else. |
+| Operating system | Yes | One of `macOS`, `Windows` or `Linux`. Displayed on your profile next to your coding stats. |
 | Approximate location | Yes | City + coordinates **snapped to your city center** (from a database of 152,000+ cities). You appear as an area on the globe, not an address. |
 | Repo name | **You decide** | `owner/repo` is **only sent to the server if you enable the "Share repo" toggle** (disabled by default). When disabled, your repo name never leaves your IDE. |
 | Anonymous mode | **You decide** | When enabled, your real coordinates are replaced with a random city in your country (from a database of 152,000+ cities worldwide). Your actual location is never sent to DevGlobe. |
@@ -155,9 +122,9 @@ On [devglobe.xyz](https://devglobe.xyz), you'll find:
 | Your environment variables | **Never** |
 | Your SSH keys or credentials | **Never** |
 
-### Commit stats verification
+### Commit data
 
-Commit statistics (insertions/deletions) are **never sent by the extension**. They are fetched **server-side** directly from the GitHub API using the token granted when you install the GitHub App. This prevents any falsification — the stats displayed on DevGlobe always match the real data on GitHub.
+Commit data is **never read or sent by the extension** — no diffs, no insertions/deletions, no commit messages.
 
 ### Rate limiting
 

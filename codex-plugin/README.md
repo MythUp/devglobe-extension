@@ -128,17 +128,12 @@ Your coding session then appears live on the [DevGlobe map](https://devglobe.xyz
 | `$devglobe check` | Verify the installation (API key, hooks, feature flag) |
 | `$devglobe uninstall` | Remove DevGlobe hooks from Codex |
 
-## GitHub App — Verified commit stats
-
-Commit statistics displayed on DevGlobe (insertions/deletions per week) are **never collected by this skill**. They are fetched server-side via a [GitHub App](https://github.com/apps/devglobeapp) that requests only **Metadata: Read-only** — the most minimal permission available. No access to source code, file contents, commit messages, issues, or pull requests.
-
-See the [main extensions README](../README.md#-github-app--verified-commit-stats) for details.
-
 ## Privacy
 
 | Data | Sent | Detail |
 |------|------|--------|
 | Programming language | Yes | Detected from file extensions mentioned in prompts or recently modified files. |
+| Operating system | Yes | One of `macOS`, `Windows` or `Linux`. Displayed on your profile next to your coding stats. |
 | Approximate location | Yes | Coordinates **snapped to your city center** (from a database of 152,000+ cities). |
 | Repo name | **You decide** | `owner/repo` is **only sent to the server if `shareRepo` is enabled** (disabled by default). When disabled, your repo name never leaves your machine. |
 | Anonymous mode | **You decide** | When enabled, real coordinates are replaced with a random city in your country. Your actual location is never transmitted. |

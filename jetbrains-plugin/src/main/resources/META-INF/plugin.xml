@@ -19,7 +19,7 @@
     <ul>
         <li><b>Live heartbeat</b> — your presence on the globe in real time</li>
         <li><b>Language detection</b> — uses your IDE's native FileType system, supports all languages</li>
-        <li><b>Git integration</b> — detects your repo and tracks insertions/deletions over 24h</li>
+        <li><b>Git integration</b> — detects your repo (commit data is never read or sent by the plugin)</li>
         <li><b>Status message</b> — tell others what you're working on</li>
         <li><b>Repo sharing</b> — you decide whether your repo name is visible (off by default)</li>
         <li><b>Status bar</b> — your coding time today displayed live</li>
@@ -29,10 +29,12 @@
 
     <h3>What DevGlobe gives you</h3>
     <ul>
-        <li><b>Visibility</b> — your GitHub, X, projects, and links accessible to all devs on the globe</li>
-        <li><b>Network</b> — discover who's coding right now, in which language, and find their links</li>
-        <li><b>Motivation</b> — weekly leaderboard by coding time + daily streak</li>
-        <li><b>Project showcase</b> — highlight up to 10 projects on the globe</li>
+        <li><b>Enhanced public profile</b> — GitHub, X, projects, activity, tech stack and links on a single shareable page</li>
+        <li><b>Project directory</b> — publish projects, invite teammates, get discovered and upvoted by the community</li>
+        <li><b>Comments & upvotes</b> — threaded discussions on every project</li>
+        <li><b>Developer dashboard</b> — manage profile, projects and extensions, track coding stats, badges and notifications</li>
+        <li><b>Discovery</b> — browse and filter developers & projects by language, tools and platform</li>
+        <li><b>Light & dark mode</b> — full theme support across the platform</li>
     </ul>
 
     <h3>Privacy</h3>

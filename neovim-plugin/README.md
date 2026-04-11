@@ -119,4 +119,4 @@ Heartbeats are sent every 30 seconds while you're actively coding. After 1 minut
 
 ## Privacy
 
-No source code, file contents, or keystrokes are sent. Only language name, city-level location, and editor name. See [PRIVACY.md](../PRIVACY.md).
+No source code, file contents, or keystrokes are sent. Only language name, operating system (macOS, Windows or Linux), city-level location, and editor name. See [PRIVACY.md](../PRIVACY.md).

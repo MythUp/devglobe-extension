@@ -94,6 +94,7 @@ The extension runs a lightweight Language Server (LSP) that receives file open/c
 ### What is sent
 
 - Programming language (e.g. "TypeScript", "Python")
+- Operating system (one of `macOS`, `Windows` or `Linux`)
 - City-level location (snapped to a GeoNames city center, never exact)
 - Editor name ("zed")
 - Repository name (only if `shareRepo` is enabled)

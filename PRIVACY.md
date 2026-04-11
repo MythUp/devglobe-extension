@@ -9,9 +9,10 @@
 | Data | Sent | Detail |
 |------|------|--------|
 | Programming language | Yes | The language name of your active tab (e.g. "TypeScript"). Nothing else. |
+| Operating system | Yes | One of `macOS`, `Windows` or `Linux` — displayed on your profile next to your coding stats. |
 | Approximate location | Yes | City + coordinates **snapped to your city center** (from a database of 152,000+ cities). You appear as an area on the globe, not an address. |
 | Repo name | **You decide** | `owner/repo` is **only sent to the server if you enable the "Share repo" toggle** (disabled by default). When disabled, your repo name never leaves your IDE. |
-| Commit stats | **Never by the extension** | Insertions/deletions are fetched **server-side** from the GitHub API via the GitHub App. The extension never reads or sends commit data. |
+| Commit data | **Never** | The extension never reads or sends commit data — no diffs, no insertions/deletions, no commit messages. |
 | Anonymous mode | **You decide** | When enabled, your real coordinates are replaced with a random city in your country (from a database of 152,000+ cities worldwide). Your actual location is never sent to DevGlobe. |
 | Coding time | Yes | Accumulated per day, per language. |
 | Status message | Yes | Only what you write yourself. |
@@ -69,46 +70,6 @@ The VS Code extension automatically migrates old keys that were stored in plain 
 
 ---
 
-## GitHub App — Verified commit stats
-
-DevGlobe uses a [GitHub App](https://github.com/apps/devglobeapp) to display **verified** commit statistics (insertions & deletions per week) on featured projects. This replaces the old client-side stats collection, which could be falsified.
-
-### How it works
-
-1. On your DevGlobe profile, click **"Connect repo"** in the Projects section
-2. You're redirected to GitHub to install the [DevGlobe App](https://github.com/apps/devglobeapp) on the repos you choose
-3. A server-side job syncs commit stats from the GitHub API **every 15 minutes**
-4. Stats are displayed on your featured projects in the carousel and on your profile
-
-### What the GitHub App can access
-
-The app requests **Metadata: Read-only** — the most minimal GitHub permission available. It uses the `GET /repos/{owner/repo}/stats/contributors` endpoint to retrieve aggregated contribution statistics (weekly insertions and deletions per contributor).
-
-| Data | Access |
-|------|--------|
-| Aggregated commit statistics (insertions/deletions per week) | **Read** |
-| Repo metadata (name, description, stars, forks) | **Read** |
-| Your source code | **No access** |
-| Your file contents or file names | **No access** |
-| Your commit messages | **No access** |
-| Your issues and pull requests | **No access** |
-| Your repo settings | **No access** |
-| Your actions/workflows | **No access** |
-| Your collaborators list | **No access** |
-
-### What happens if you don't install it
-
-- You can still use DevGlobe normally (heartbeats, coding time, leaderboard)
-- You can still add projects to your profile
-- You just **can't feature a project** in the carousel without connecting its repo
-- No commit stats will be displayed on your profile
-
-### How to uninstall
-
-Go to [github.com/settings/installations](https://github.com/settings/installations), find "DevGlobe", and click **Uninstall**. Your coding time and profile data on DevGlobe remain intact.
-
----
-
 ## How it works technically
 
 ### The heartbeat
@@ -122,6 +83,7 @@ Every 30 seconds, if you've typed code in the last minute, the extension sends a
   city,                         // "Paris, France"
   language,                     // "TypeScript"
   editor,                       // "vscode", "intellij", "claude-code", etc.
+  platform,                     // "macOS", "Windows" or "Linux"
   repo,                         // "owner/repo" (only sent if share_repo is true — never leaves the IDE otherwise)
   share_repo,                   // true/false — when true, repo name is sent and displayed on your profile
   anonymous,                    // true/false — when true, coordinates are a random city
@@ -140,7 +102,7 @@ The server responds with today's total coding time. The extension updates the di
 
 The extension runs `git remote get-url origin` in your active file's directory and extracts the `owner/repo` identifier from the URL (SSH or HTTPS). The result is cached for 5 minutes.
 
-**The extension never reads commits, diffs, or file contents.** Commit statistics (insertions/deletions) are fetched entirely server-side via the GitHub API using the token granted by the [GitHub App](#github-app--verified-commit-stats). This prevents falsification — the stats displayed on DevGlobe always match the real data on GitHub.
+**The extension never reads commits, diffs, or file contents.**
 
 ### Anonymous mode
 
@@ -234,7 +196,7 @@ Your IP address is used only to determine your city. It is never transmitted to 
 ## Data retention
 
 - **Heartbeats**: Your last heartbeat determines your live status on the globe. Heartbeats older than **10 minutes** are considered expired and your marker is removed from the globe.
-- **Coding time**: Daily coding time is retained for leaderboard and streak tracking.
+- **Coding time**: Daily coding time is retained for your dashboard stats, streaks, and badges.
 - **Account data**: Retained until you delete your account.
 
 ---
