@@ -345,10 +345,6 @@ Contributions are welcome — fixes, new features, documentation.
 
 ---
 
-## Contributors
-
----
-
 ## License
 
 MIT
