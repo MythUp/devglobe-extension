@@ -43,12 +43,13 @@ The following are **in scope** for security reports:
 
 ### IDE extensions (this repository)
 
-- Heartbeat data leaking information beyond what is documented (language, city-level location, optional repo name)
+- Heartbeat data leaking information beyond what is documented in [PRIVACY.md](PRIVACY.md)
 - API key exposure or insecure storage
-- Bypass of anonymous mode (real location sent when anonymous mode is enabled)
+- Privacy flag bypass (`hide_file_names`, `hide_branch_names`, `hide_project_names` not honored)
+- File paths leaking outside the git root, or absolute home paths reaching the wire
 - Code injection via the VS Code webview sidebar
 - Insecure network communication (TLS downgrade, unencrypted requests)
-- Unauthorized access to user data through the Supabase API or Row Level Security bypass
+- Unauthorized access to another user's data via the heartbeat / dashboard API
 
 ### Backend & infrastructure
 
@@ -66,7 +67,6 @@ The following are **in scope** for security reports:
 - The Supabase anonymous key being visible in source code (this is public by Supabase design — protection relies on RLS policies)
 - Social engineering or phishing attacks
 - Denial of service attacks
-- Vulnerabilities in third-party geolocation services (freeipapi.com, ipapi.co) — report those to the respective service owners
 - Vulnerabilities in dependencies of the IDE platforms themselves (VS Code, JetBrains, Claude Code)
 - Issues that require physical access to the user's machine
 
@@ -77,10 +77,9 @@ For a detailed description of what data is collected, how API keys are stored, a
 Key design decisions:
 
 - **HTTPS only** — all network requests enforce TLS, no HTTP fallback
-- **Minimal data** — only language, city-level location, and coding time are sent; source code, file names, and keystrokes are never accessed
-- **Secure key storage** — OS keychain on VS Code (SecretStorage) and JetBrains (PasswordSafe); local config file on Claude Code (no keychain API available)
+- **Minimal data** — only what is listed in [PRIVACY.md](PRIVACY.md) is sent; source code, file contents, and keystrokes are never accessed
+- **Secure key storage** — OS keychain on VS Code (SecretStorage) and JetBrains (PasswordSafe); `~/.devglobe/config.toml` (mode `0600`) on the other extensions
 - **Content Security Policy** — VS Code webview uses a cryptographic nonce-based CSP
-- **Row Level Security** — each user's data is isolated server-side
 - **No telemetry** — no third-party analytics or tracking services
 
 ## Disclosure policy

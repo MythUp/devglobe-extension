@@ -37,7 +37,7 @@ function M.check()
     vim.health.ok("API key configured (" .. key:sub(1, 12) .. "...)")
   else
     vim.health.warn("No API key found", {
-      "Run :DevGlobe setup devglobe_YOUR_KEY",
+      "Run :DevGlobe setup YOUR_API_KEY",
       "Or create ~/.devglobe/api_key",
     })
   end

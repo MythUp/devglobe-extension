@@ -3,7 +3,6 @@ package xyz.devglobe.plugin.ui
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.JBUI
 import xyz.devglobe.plugin.core.TrackerState
 import java.awt.*
@@ -17,8 +16,6 @@ interface SidebarListener {
     fun onStartTracking()
     fun onStopTracking()
     fun onSetStatus(message: String)
-    fun onToggleShareRepo(enabled: Boolean)
-    fun onToggleAnonymousMode(enabled: Boolean)
     fun onOpenExternal(url: String)
 }
 
@@ -29,15 +26,11 @@ class SidebarPanel : JPanel() {
     private val cardLayout = CardLayout()
     private val cards = JPanel(cardLayout)
 
-    // Login
     private val tokenField = JBPasswordField()
     private val connectButton = JButton("Connect")
 
-    // Dashboard
     private val codingTimeLabel = JBLabel("0m")
     private val languageLabel = JBLabel("--")
-    private val shareRepoCheckbox = JBCheckBox("Share repository")
-    private val anonymousModeCheckbox = JBCheckBox("Anonymous mode")
     private val statusField = JBTextField()
     private val statusButton = JButton("Set")
     private val stopButton = JButton("Stop Tracking")
@@ -57,13 +50,10 @@ class SidebarPanel : JPanel() {
     }
 
     fun updateState(state: TrackerState) {
-        if (state.connected) {
+        if (state.configured) {
             cardLayout.show(cards, "dashboard")
             codingTimeLabel.text = state.codingTime.ifEmpty { "0m" }
             languageLabel.text = state.language ?: "--"
-            shareRepoCheckbox.isSelected = state.shareRepo
-            anonymousModeCheckbox.isSelected = state.anonymousMode
-            statusField.text = state.statusMessage
             stopButton.isEnabled = state.tracking
             startButton.isEnabled = !state.tracking
 
@@ -80,10 +70,6 @@ class SidebarPanel : JPanel() {
             errorLabel.isVisible = false
         }
     }
-
-    // -------------------------------------------------------------------------
-    // Login panel
-    // -------------------------------------------------------------------------
 
     private fun buildLoginPanel(): JPanel {
         val panel = JPanel(GridBagLayout())
@@ -103,29 +89,21 @@ class SidebarPanel : JPanel() {
 
         gbc.gridy = row++; gbc.insets = JBUI.insets(6, 0, 0, 0)
         panel.add(createLink("Get your API key on devglobe.xyz") {
-            listener?.onOpenExternal("https://devglobe.xyz")
+            listener?.onOpenExternal("https://devglobe.xyz/dashboard/plugins")
         }, gbc)
 
         return panel
     }
-
-    // -------------------------------------------------------------------------
-    // Dashboard panel
-    // -------------------------------------------------------------------------
 
     private fun buildDashboardPanel(): JPanel {
         val panel = JPanel(GridBagLayout())
         panel.isOpaque = false
         val gbc = fillRow()
         var row = 0
-
-        // --- Error ---
         gbc.gridy = row++; gbc.insets = JBUI.emptyInsets()
         errorLabel.isVisible = false
         errorLabel.font = errorLabel.font.deriveFont(Font.PLAIN, 11f)
         panel.add(errorLabel, gbc)
-
-        // --- Stats ---
         gbc.gridy = row++; gbc.insets = JBUI.insets(4, 0, 0, 0)
         panel.add(sectionHeading("Dashboard"), gbc)
 
@@ -134,40 +112,8 @@ class SidebarPanel : JPanel() {
 
         gbc.gridy = row++; gbc.insets = JBUI.insets(2, 0, 0, 0)
         panel.add(statRow("Language", languageLabel), gbc)
-
-        // --- Separator ---
         gbc.gridy = row++; gbc.insets = JBUI.insets(10, 0, 10, 0)
         panel.add(JSeparator(), gbc)
-
-        // --- Preferences ---
-        gbc.gridy = row++; gbc.insets = JBUI.emptyInsets()
-        panel.add(sectionHeading("Preferences"), gbc)
-
-        gbc.gridy = row++; gbc.insets = JBUI.insets(4, 0, 0, 0)
-        shareRepoCheckbox.isOpaque = false
-        panel.add(shareRepoCheckbox, gbc)
-
-        gbc.gridy = row++; gbc.insets = JBUI.insets(2, 0, 0, 0)
-        val hint = JBLabel("<html>When disabled, your repository name is never sent to the server. Enable to display it on your globe profile.</html>")
-        hint.font = hint.font.deriveFont(Font.PLAIN, 11f)
-        hint.foreground = UIManager.getColor("Label.disabledForeground")
-        panel.add(hint, gbc)
-
-        gbc.gridy = row++; gbc.insets = JBUI.insets(8, 0, 0, 0)
-        anonymousModeCheckbox.isOpaque = false
-        panel.add(anonymousModeCheckbox, gbc)
-
-        gbc.gridy = row++; gbc.insets = JBUI.insets(2, 0, 0, 0)
-        val anonHint = JBLabel("<html>Your real location is never sent to the server. You appear on a random city in your country, chosen from a database of 152,000+ cities (GeoNames). The random city stays the same for the entire session.</html>")
-        anonHint.font = anonHint.font.deriveFont(Font.PLAIN, 11f)
-        anonHint.foreground = UIManager.getColor("Label.disabledForeground")
-        panel.add(anonHint, gbc)
-
-        // --- Separator ---
-        gbc.gridy = row++; gbc.insets = JBUI.insets(10, 0, 10, 0)
-        panel.add(JSeparator(), gbc)
-
-        // --- Status ---
         gbc.gridy = row++; gbc.insets = JBUI.emptyInsets()
         panel.add(sectionHeading("Status Message"), gbc)
 
@@ -179,11 +125,19 @@ class SidebarPanel : JPanel() {
         statusRow.add(statusButton, BorderLayout.EAST)
         panel.add(statusRow, gbc)
 
-        // --- Separator ---
+        gbc.gridy = row++; gbc.insets = JBUI.insets(6, 0, 0, 0)
+        val settingsHint = JBLabel("<html>Privacy &amp; visibility settings are managed on <a href='#'>devglobe.xyz</a>.</html>")
+        settingsHint.font = settingsHint.font.deriveFont(Font.PLAIN, 11f)
+        settingsHint.foreground = UIManager.getColor("Label.disabledForeground")
+        settingsHint.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+        settingsHint.addMouseListener(object : java.awt.event.MouseAdapter() {
+            override fun mouseClicked(e: java.awt.event.MouseEvent) {
+                listener?.onOpenExternal("https://devglobe.xyz/dashboard/settings")
+            }
+        })
+        panel.add(settingsHint, gbc)
         gbc.gridy = row++; gbc.insets = JBUI.insets(10, 0, 10, 0)
         panel.add(JSeparator(), gbc)
-
-        // --- Buttons ---
         gbc.gridy = row++; gbc.insets = JBUI.emptyInsets()
         val buttonRow = JPanel(GridLayout(1, 2, 6, 0))
         buttonRow.isOpaque = false
@@ -199,10 +153,6 @@ class SidebarPanel : JPanel() {
         return panel
     }
 
-    // -------------------------------------------------------------------------
-    // Events
-    // -------------------------------------------------------------------------
-
     private fun wireEvents() {
         connectButton.addActionListener {
             val key = String(tokenField.password).trim()
@@ -213,12 +163,6 @@ class SidebarPanel : JPanel() {
                 if (e.keyCode == KeyEvent.VK_ENTER) connectButton.doClick()
             }
         })
-        shareRepoCheckbox.addActionListener {
-            listener?.onToggleShareRepo(shareRepoCheckbox.isSelected)
-        }
-        anonymousModeCheckbox.addActionListener {
-            listener?.onToggleAnonymousMode(anonymousModeCheckbox.isSelected)
-        }
         statusButton.addActionListener {
             listener?.onSetStatus(statusField.text)
         }
@@ -231,11 +175,6 @@ class SidebarPanel : JPanel() {
         startButton.addActionListener { listener?.onStartTracking() }
     }
 
-    // -------------------------------------------------------------------------
-    // UI helpers
-    // -------------------------------------------------------------------------
-
-    /** Returns a GridBagConstraints that fills the full row width. */
     private fun fillRow(): GridBagConstraints = GridBagConstraints().apply {
         gridx = 0
         weightx = 1.0

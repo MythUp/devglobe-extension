@@ -9,8 +9,10 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileEditorManager
-import xyz.devglobe.plugin.settings.DevGlobeSettings
-import java.io.File
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.extensions.PluginId
+import xyz.devglobe.plugin.auth.ApiKeyStorage
+import xyz.devglobe.plugin.auth.ConfigWriter
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -20,7 +22,6 @@ class DevGlobeTracker : Disposable {
 
     @Volatile private var state = TrackerState()
     @Volatile private var coreClient: CoreClient? = null
-    private var currentApiKey: String? = null
     private val started = AtomicBoolean(false)
     private var documentListener: DocumentListener? = null
     private val stateListeners = CopyOnWriteArrayList<(TrackerState) -> Unit>()
@@ -35,70 +36,48 @@ class DevGlobeTracker : Disposable {
         stateListeners.remove(listener)
     }
 
-    fun start(apiKey: String) {
+    /** Called when the user enters their API key. Writes to config.toml + OS keychain, then starts. */
+    fun saveApiKeyAndStart(apiKey: String) {
+        ConfigWriter.writeApiKey(apiKey)
+        ApiKeyStorage.set(apiKey)
+        start()
+    }
+
+    fun start() {
         if (!started.compareAndSet(false, true)) return
-        currentApiKey = apiKey
-        val settings = DevGlobeSettings.getInstance()
+
+        updateState { it.copy(tracking = true) }
 
         ApplicationManager.getApplication().executeOnPooledThread {
-            val ok = ensureCore()
-            if (!ok) {
+            if (!ensureCore()) {
                 started.set(false)
+                updateState { it.copy(tracking = false) }
                 return@executeOnPooledThread
             }
-            coreClient?.sendInit(apiKey, settings.state.shareRepo, settings.state.anonymousMode, settings.state.statusMessage)
+            coreClient?.sendInit(pluginVersion())
             coreClient?.sendResume()
             ApplicationManager.getApplication().invokeLater { registerDocumentListener() }
         }
     }
 
-    @Synchronized
     fun pause() {
         started.set(false)
         coreClient?.sendPause()
-        state = state.copy(tracking = false)
-        pushState()
+        updateState { it.copy(tracking = false) }
     }
 
-    @Synchronized
-    fun stop() {
-        started.set(false)
-        coreClient?.sendPause()
-        state = state.copy(tracking = false, connected = false)
-        currentApiKey = null
-        pushState()
-    }
-
-    @Synchronized
     fun reset() {
         started.set(false)
         coreClient?.sendShutdown()
         coreClient?.dispose()
-        coreClient = null
-        currentApiKey = null
-        state = TrackerState()
-        pushState()
+        synchronized(this) { coreClient = null }
+        ConfigWriter.clearApiKey()
+        ApiKeyStorage.clear()
+        updateState { TrackerState() }
     }
 
-    @Synchronized
-    fun restoreConnected(apiKey: String) {
-        currentApiKey = apiKey
-        val settings = DevGlobeSettings.getInstance()
-        state = state.copy(
-            connected = true,
-            tracking = false,
-            shareRepo = settings.state.shareRepo,
-            anonymousMode = settings.state.anonymousMode,
-            statusMessage = settings.state.statusMessage,
-            error = null,
-        )
-        pushState()
-    }
-
-    @Synchronized
-    fun setStatusMessage(message: String) {
-        state = state.copy(statusMessage = message)
-        pushState()
+    fun restoreConnected() {
+        updateState { it.copy(configured = true, tracking = false, error = null) }
     }
 
     fun sendSetStatus(message: String) {
@@ -109,109 +88,91 @@ class DevGlobeTracker : Disposable {
     }
 
     @Synchronized
-    fun updatePreference(key: String, value: Boolean) {
-        state = when (key) {
-            "shareRepo" -> state.copy(shareRepo = value)
-            "anonymousMode" -> state.copy(anonymousMode = value)
-            else -> state
-        }
-        pushState()
+    private fun ensureCore(): Boolean {
+        if (coreClient?.isAlive() == true) return true
 
-        val client = coreClient
-        when (key) {
-            "shareRepo" -> client?.sendSetConfig(shareRepo = value, anonymousMode = null)
-            "anonymousMode" -> client?.sendSetConfig(shareRepo = null, anonymousMode = value)
+        coreClient?.dispose()
+        coreClient = null
+
+        if (!CoreDownloader.isInstalled() && !downloadCore()) return false
+
+        val client = CoreClient(CoreDownloader.getBinaryPath()).also(::wireCallbacks)
+        if (!client.start()) {
+            updateState { it.copy(error = "Failed to start devglobe-core") }
+            return false
         }
+        coreClient = client
+        return true
     }
 
-    @Synchronized
-    private fun ensureCore(): Boolean {
-        if (coreClient != null && coreClient!!.isAlive()) return true
-
-        // Clean up dead client
-        if (coreClient != null) {
-            coreClient!!.dispose()
-            coreClient = null
+    private fun downloadCore(): Boolean {
+        LOG.info("devglobe-core not found, downloading...")
+        notify("Downloading devglobe-core...", NotificationType.INFORMATION)
+        if (!CoreDownloader.download()) {
+            CoreDownloader.notifyDownloadFailed()
+            updateState { it.copy(error = "Failed to download devglobe-core") }
+            return false
         }
+        notify("devglobe-core downloaded successfully", NotificationType.INFORMATION)
+        return true
+    }
 
-        if (!CoreDownloader.isInstalled()) {
-            LOG.info("devglobe-core not found, downloading...")
-            notify("Downloading devglobe-core...", NotificationType.INFORMATION)
-
-            val ok = CoreDownloader.download()
-            if (!ok) {
-                CoreDownloader.notifyDownloadFailed()
-                state = state.copy(error = "Failed to download devglobe-core")
-                pushState()
-                return false
+    private fun wireCallbacks(client: CoreClient) {
+        client.onReady = { configured ->
+            updateState { it.copy(configured = configured, error = null) }
+        }
+        client.onNotConfigured = {
+            updateState { it.copy(configured = false, tracking = false) }
+        }
+        client.onHeartbeatOk = { todaySeconds, language ->
+            updateState {
+                it.copy(
+                    todaySeconds = todaySeconds,
+                    codingTime = formatSeconds(todaySeconds),
+                    language = language,
+                    tracking = true,
+                    offline = false,
+                )
             }
-            notify("devglobe-core downloaded successfully", NotificationType.INFORMATION)
         }
-
-        val client = CoreClient(CoreDownloader.getBinaryPath())
-        client.onState = { newState ->
-            synchronized(this) { state = newState.copy(error = null) }
-            pushState()
-        }
-        client.onOffline = { msg ->
-            notify(msg, NotificationType.WARNING)
-        }
-        client.onOnline = { msg ->
-            notify(msg, NotificationType.INFORMATION)
-        }
-        client.onStatusOk = { msg ->
-            val text = if (msg.isNotEmpty()) "Status set to \"$msg\"" else "Status cleared"
-            notify(text, NotificationType.INFORMATION)
-        }
-        client.onStatusError = { msg ->
-            notify(msg, NotificationType.ERROR)
-        }
+        client.onOffline = { updateState { it.copy(offline = true) } }
+        client.onOnline = { updateState { it.copy(offline = false) } }
+        client.onStatusOk = { notify("Status updated", NotificationType.INFORMATION) }
+        client.onStatusError = { msg -> notify(msg, NotificationType.ERROR) }
         client.onError = { msg ->
             notify(msg, NotificationType.ERROR)
-            synchronized(this) { state = state.copy(error = msg) }
-            pushState()
+            updateState { it.copy(error = msg) }
         }
         client.onProcessDied = {
             LOG.warn("devglobe-core process died unexpectedly")
             synchronized(this) {
                 coreClient = null
                 started.set(false)
-                state = state.copy(tracking = false, error = "devglobe-core stopped unexpectedly")
             }
-            pushState()
+            updateState { it.copy(tracking = false, error = "devglobe-core stopped unexpectedly") }
             notify("DevGlobe tracking stopped — devglobe-core crashed", NotificationType.WARNING)
         }
-
-        val ok = client.start()
-        if (!ok) {
-            state = state.copy(error = "Failed to start devglobe-core")
-            pushState()
-            return false
-        }
-
-        coreClient = client
-        return true
     }
 
     private fun registerDocumentListener() {
         if (documentListener != null) return
-        documentListener = object : DocumentListener {
+        val listener = object : DocumentListener {
             override fun documentChanged(event: DocumentEvent) {
                 val project = LanguageService.getFocusedProject() ?: return
                 val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
                 val file = editor.virtualFile ?: return
-                val filePath = file.path
-                val cwd = File(filePath).parent ?: return
-                val language = file.fileType.name
-
-                coreClient?.sendActivity(filePath, cwd, language)
+                coreClient?.sendActivity(file.path, LanguageService.detectLanguage(file))
             }
         }
-        EditorFactory.getInstance().eventMulticaster.addDocumentListener(documentListener!!, this)
+        documentListener = listener
+        EditorFactory.getInstance().eventMulticaster.addDocumentListener(listener, this)
     }
 
-    private fun pushState() {
-        val snapshot = state.copy()
+    private fun updateState(transform: (TrackerState) -> TrackerState) {
+        val snapshot = synchronized(this) {
+            state = transform(state)
+            state.copy()
+        }
         ApplicationManager.getApplication().invokeLater {
             for (listener in stateListeners) {
                 listener(snapshot)
@@ -223,6 +184,20 @@ class DevGlobeTracker : Disposable {
         ApplicationManager.getApplication().invokeLater {
             Notification("DevGlobe", "DevGlobe", message, type).notify(null)
         }
+    }
+
+    private fun pluginVersion(): String {
+        return try {
+            PluginManagerCore.getPlugin(PluginId.getId("xyz.devglobe.plugin"))?.version ?: "0.0.0"
+        } catch (_: Exception) {
+            "0.0.0"
+        }
+    }
+
+    private fun formatSeconds(seconds: Int): String {
+        val h = seconds / 3600
+        val m = (seconds % 3600) / 60
+        return if (h > 0) "${h}h ${m}m" else "${m}m"
     }
 
     override fun dispose() {

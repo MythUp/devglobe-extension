@@ -186,7 +186,7 @@ function runSubcommand(cmd: string, args: string[]): void {
   switch (cmd) {
     case "setup": {
       const key = args[0];
-      if (!key || !key.startsWith("devglobe_")) {
+      if (!key) {
         console.log("Usage: /devglobe-setup YOUR_API_KEY\n\nGet your key at https://devglobe.xyz (profile settings).");
         process.exit(1);
       }

@@ -25,7 +25,7 @@ private class DevGlobeStatusBarWidget(private val project: Project) :
     private var currentText = ""
 
     private val stateListener: (TrackerState) -> Unit = { state ->
-        currentText = if (state.connected && state.tracking) state.codingTime else ""
+        currentText = if (state.configured && state.tracking) state.codingTime else ""
         statusBar?.updateWidget(ID())
     }
 
@@ -38,9 +38,8 @@ private class DevGlobeStatusBarWidget(private val project: Project) :
         val tracker = DevGlobeTracker.getInstance()
         tracker.addStateListener(stateListener)
 
-        // Set initial text
         val state = tracker.getState()
-        currentText = if (state.connected && state.tracking) state.codingTime else ""
+        currentText = if (state.configured && state.tracking) state.codingTime else ""
     }
 
     override fun dispose() {

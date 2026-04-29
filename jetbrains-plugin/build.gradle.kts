@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "xyz.devglobe"
-version = "1.1.2"
+version = "2.0.0"
 
 kotlin {
     jvmToolchain(17)
@@ -24,7 +24,7 @@ repositories {
 
 dependencies {
     intellijPlatform {
-        create("IC", "2024.2")
+        create("IC", "2025.1")
 
         pluginVerifier()
     }

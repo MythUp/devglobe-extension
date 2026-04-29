@@ -1,13 +1,11 @@
 package xyz.devglobe.plugin.core
 
 data class TrackerState(
-    val connected: Boolean = false,
+    val configured: Boolean = false,
     val tracking: Boolean = false,
     val codingTime: String = "0m",
+    val todaySeconds: Int = 0,
     val language: String? = null,
-    val shareRepo: Boolean = false,
-    val anonymousMode: Boolean = false,
-    val statusMessage: String = "",
     val offline: Boolean = false,
     val error: String? = null,
 )

@@ -14,7 +14,7 @@ object CoreDownloader {
 
     private val LOG = Logger.getInstance(CoreDownloader::class.java)
 
-    const val CORE_VERSION = "1.1.0"
+    const val CORE_VERSION = "2.0.0"
 
     private val BASE_URL = "https://github.com/Nako0/devglobe-extension/releases/download/core-v$CORE_VERSION"
 
@@ -27,6 +27,9 @@ object CoreDownloader {
 
     fun isInstalled(): Boolean = File(getBinaryPath()).canExecute()
 
+    private const val MAX_ATTEMPTS = 3
+    private const val RETRY_BACKOFF_MS = 1500L
+
     fun download(): Boolean {
         val platform = detectPlatform() ?: run {
             LOG.warn("Unsupported platform for devglobe-core binary")
@@ -38,8 +41,15 @@ object CoreDownloader {
         val target = File(getBinaryPath())
         target.parentFile.mkdirs()
 
-        LOG.info("Downloading devglobe-core from $url")
+        for (attempt in 1..MAX_ATTEMPTS) {
+            LOG.info("Downloading devglobe-core from $url (attempt $attempt/$MAX_ATTEMPTS)")
+            if (downloadOnce(url, target)) return true
+            if (attempt < MAX_ATTEMPTS) Thread.sleep(RETRY_BACKOFF_MS * attempt)
+        }
+        return false
+    }
 
+    private fun downloadOnce(url: String, target: File): Boolean {
         return try {
             val client = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)

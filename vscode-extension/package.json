@@ -1,24 +1,43 @@
 {
   "name": "devglobe",
   "displayName": "DevGlobe",
-  "description": "Show your live coding presence on the DevGlobe world map",
-  "version": "1.1.0",
+  "description": "Show your live coding presence on the DevGlobe world map. Track coding time, languages, repos, and stats.",
+  "version": "2.0.0",
   "publisher": "devglobe",
   "icon": "media/logo.png",
   "license": "MIT",
+  "homepage": "https://devglobe.xyz",
   "repository": {
     "type": "git",
     "url": "https://github.com/Nako0/devglobe-extension"
   },
+  "bugs": {
+    "url": "https://github.com/Nako0/devglobe-extension/issues"
+  },
   "engines": {
     "vscode": "^1.80.0"
   },
-  "categories": ["Other"],
+  "categories": ["Visualization", "Other"],
+  "keywords": [
+    "devglobe",
+    "globe",
+    "wakatime",
+    "time tracking",
+    "coding stats",
+    "leaderboard",
+    "developer profile",
+    "presence"
+  ],
+  "galleryBanner": {
+    "color": "#115bca",
+    "theme": "dark"
+  },
   "activationEvents": ["onStartupFinished"],
   "main": "./out/extension.js",
   "scripts": {
     "compile": "tsc -p ./ && cp ../devglobe-core/dist/devglobe-core.js out/",
-    "watch": "tsc -watch -p ./"
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {
     "@types/vscode": "^1.80.0",
@@ -50,44 +69,25 @@
         "title": "DevGlobe: Set Status Message"
       },
       {
-        "command": "devglobe.toggleAnonymous",
-        "title": "DevGlobe: Toggle Anonymous Mode"
-      },
-      {
-        "command": "devglobe.toggleShareRepo",
-        "title": "DevGlobe: Toggle Repo Sharing"
-      },
-      {
         "command": "devglobe.showCodingTime",
         "title": "DevGlobe: Show Coding Time"
       },
       {
         "command": "devglobe.openGlobe",
         "title": "DevGlobe: Open Globe"
+      },
+      {
+        "command": "devglobe.openPanel",
+        "title": "DevGlobe: Open Panel"
       }
     ],
     "configuration": {
       "title": "DevGlobe",
       "properties": {
-        "devglobe.statusMessage": {
-          "type": "string",
-          "default": "",
-          "description": "Your current status message (max 100 chars)"
-        },
         "devglobe.trackingEnabled": {
           "type": "boolean",
           "default": true,
           "description": "Whether DevGlobe heartbeat tracking is active"
-        },
-        "devglobe.shareRepo": {
-          "type": "boolean",
-          "default": false,
-          "description": "Share your GitHub repository on your DevGlobe profile"
-        },
-        "devglobe.anonymousMode": {
-          "type": "boolean",
-          "default": false,
-          "description": "Appear on a random city in your country instead of your real location"
         }
       }
     }

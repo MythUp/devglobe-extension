@@ -8,12 +8,9 @@ type StateGetter = () => TrackerState;
 /**
  * Provides the DevGlobe sidebar webview.
  *
- * The extension registers this provider once, then communicates with it via:
- * - `updateState(state)` — push new state (sidebar re-renders immediately)
- * - `sendToast(message)` — show a transient in-sidebar toast
- *
- * The sidebar sends messages back via `vscode.postMessage()`.
- * Register a handler with `setMessageHandler()`.
+ * Communication: `updateState(state)` pushes state into the webview, and the
+ * webview sends messages back through `vscode.postMessage()` (handled via
+ * `setMessageHandler()`).
  */
 export class DevGlobeSidebarProvider implements vscode.WebviewViewProvider {
     static readonly viewType = 'devglobe.sidebarView';
@@ -36,10 +33,6 @@ export class DevGlobeSidebarProvider implements vscode.WebviewViewProvider {
         this.view?.webview.postMessage({ type: 'state', ...data });
     }
 
-    sendToast(message: string): void {
-        this.view?.webview.postMessage({ type: 'toast', message });
-    }
-
     resolveWebviewView(webviewView: vscode.WebviewView): void {
         this.view = webviewView;
 
@@ -48,7 +41,6 @@ export class DevGlobeSidebarProvider implements vscode.WebviewViewProvider {
             localResourceRoots: [],
         };
 
-        // Cryptographically secure nonce for the Content Security Policy
         const nonce = crypto.randomBytes(16).toString('base64');
 
         webviewView.webview.html = this.getHtml(nonce);
@@ -69,10 +61,6 @@ export class DevGlobeSidebarProvider implements vscode.WebviewViewProvider {
             }
         });
     }
-
-    // -------------------------------------------------------------------------
-    // HTML
-    // -------------------------------------------------------------------------
 
     private getHtml(nonce: string): string {
         return /* html */ `<!DOCTYPE html>
@@ -272,36 +260,13 @@ export class DevGlobeSidebarProvider implements vscode.WebviewViewProvider {
         <hr class="separator" />
 
         <div class="section">
-            <h3>Preferences</h3>
-            <div class="toggle-row">
-                <span>Share repository</span>
-                <label class="switch">
-                    <input type="checkbox" id="toggle-share-repo" />
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div style="font-size: 11px; color: var(--vscode-descriptionForeground); margin-top: 2px; line-height: 1.4;">
-                When disabled, your repository name is never sent to the server. Enable to display it on your globe profile.
-            </div>
-            <div class="toggle-row" style="margin-top: 8px;">
-                <span>Anonymous mode</span>
-                <label class="switch">
-                    <input type="checkbox" id="toggle-anonymous" />
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div style="font-size: 11px; color: var(--vscode-descriptionForeground); margin-top: 2px; line-height: 1.4;">
-                Your real location is never sent to the server. You appear on a random city in your country, chosen from a database of 152,000+ cities (GeoNames). The random city stays the same for the entire session.
-            </div>
-        </div>
-
-        <hr class="separator" />
-
-        <div class="section">
             <h3>Status Message</h3>
             <div class="status-row">
                 <input type="text" id="status-input" placeholder="What are you working on?" maxlength="100" />
                 <button class="secondary" id="status-btn">Set</button>
+            </div>
+            <div style="font-size: 11px; color: var(--vscode-descriptionForeground); margin-top: 6px; line-height: 1.4;">
+                Privacy &amp; visibility settings are managed on <a class="link" id="settings-link" style="margin: 0;">devglobe.xyz</a>.
             </div>
         </div>
 
@@ -321,7 +286,6 @@ export class DevGlobeSidebarProvider implements vscode.WebviewViewProvider {
 <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
 
-    // Elements
     const loginSection     = document.getElementById('login-section');
     const dashboardSection = document.getElementById('dashboard-section');
     const tokenInput       = document.getElementById('token-input');
@@ -329,10 +293,9 @@ export class DevGlobeSidebarProvider implements vscode.WebviewViewProvider {
     const getKeyLink       = document.getElementById('get-key-link');
     const codingTime       = document.getElementById('coding-time');
     const activeLang       = document.getElementById('active-lang');
-    const toggleShareRepo  = document.getElementById('toggle-share-repo');
-    const toggleAnonymous  = document.getElementById('toggle-anonymous');
     const statusInput      = document.getElementById('status-input');
     const statusBtn        = document.getElementById('status-btn');
+    const settingsLink     = document.getElementById('settings-link');
     const btnStop          = document.getElementById('btn-stop');
     const btnStart         = document.getElementById('btn-start');
     const disconnectBtn    = document.getElementById('disconnect-btn');
@@ -346,8 +309,6 @@ export class DevGlobeSidebarProvider implements vscode.WebviewViewProvider {
         toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    // --- Outgoing messages ---
-
     connectBtn.addEventListener('click', () => {
         const token = tokenInput.value.trim();
         if (token) vscode.postMessage({ type: 'saveToken', token });
@@ -358,15 +319,11 @@ export class DevGlobeSidebarProvider implements vscode.WebviewViewProvider {
     });
 
     getKeyLink.addEventListener('click', () => {
-        vscode.postMessage({ type: 'openExternal', url: 'https://devglobe.xyz' });
+        vscode.postMessage({ type: 'openExternal', url: 'https://devglobe.xyz/dashboard/plugins' });
     });
 
-    toggleShareRepo.addEventListener('change', () => {
-        vscode.postMessage({ type: 'toggle', key: 'shareRepo', value: toggleShareRepo.checked });
-    });
-
-    toggleAnonymous.addEventListener('change', () => {
-        vscode.postMessage({ type: 'toggle', key: 'anonymousMode', value: toggleAnonymous.checked });
+    settingsLink.addEventListener('click', () => {
+        vscode.postMessage({ type: 'openExternal', url: 'https://devglobe.xyz/dashboard/settings' });
     });
 
     statusBtn.addEventListener('click', () => {
@@ -382,33 +339,19 @@ export class DevGlobeSidebarProvider implements vscode.WebviewViewProvider {
 
     disconnectBtn.addEventListener('click', () => vscode.postMessage({ type: 'disconnect' }));
 
-    // Notify extension when the browser detects network restoration
-    window.addEventListener('online', () => vscode.postMessage({ type: 'networkRestored' }));
-
-    // Signal to the extension that this webview is ready to receive state
     vscode.postMessage({ type: 'ready' });
-
-    // --- Incoming messages ---
 
     window.addEventListener('message', (event) => {
         const msg = event.data;
 
-        if (msg.type === 'toast') {
-            showToast(msg.message);
-            return;
-        }
-
         if (msg.type === 'state') {
             document.body.classList.add('ready');
 
-            if (msg.connected) {
+            if (msg.configured) {
                 loginSection.classList.add('hidden');
                 dashboardSection.classList.remove('hidden');
-                codingTime.textContent  = msg.codingTime || '0m';
-                activeLang.textContent  = msg.language   || '--';
-                toggleShareRepo.checked = msg.shareRepo  === true;
-                toggleAnonymous.checked = msg.anonymousMode === true;
-                statusInput.value = msg.statusMessage || '';
+                codingTime.textContent = msg.codingTime || '0m';
+                activeLang.textContent = msg.language || '--';
                 btnStop.disabled  = !msg.tracking;
                 btnStart.disabled = !!msg.tracking;
             } else {

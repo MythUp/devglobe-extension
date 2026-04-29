@@ -1,22 +1,49 @@
-import { startDaemon } from "./daemon.js";
-import { runOneshot } from "./oneshot.js";
-import type { OneshotParams } from "./types.js";
+import { runDaemon } from './daemon.js';
+import { runOneshot } from './oneshot.js';
+import { setApiKey } from './config.js';
 
-const command = process.argv[2];
+const args = process.argv.slice(2);
+const mode = args[0];
 
-if (command === "daemon") {
-  startDaemon();
-} else if (command === "heartbeat") {
-  let input: OneshotParams;
-  try {
-    const { readFileSync } = await import("fs");
-    const raw = readFileSync(0, "utf-8");
-    input = JSON.parse(raw);
-  } catch {
-    process.exit(0);
+async function main(): Promise<void> {
+  if (mode === 'daemon') {
+    await runDaemon();
+    return;
   }
-  runOneshot(input).catch(() => process.exit(0));
-} else {
-  process.stderr.write("Usage: devglobe-core <daemon|heartbeat>\n");
+  if (mode === 'setup' && args[1]) {
+    setApiKey(args[1]);
+    process.stdout.write('API key saved\n');
+    return;
+  }
+  if (mode === 'heartbeat') {
+    const params = parseOneshotArgs(args.slice(1));
+    await runOneshot(params);
+    return;
+  }
+  process.stderr.write('Usage: devglobe-core <daemon|heartbeat|setup>\n');
   process.exit(1);
 }
+
+function parseOneshotArgs(args: string[]): Parameters<typeof runOneshot>[0] {
+  const parsed: Record<string, string | boolean> = {};
+  for (let i = 0; i < args.length; i++) {
+    const key = args[i];
+    if (key === '--force') { parsed.force = true; continue; }
+    if (key.startsWith('--')) {
+      parsed[key.slice(2)] = args[++i];
+    }
+  }
+  return {
+    file: parsed.file as string | undefined,
+    cwd: parsed.cwd as string | undefined,
+    language: parsed.language as string | undefined,
+    editor: (parsed.editor as string) ?? 'unknown',
+    pluginVersion: (parsed['plugin-version'] as string) ?? '0.0.0',
+    force: parsed.force as boolean | undefined,
+  };
+}
+
+main().catch((err) => {
+  process.stderr.write(`error: ${err}\n`);
+  process.exit(1);
+});

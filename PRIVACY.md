@@ -1,6 +1,6 @@
 # Privacy & Security
 
-> **Open source & transparent** — These extensions are 100% open source. No code is read, no sensitive data is collected. You can audit every line of this repository.
+> **Open source & transparent.** No code is read, no sensitive data is collected. Audit every line of this repository.
 
 ---
 
@@ -8,199 +8,126 @@
 
 | Data | Sent | Detail |
 |------|------|--------|
-| Programming language | Yes | The language name of your active tab (e.g. "TypeScript"). Nothing else. |
-| Operating system | Yes | One of `macOS`, `Windows` or `Linux` — displayed on your profile next to your coding stats. |
-| Approximate location | Yes | City + coordinates **snapped to your city center** (from a database of 152,000+ cities). You appear as an area on the globe, not an address. |
-| Repo name | **You decide** | `owner/repo` is **only sent to the server if you enable the "Share repo" toggle** (disabled by default). When disabled, your repo name never leaves your IDE. |
-| Commit data | **Never** | The extension never reads or sends commit data — no diffs, no insertions/deletions, no commit messages. |
-| Anonymous mode | **You decide** | When enabled, your real coordinates are replaced with a random city in your country (from a database of 152,000+ cities worldwide). Your actual location is never sent to DevGlobe. |
-| Coding time | Yes | Accumulated per day, per language. |
-| Status message | Yes | Only what you write yourself. |
+| Programming language | Yes | The language of your active tab (e.g. `TypeScript`). |
+| Editor & OS | Yes | Editor name (`vscode`, `intellij`, `zed`, …) and OS (`macOS`, `Windows`, `Linux`). |
+| Coding time | Yes | Computed locally from intervals between heartbeats. |
+| Origin remote URL | When present | The canonical URL of your current git repo's `origin` remote (`https://github.com/foo/bar`, `https://gitlab.com/foo/bar`, etc.) — only when in a git repo. |
+| Branch name | When present | The current git branch — only when in a git repo. |
+| File path | When in a repo | The path **relative to your git repo root** (e.g. `src/main.ts`). Never the absolute home path. |
+| Status message | Yes | Only what you set explicitly via the extension. |
 
-## What the extension does NOT send
+## What the extension never sends
 
 | Data | Sent |
 |------|------|
-| Your source code | **Never** |
-| Your file contents | **Never** |
-| Your file names | **Never** |
-| Your folder paths | **Never** |
-| Your keystrokes | **Never** |
-| Your commit messages | **Never** |
-| Your Git branches | **Never** |
-| Your IP address | **Never stored** — used only to determine city via a geolocation service, then discarded, the IP stays on your IDE |
-| Your environment variables | **Never** |
-| Your SSH keys or credentials | **Never** |
+| Source code | **Never** |
+| File contents | **Never** |
+| File paths outside a git repo | **Never** — files in non-git folders only contribute to language stats; their path is dropped |
+| Keystrokes | **Never** |
+| Commits, diffs, commit messages | **Never** |
+| Environment variables | **Never** |
+| SSH keys, credentials | **Never** |
+| IP address | **Never sent by the extension** — your public IP is read by the heartbeat backend at request time for server-side geolocation, then discarded |
 
 ---
 
-## Location: how it works exactly
+## Local privacy flags
 
-The extension determines your city from your IP address via external geolocation services (freeipapi.com, with fallback to ipapi.co and ipwho.is). All are free public services, no API key required.
+Edit `~/.devglobe/config.toml`:
 
-**Coordinates are snapped to your city center** using a database of 152,000+ cities (GeoNames). You appear at your city's canonical center on the globe, not at your address. If the city is not found in the database, coordinates are randomly offset within a 20 km radius.
+```toml
+api_key = "YOUR_API_KEY"
 
-The location is **cached for 1 hour** — the extension does not call the geolocation service on every heartbeat.
+[privacy]
+hide_file_names = false
+hide_branch_names = false
+hide_project_names = false
+```
 
-**Your IP address is never transmitted to DevGlobe.** It is only used by the third-party geolocation service to determine your city, then discarded.
+| Flag | Effect when `true` |
+|------|--------------------|
+| `hide_file_names` | The `file` field is omitted from every heartbeat. |
+| `hide_branch_names` | The `branch` field is omitted. |
+| `hide_project_names` | The `repo` field is omitted, and so is `branch` (hiding a project while still revealing its branches would leak structural info). |
+
+Defaults are all `false`. Filtering happens locally before the request is built — the redacted fields never leave your machine.
+
+---
+
+## Globe-side visibility (managed on devglobe.xyz)
+
+The dashboard at [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings) controls what other users see on the public globe and on your profile:
+
+- **Profile mode** — `normal`, `anonymous` (city-only, no exact coordinates), or `private` (no live presence on the globe)
+- **Repo sharing** — whether your current repo URL is broadcast to the live globe and shown on your profile
+
+These toggles affect only the public, real-time view. They do not change what the extension sends.
+
+---
+
+## Server-side geolocation
+
+When a heartbeat arrives, the backend looks up your public IP against [MaxMind GeoLite2](https://dev.maxmind.com/geoip/geolite2-free-geolocation-data) to derive city + approximate coordinates. Coordinates are then snapped to the nearest known city center so users appear at city granularity, not at their exact address.
+
+If your profile is set to `anonymous`, the server stores no precise coordinates for that session. If `private`, no live session row is created at all.
 
 ---
 
 ## API key storage
 
-Your DevGlobe API key is stored securely using each platform's best available method.
-
-| IDE | Storage method |
-|-----|----------------|
-| VS Code | **SecretStorage** — your OS system keychain (macOS Keychain, Windows Credential Manager, Linux libsecret) |
-| JetBrains | **PasswordSafe** — the IDE's native credential manager, backed by the OS keychain |
-| Claude Code | **Environment variable** (`DEVGLOBE_API_KEY`) or **config file** (`~/.devglobe/api_key`) — Claude Code has no keychain API, so the key is stored in a local config file readable only by your user |
-
-The VS Code extension automatically migrates old keys that were stored in plain text in `settings.json` to the secure keychain.
+| IDE | Storage |
+|-----|---------|
+| VS Code | OS keychain via `SecretStorage` (macOS Keychain, Windows Credential Manager, Linux libsecret). Old plaintext entries in `settings.json` are migrated automatically. |
+| JetBrains | OS keychain via `PasswordSafe`. |
+| Zed, NeoVim, Claude Code, Codex, OpenCode | `~/.devglobe/config.toml`, written with `0600` permissions. |
 
 ---
 
 ## Network security
 
 - **HTTPS only** (TLS 1.2+) — no HTTP fallback
-- Heartbeats go directly to the database — no intermediary server
-- The VS Code side panel uses a **Content Security Policy** with a cryptographic nonce to prevent script injection
-- Server-side, Row Level Security policies isolate each user's data
-- **No telemetry** — no third-party analytics or tracking services
+- The VS Code webview uses a **Content Security Policy** with a per-render nonce
+- **No telemetry**, no third-party analytics
+- All endpoints live under `https://devglobe.xyz`
 
 ---
 
-## How it works technically
+## How it works under the hood
 
-### The heartbeat
+The extension hosts a JavaScript subprocess (`devglobe-core`) that:
 
-Every 30 seconds, if you've typed code in the last minute, the extension sends a heartbeat to the database. This heartbeat contains:
+1. Watches editor events (file change, language change).
+2. Detects git context by reading `.git/HEAD` and `.git/config` directly — no `git` binary required, no shell out.
+3. Resolves the origin remote URL into a canonical `https://host/owner/repo` form. Multi-provider (GitHub, GitLab, Bitbucket, self-hosted Gitea/Forgejo, Azure DevOps, …).
+4. Buffers heartbeat events and flushes a batch every 30 s while you're active.
+5. Pauses after 1 minute of editor inactivity. After 10 minutes the server removes you from the live globe.
 
-```
+The wire payload of a single batch:
+
+```json
 {
-  api_key,                      // your identifier (stored in the OS keychain)
-  latitude, longitude,          // snapped to city center (152k+ cities)
-  city,                         // "Paris, France"
-  language,                     // "TypeScript"
-  editor,                       // "vscode", "intellij", "claude-code", etc.
-  platform,                     // "macOS", "Windows" or "Linux"
-  repo,                         // "owner/repo" (only sent if share_repo is true — never leaves the IDE otherwise)
-  share_repo,                   // true/false — when true, repo name is sent and displayed on your profile
-  anonymous,                    // true/false — when true, coordinates are a random city
+  "key": "<api-key>",
+  "plugin_version": "x.y.z",
+  "editor": "vscode",
+  "platform": "macOS",
+  "heartbeats": [
+    {
+      "time": 1730000000.0,
+      "file": "src/main.ts",
+      "language": "TypeScript",
+      "repo": "https://github.com/foo/bar",
+      "branch": "main"
+    }
+  ]
 }
 ```
 
-The server responds with today's total coding time. The extension updates the display in the sidebar and status bar.
-
-### Language detection
-
-- **VS Code**: reads the `languageId` of the active editor, then translates it via a table of 48+ languages (JavaScript, TypeScript, Python, Rust, Go, Kotlin, etc.)
-- **JetBrains**: uses the IDE's native `FileType` system — no manual table, automatically supports all languages your IDE supports
-- **Claude Code**: detects the language from the file extension of edited files
-
-### Git integration
-
-The extension runs `git remote get-url origin` in your active file's directory and extracts the `owner/repo` identifier from the URL (SSH or HTTPS). The result is cached for 5 minutes.
-
-**The extension never reads commits, diffs, or file contents.**
-
-### Anonymous mode
-
-When anonymous mode is enabled, the extension replaces your real coordinates with a **random city in your country**, chosen from a database of 152,000+ cities worldwide (GeoNames). Your actual location is never transmitted to DevGlobe. The random city is selected once per session and stays consistent until you restart your IDE or toggle the mode.
-
-On the globe, your profile displays an "anonymous mode" badge instead of your city name.
-
-### Offline detection
-
-After 2 consecutive network failures, the extension switches to offline mode and notifies you. As soon as the connection is back, it automatically resumes heartbeats.
-
-### Architecture
-
-```
-vscode-extension/
-├── src/
-│   ├── extension.ts      # Lifecycle, API key management (SecretStorage)
-│   ├── tracker.ts        # State machine, heartbeat loop, offline detection
-│   ├── heartbeat.ts      # HTTP calls to the database
-│   ├── sidebar.ts        # Side panel (webview HTML/CSS/JS)
-│   ├── geo.ts            # IP geolocation (dual provider + fallback)
-│   ├── git.ts            # Repo detection (owner/repo from remote)
-│   ├── language.ts       # languageId → display name translation
-│   ├── logger.ts         # Debug/info/warn/error logs
-│   └── constants.ts      # URLs, timeouts, intervals
-└── package.json
-
-jetbrains-plugin/
-├── src/main/kotlin/xyz/devglobe/plugin/
-│   ├── core/
-│   │   ├── DevGlobeTracker.kt    # Singleton tracker, heartbeat scheduler
-│   │   ├── HeartbeatService.kt   # HTTP client
-│   │   ├── GeoService.kt         # IP geolocation (same logic)
-│   │   ├── GitService.kt         # Repo detection (owner/repo from remote)
-│   │   ├── LanguageService.kt    # Language detection via native FileType
-│   │   ├── TrackerState.kt       # Immutable state
-│   │   └── Constants.kt          # URLs, timeouts, intervals
-│   ├── auth/
-│   │   └── ApiKeyStorage.kt      # PasswordSafe wrapper (OS keychain)
-│   ├── settings/
-│   │   └── DevGlobeSettings.kt   # IDE settings persistence
-│   ├── ui/
-│   │   ├── SidebarPanel.kt       # Swing panel (login + dashboard)
-│   │   ├── SidebarFactory.kt     # Tool window integration
-│   │   └── DevGlobeStatusBarFactory.kt
-│   └── DevGlobeStartupActivity.kt
-├── src/main/resources/META-INF/
-│   └── plugin.xml
-└── build.gradle.kts
-
-claude-code-plugin/
-├── plugins/devglobe/
-│   ├── src/
-│   │   ├── index.ts           # Heartbeat logic (PostToolUse, UserPromptSubmit, Stop)
-│   │   ├── update-status.ts   # Status message API script
-│   │   ├── types.ts           # TypeScript type definitions
-│   │   ├── lang.ts            # File extension → language mapping
-│   │   └── data/
-│   │       └── city-centers.json  # 152k+ cities (GeoNames)
-│   ├── hooks/
-│   │   └── hooks.json         # Claude Code hook definitions
-│   ├── skills/
-│   │   ├── setup/SKILL.md         # /devglobe:setup
-│   │   ├── anonymous/SKILL.md     # /devglobe:anonymous
-│   │   ├── share-repo/SKILL.md    # /devglobe:share-repo
-│   │   └── status/SKILL.md        # /devglobe:status
-│   ├── scripts/
-│   │   ├── run                # Heartbeat launcher
-│   │   └── update-status      # Status message launcher
-│   └── package.json
-└── .claude-plugin/
-    └── marketplace.json
-```
-
----
-
-## Third-party services
-
-The extensions rely on three external services for IP geolocation. Neither receives your DevGlobe API key or any coding data.
-
-| Service | Purpose | Data sent | Privacy policy |
-|---------|---------|-----------|----------------|
-| [freeipapi.com](https://freeipapi.com) | IP geolocation (primary) | Your IP address (via standard HTTPS request) | [freeipapi.com/privacy](https://freeipapi.com) |
-| [ipapi.co](https://ipapi.co) | IP geolocation (fallback #1) | Your IP address (via standard HTTPS request) | [ipapi.co/privacy](https://ipapi.co/privacy/) |
-| [ipwho.is](https://ipwho.is) | IP geolocation (fallback #2) | Your IP address (via standard HTTPS request) | [ipwho.is](https://ipwho.is) |
-
-Your IP address is used only to determine your city. It is never transmitted to or stored by DevGlobe.
+Each `heartbeats[i]` represents the editor state at `time` going forward; the server attributes the interval `[heartbeats[i].time, heartbeats[i+1].time]` to the file/language/repo of `heartbeats[i]`.
 
 ---
 
 ## Data retention
 
-- **Heartbeats**: Your last heartbeat determines your live status on the globe. Heartbeats older than **10 minutes** are considered expired and your marker is removed from the globe.
-- **Coding time**: Daily coding time is retained for your dashboard stats, streaks, and badges.
-- **Account data**: Retained until you delete your account.
-
----
-
-## Account deletion
-
-If you delete your account on [devglobe.xyz](https://devglobe.xyz), all your data is permanently erased. No information is kept.
+- **Live presence**: a heartbeat keeps you on the globe for 10 minutes; older session rows are pruned.
+- **Coding time**: per-day, per-(language, editor, platform, repo, branch, file) buckets, retained for your dashboard, stats, streaks and badges.
+- **Account data**: kept until you delete your account on [devglobe.xyz](https://devglobe.xyz), then permanently erased.

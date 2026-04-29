@@ -1,66 +1,54 @@
-import { createInterface } from 'readline';
+import * as readline from 'node:readline';
 import { Tracker } from './tracker.js';
 import type { ClientMessage, CoreEvent } from './types.js';
 
-function send(event: CoreEvent): void {
-  process.stdout.write(JSON.stringify(event) + '\n');
-}
+export async function runDaemon(): Promise<void> {
+  const emit = (event: CoreEvent) => {
+    process.stdout.write(JSON.stringify(event) + '\n');
+  };
 
-export function startDaemon(): void {
-  const tracker = new Tracker(send);
+  const tracker = new Tracker(emit);
+  const rl = readline.createInterface({ input: process.stdin, terminal: false });
 
-  const rl = createInterface({ input: process.stdin, terminal: false });
-
-  rl.on('line', (line) => {
+  rl.on('line', async (line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
     let msg: ClientMessage;
     try {
-      msg = JSON.parse(line);
+      msg = JSON.parse(trimmed) as ClientMessage;
     } catch {
       return;
     }
-
-    switch (msg.method) {
-      case 'init':
-        tracker.init(
-          msg.params.api_key,
-          msg.params.editor,
-          msg.params.share_repo,
-          msg.params.anonymous_mode,
-          msg.params.status_message,
-        );
-        break;
-
-      case 'activity':
-        tracker.recordActivity(msg.params.file_path, msg.params.cwd, msg.params.language);
-        break;
-
-      case 'set_config':
-        tracker.setConfig(msg.params.share_repo, msg.params.anonymous_mode);
-        break;
-
-      case 'set_status':
-        tracker.setStatus(msg.params.message);
-        break;
-
-      case 'pause':
-        tracker.pause();
-        break;
-
-      case 'resume':
-        tracker.resume();
-        break;
-
-      case 'shutdown':
-        tracker.shutdown();
-        rl.close();
-        break;
-    }
+    try {
+      switch (msg.method) {
+        case 'init':
+          tracker.init(msg.params.plugin_version ?? '', msg.params.editor ?? 'unknown');
+          break;
+        case 'activity': {
+          const file = msg.params.file ?? msg.params.file_path;
+          const language = msg.params.language ?? undefined;
+          await tracker.activity(file, language);
+          break;
+        }
+        case 'set_status':
+          await tracker.setStatus(msg.params.message);
+          break;
+        case 'pause':
+          tracker.pause();
+          break;
+        case 'resume':
+          tracker.resume();
+          break;
+        case 'shutdown':
+          tracker.shutdown();
+          rl.close();
+          process.exit(0);
+      }
+    } catch { /* swallow */ }
   });
 
   rl.on('close', () => {
-    // Don't exit immediately — let pending async heartbeats finish.
-    // shutdown() clears the interval, so the process will exit naturally
-    // once all pending promises resolve.
     tracker.shutdown();
+    process.exit(0);
   });
 }

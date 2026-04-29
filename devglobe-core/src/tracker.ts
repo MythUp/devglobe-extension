@@ -1,200 +1,214 @@
+import { loadConfig } from './config.js';
+import { resolveRepoFields } from './git.js';
+import { sendBatch, sendStatus } from './heartbeat.js';
 import {
-  sendHeartbeat,
-  updateStatusMessage,
-  NetworkError,
-  ApiError,
-} from "./heartbeat.js";
-import { resetAnonymousLocation } from "./geo.js";
-import {
-  HEARTBEAT_INTERVAL,
-  ACTIVITY_TIMEOUT,
+  KEEPALIVE_INTERVAL_MS,
+  DEDUP_WINDOW_MS,
+  ACTIVITY_TIMEOUT_MS,
   OFFLINE_THRESHOLD,
-} from "./constants.js";
-import type { TrackerState, CoreEvent } from "./types.js";
+  currentPlatform,
+} from './constants.js';
+import type { HeartbeatEvent, HeartbeatBatch, CoreEvent, TrackerState } from './types.js';
 
-function formatTime(totalSeconds: number): string {
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+export type Emitter = (event: CoreEvent) => void;
+
+interface DedupEntry {
+  file: string | undefined;
+  language: string | undefined;
+  at: number;
 }
 
-const DEFAULT_STATE: TrackerState = {
-  connected: false,
-  tracking: false,
-  coding_time: "0m",
-  language: null,
-  share_repo: false,
-  anonymous_mode: false,
-  status_message: "",
-  offline: false,
-};
-
 export class Tracker {
-  private state: TrackerState;
-  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private pluginVersion = '';
+  private editor = '';
+  private currentFile: string | undefined;
+  // Raw absolute path last seen on the input side, used for change detection.
+  // `currentFile` is rewritten relative to the git root and would never match
+  // the absolute path coming back in from the editor.
+  private lastFileInput: string | undefined;
+  private currentLanguage: string | undefined;
+  private currentRepo: string | undefined;
+  private currentBranch: string | undefined;
   private lastActivity = 0;
-  private consecutiveNetErrors = 0;
-  private currentApiKey: string | null = null;
-  private editor = "unknown";
-  private ticking = false;
-  private last5xxWarning = 0;
-  private lastCwd: string | null = null;
-  private lastFilePath: string | null = null;
-  private lastLanguage: string | null = null;
+  private pending: HeartbeatEvent[] = [];
+  private lastDedup: DedupEntry = { file: undefined, language: undefined, at: 0 };
+  private timer: NodeJS.Timeout | null = null;
+  private paused = false;
+  private offline = false;
+  private consecutiveErrors = 0;
+  private todaySeconds = 0;
 
-  constructor(private readonly emit: (event: CoreEvent) => void) {
-    this.state = { ...DEFAULT_STATE };
-  }
+  constructor(private readonly emit: Emitter) {}
 
-  getState(): TrackerState {
-    return { ...this.state };
-  }
-
-  init(
-    apiKey: string,
-    editor: string,
-    shareRepo?: boolean,
-    anonymousMode?: boolean,
-    statusMessage?: string,
-  ): void {
-    this.currentApiKey = apiKey;
+  init(pluginVersion: string, editor: string): void {
+    this.pluginVersion = pluginVersion;
     this.editor = editor;
-    this.state.connected = true;
-    this.state.share_repo = shareRepo ?? false;
-    this.state.anonymous_mode = anonymousMode ?? false;
-    this.state.status_message = statusMessage ?? "";
-    this.pushState();
-  }
-
-  recordActivity(filePath: string, cwd: string, language?: string): void {
-    this.lastActivity = Date.now();
-    this.lastFilePath = filePath;
-    this.lastCwd = cwd;
-    if (language) this.lastLanguage = language;
-  }
-
-  setConfig(shareRepo?: boolean, anonymousMode?: boolean): void {
-    if (shareRepo !== undefined) this.state.share_repo = shareRepo;
-    if (
-      anonymousMode !== undefined &&
-      anonymousMode !== this.state.anonymous_mode
-    ) {
-      this.state.anonymous_mode = anonymousMode;
-      resetAnonymousLocation();
+    const cfg = loadConfig();
+    this.emit({ event: 'ready', data: { configured: !!cfg.apiKey } });
+    if (!cfg.apiKey) {
+      this.emit({ event: 'not_configured' });
+      return;
     }
-    this.pushState();
-  }
-
-  async setStatus(message: string): Promise<void> {
-    if (!this.currentApiKey) return;
-    const ok = await updateStatusMessage(this.currentApiKey, message);
-    if (ok) {
-      this.state.status_message = message;
-      this.pushState();
-      this.emit({ event: "status_ok", data: { message } });
-    } else {
-      this.emit({
-        event: "status_error",
-        data: { message: "Failed to update status" },
-      });
-    }
-  }
-
-  start(): void {
-    if (!this.currentApiKey) return;
-    this.clearTimer();
-    resetAnonymousLocation();
-    this.consecutiveNetErrors = 0;
-    this.state.connected = true;
-    this.state.tracking = true;
-    this.state.offline = false;
-    this.pushState();
-    this.lastActivity = Date.now();
-
-    const apiKey = this.currentApiKey;
-    this.heartbeatTimer = setInterval(() => {
-      if (Date.now() - this.lastActivity > ACTIVITY_TIMEOUT) return;
-      this.tick(apiKey);
-    }, HEARTBEAT_INTERVAL);
-
-    this.tick(apiKey);
+    this.startTimer();
   }
 
   pause(): void {
-    this.clearTimer();
-    this.state.tracking = false;
-    this.pushState();
+    this.paused = true;
+    this.stopTimer();
   }
 
   resume(): void {
-    if (this.currentApiKey) this.start();
+    this.paused = false;
+    if (!this.timer) this.startTimer();
   }
 
   shutdown(): void {
-    this.clearTimer();
-    this.state = { ...DEFAULT_STATE };
+    this.stopTimer();
   }
 
-  private async tick(apiKey: string): Promise<void> {
-    if (this.ticking) return;
-    this.ticking = true;
+  async activity(file: string | undefined, language: string | undefined): Promise<void> {
+    if (this.paused) return;
+    const cfg = loadConfig();
+    if (!cfg.apiKey) return;
+
+    const now = Date.now();
+    this.lastActivity = now;
+
+    const fileChanged = file !== undefined && file !== this.lastFileInput;
+    const langChanged = language !== undefined && language !== this.currentLanguage;
+
+    if (!fileChanged && !langChanged) {
+      const dup = this.lastDedup;
+      if (dup.file === file && dup.language === language && now - dup.at < DEDUP_WINDOW_MS) {
+        return;
+      }
+    }
+
+    const firstActivity = this.lastFileInput === undefined;
+    const transition = (fileChanged || langChanged) && !firstActivity;
+
+    if (file !== undefined) {
+      this.lastFileInput = file;
+      const fields = await resolveRepoFields(file, cfg.privacy);
+      this.currentFile = fields.file;
+      this.currentRepo = fields.repo;
+      this.currentBranch = fields.branch;
+    }
+    if (language !== undefined) this.currentLanguage = language || undefined;
+
+    // Heartbeats are emitted on first activity (session start) and transitions.
+    // The server uses heartbeats[i].file for the interval [i, i+1], so each
+    // heartbeat reflects state going forward from its timestamp.
+    if (firstActivity || transition) {
+      this.pending.push(this.buildEvent(now, cfg));
+    }
+
+    this.lastDedup = { file, language, at: now };
+  }
+
+  async setStatus(message: string): Promise<void> {
+    const cfg = loadConfig();
+    if (!cfg.apiKey) {
+      this.emit({ event: 'status_error', data: { message: 'not configured' } });
+      return;
+    }
+    try {
+      await sendStatus(cfg.apiKey, message);
+      this.emit({ event: 'status_ok' });
+    } catch (e) {
+      this.emit({ event: 'status_error', data: { message: (e as Error).message } });
+    }
+  }
+
+  getState(): TrackerState {
+    return {
+      configured: !!loadConfig().apiKey,
+      tracking: !this.paused,
+      offline: this.offline,
+      codingTime: formatSeconds(this.todaySeconds),
+      todaySeconds: this.todaySeconds,
+    };
+  }
+
+  private startTimer(): void {
+    this.timer = setInterval(() => this.tick().catch(() => {}), KEEPALIVE_INTERVAL_MS);
+  }
+
+  private stopTimer(): void {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+  }
+
+  private async tick(): Promise<void> {
+    if (this.paused) return;
+    const cfg = loadConfig();
+    if (!cfg.apiKey) return;
+
+    const now = Date.now();
+    if (now - this.lastActivity > ACTIVITY_TIMEOUT_MS && this.pending.length === 0) {
+      return;
+    }
+
+    // Keepalive marker with current state — gives the server an upper bound
+    // for time attribution.
+    if (this.currentFile !== undefined) {
+      this.pending.push(this.buildEvent(now, cfg));
+    }
+
+    if (this.pending.length === 0) return;
+
+    const batch: HeartbeatBatch = {
+      key: cfg.apiKey,
+      plugin_version: this.pluginVersion,
+      editor: this.editor,
+      platform: currentPlatform(),
+      heartbeats: this.pending,
+    };
 
     try {
-      const result = await sendHeartbeat({
-        apiKey,
-        editor: this.editor,
-        anonymous: this.state.anonymous_mode,
-        shareRepo: this.state.share_repo,
-        filePath: this.lastFilePath ?? undefined,
-        cwd: this.lastCwd ?? undefined,
-        language: this.lastLanguage,
-      });
-
-      this.consecutiveNetErrors = 0;
-      if (this.state.offline) {
-        this.state.offline = false;
-        this.emit({ event: "online", data: { message: "Network restored" } });
+      const resp = await sendBatch(batch);
+      this.pending = [];
+      this.consecutiveErrors = 0;
+      if (this.offline) {
+        this.offline = false;
+        this.emit({ event: 'online' });
       }
-
-      this.state.coding_time = formatTime(result.todaySeconds);
-      this.state.language = result.language;
-      this.pushState();
-      this.emit({
-        event: "heartbeat_ok",
-        data: { today_seconds: result.todaySeconds, language: result.language },
-      });
-    } catch (e) {
-      if (e instanceof NetworkError) {
-        this.consecutiveNetErrors++;
-        if (
-          this.consecutiveNetErrors >= OFFLINE_THRESHOLD &&
-          !this.state.offline
-        ) {
-          this.state.offline = true;
-          this.pushState();
-          this.emit({
-            event: "offline",
-            data: { message: "No network — tracking paused" },
-          });
-        }
-      } else if (e instanceof ApiError && e.status >= 500) {
-        if (Date.now() - this.last5xxWarning > 120_000) {
-          this.last5xxWarning = Date.now();
-        }
+      if (resp.today_seconds !== undefined) {
+        this.todaySeconds = resp.today_seconds;
+        this.emit({
+          event: 'heartbeat_ok',
+          data: { today_seconds: resp.today_seconds, language: this.currentLanguage ?? null },
+        });
       }
-    } finally {
-      this.ticking = false;
+    } catch {
+      this.pending = [];
+      this.consecutiveErrors++;
+      if (this.consecutiveErrors >= OFFLINE_THRESHOLD && !this.offline) {
+        this.offline = true;
+        this.emit({ event: 'offline' });
+      }
     }
   }
 
-  private clearTimer(): void {
-    if (this.heartbeatTimer) {
-      clearInterval(this.heartbeatTimer);
-      this.heartbeatTimer = null;
+  // The privacy guards mirror those in resolveRepoFields, since flags can
+  // toggle at runtime between activity() and tick() — never leak past a flip.
+  private buildEvent(now: number, cfg: ReturnType<typeof loadConfig>): HeartbeatEvent {
+    const { hideFileNames, hideProjectNames, hideBranchNames } = cfg.privacy;
+    const ev: HeartbeatEvent = { time: now / 1000 };
+    if (this.currentFile !== undefined && !hideFileNames) ev.file = this.currentFile;
+    if (this.currentLanguage !== undefined) ev.language = this.currentLanguage;
+    if (this.currentRepo !== undefined && !hideProjectNames) ev.repo = this.currentRepo;
+    if (this.currentBranch !== undefined && !hideBranchNames && !hideProjectNames) {
+      ev.branch = this.currentBranch;
     }
+    return ev;
   }
+}
 
-  private pushState(): void {
-    this.emit({ event: "state", data: { ...this.state } });
-  }
+function formatSeconds(s: number): string {
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }

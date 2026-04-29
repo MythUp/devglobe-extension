@@ -60,25 +60,11 @@ Once restarted, configure the plugin directly from Claude Code:
 
 Get your API key at [devglobe.xyz](https://devglobe.xyz) — sign in, then open your **profile settings**.
 
-This command saves your key to `~/.devglobe/api_key` and creates default settings in `~/.devglobe/config.json` (anonymousMode on, shareRepo off).
+This command saves your key to `~/.devglobe/config.toml`.
 
 > If no API key is provided, the command shows an error with instructions.
 
-### Settings
-
-```
-/devglobe:anonymous true          # hide your exact location (default)
-/devglobe:anonymous false         # show your real city on the globe
-/devglobe:share-repo true         # display your repo name on the globe
-/devglobe:share-repo false        # hide your repo name (default)
-```
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `anonymousMode` | `true` | Your marker is placed on a random city in your country (from 152,000+ cities). Your real location is never sent. |
-| `shareRepo` | `false` | Display your current repo on your DevGlobe profile |
-
-Settings are stored in `~/.devglobe/config.json` and can also be edited manually.
+Visibility settings (anonymous mode, repo sharing, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
 
 ### Status message
 
@@ -102,7 +88,9 @@ export DEVGLOBE_API_KEY="your-api-key-here"
 **Option B** — Config file:
 ```bash
 mkdir -p ~/.devglobe
-echo "your-api-key-here" > ~/.devglobe/api_key
+cat > ~/.devglobe/config.toml <<'EOF'
+api_key = "YOUR_API_KEY"
+EOF
 ```
 
 ## How it works
@@ -111,7 +99,6 @@ The plugin hooks into Claude Code events (`PostToolUse`, `UserPromptSubmit`, `St
 
 - The programming language from the files you interact with
 - Your git repository (from `git remote get-url origin`)
-- Your approximate location (via IP geolocation, cached for 1 hour)
 
 Your coding session then appears live on the [DevGlobe map](https://devglobe.xyz) with the editor shown as `claude-code`.
 
@@ -120,26 +107,20 @@ Your coding session then appears live on the [DevGlobe map](https://devglobe.xyz
 | Command | Description |
 |---------|-------------|
 | `/devglobe:setup YOUR_API_KEY` | Configure the plugin with your API key |
-| `/devglobe:anonymous true/false` | Enable or disable anonymous mode |
-| `/devglobe:share-repo true/false` | Enable or disable repo sharing |
 | `/devglobe:status MESSAGE` | Set a status message on your DevGlobe profile |
 
 ## Privacy
 
-| Data | Sent | Detail |
-|------|------|--------|
-| Programming language | Yes | Detected from file extensions. Nothing else. |
-| Operating system | Yes | One of `macOS`, `Windows` or `Linux`. Displayed on your profile next to your coding stats. |
-| Approximate location | Yes | Coordinates **snapped to your city center** (from a database of 152,000+ cities). |
-| Repo name | **You decide** | `owner/repo` is **only sent to the server if `shareRepo` is enabled** (disabled by default). When disabled, your repo name never leaves your machine. |
-| Anonymous mode | **You decide** | When enabled, real coordinates are replaced with a random city in your country (from a database of 152,000+ cities worldwide). Your actual location is never transmitted. |
-| Coding time | Yes | Accumulated per day, per language. |
+The plugin sends programming language, editor name, OS, coding time, the origin remote URL of your current git repo (when present), branch name, and the file path **relative to your repo root** — never an absolute home path.
 
-The plugin **never** reads your source code, file contents, file names, keystrokes, commit messages, environment variables, or credentials.
+Files outside any git repository are not tracked beyond their language. We never read source code, file contents, keystrokes, or commit messages.
+
+Local privacy flags can be toggled in `~/.devglobe/config.toml` under `[privacy]`: `hide_file_names`, `hide_branch_names`, `hide_project_names` (the project flag also hides branches).
+
+Globe-side visibility (anonymous mode, repo sharing on the live globe, profile mode) is managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
 
 ## Support
 
 - Website: [devglobe.xyz](https://devglobe.xyz)
 - Contact: [contact@devglobe.xyz](mailto:contact@devglobe.xyz)
 - Issues: [GitHub Issues](https://github.com/Nako0/devglobe-extension/issues)
-

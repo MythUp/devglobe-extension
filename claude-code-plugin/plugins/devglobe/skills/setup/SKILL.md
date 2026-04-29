@@ -17,8 +17,7 @@ Configure the DevGlobe plugin. User arguments: $ARGUMENTS
 
 ## Error case
 
-If no API key is provided AND no key exists at `~/.devglobe/api_key`:
-show an error:
+If no API key is provided AND no key exists at `~/.devglobe/config.toml`:
 - Usage: `/devglobe:setup YOUR_API_KEY`
 - Get your API key at https://devglobe.xyz (profile settings)
 - Contact: contact@devglobe.xyz
@@ -26,12 +25,10 @@ show an error:
 ## Steps
 
 1. Create `~/.devglobe/` directory if needed
-2. Write the API key to `~/.devglobe/api_key` (plain text, no trailing newline)
-3. If `~/.devglobe/config.json` does not exist, create it with defaults: `{"shareRepo": false, "anonymousMode": true}`
-4. If it already exists, leave it unchanged
+2. Write the API key to `~/.devglobe/config.toml` as `api_key = "YOUR_API_KEY"` at the top of the file (preserve any existing `[privacy]` section)
+3. Set the file mode to `0600`
 
 ## Output
 
-Confirm the API key was saved. Show current settings from `~/.devglobe/config.json`.
-Mention they're now live on https://devglobe.xyz.
-Mention other commands: `/devglobe:status`, `/devglobe:anonymous`, `/devglobe:share-repo`.
+Confirm the API key was saved. Mention they're now live on https://devglobe.xyz.
+Mention `/devglobe:status MESSAGE` for setting a status message, and that visibility settings (anonymous mode, repo sharing) are managed at https://devglobe.xyz/dashboard/settings.

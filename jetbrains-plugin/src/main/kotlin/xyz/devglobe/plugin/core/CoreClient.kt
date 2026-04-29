@@ -19,11 +19,12 @@ class CoreClient(private val binaryPath: String) : Disposable {
     private var writer: BufferedWriter? = null
     private var readerThread: Thread? = null
 
-    var onState: ((TrackerState) -> Unit)? = null
+    var onReady: ((Boolean) -> Unit)? = null
+    var onNotConfigured: (() -> Unit)? = null
     var onHeartbeatOk: ((Int, String?) -> Unit)? = null
-    var onOffline: ((String) -> Unit)? = null
-    var onOnline: ((String) -> Unit)? = null
-    var onStatusOk: ((String) -> Unit)? = null
+    var onOffline: (() -> Unit)? = null
+    var onOnline: (() -> Unit)? = null
+    var onStatusOk: (() -> Unit)? = null
     var onStatusError: ((String) -> Unit)? = null
     var onError: ((String) -> Unit)? = null
     var onProcessDied: (() -> Unit)? = null
@@ -31,25 +32,11 @@ class CoreClient(private val binaryPath: String) : Disposable {
     fun start(): Boolean {
         if (process != null) return true
         try {
-            val pb = ProcessBuilder(binaryPath, "daemon")
-                .redirectErrorStream(false)
-            process = pb.start()
-            writer = BufferedWriter(OutputStreamWriter(process!!.outputStream, Charsets.UTF_8))
+            val proc = ProcessBuilder(binaryPath, "daemon").redirectErrorStream(false).start()
+            process = proc
+            writer = BufferedWriter(OutputStreamWriter(proc.outputStream, Charsets.UTF_8))
 
-            readerThread = Thread({
-                try {
-                    val reader = BufferedReader(InputStreamReader(process!!.inputStream, Charsets.UTF_8))
-                    var line: String?
-                    while (reader.readLine().also { line = it } != null) {
-                        handleLine(line!!)
-                    }
-                } catch (_: Exception) {
-                    // process closed
-                }
-                ApplicationManager.getApplication().invokeLater {
-                    onProcessDied?.invoke()
-                }
-            }, "DevGlobe-CoreReader").apply {
+            readerThread = Thread({ readLoop(proc) }, "DevGlobe-CoreReader").apply {
                 isDaemon = true
                 start()
             }
@@ -63,34 +50,33 @@ class CoreClient(private val binaryPath: String) : Disposable {
         }
     }
 
+    private fun readLoop(proc: Process) {
+        try {
+            BufferedReader(InputStreamReader(proc.inputStream, Charsets.UTF_8)).useLines { lines ->
+                lines.forEach(::handleLine)
+            }
+        } catch (_: Exception) {
+            // stream closed — fall through to onProcessDied
+        }
+        ApplicationManager.getApplication().invokeLater { onProcessDied?.invoke() }
+    }
+
     fun isAlive(): Boolean = process?.isAlive == true
 
-    fun sendInit(apiKey: String, shareRepo: Boolean, anonymousMode: Boolean, statusMessage: String) {
+    fun sendInit(pluginVersion: String) {
         val params = JsonObject().apply {
-            addProperty("api_key", apiKey)
+            addProperty("plugin_version", pluginVersion)
             addProperty("editor", detectEditor())
-            addProperty("share_repo", shareRepo)
-            addProperty("anonymous_mode", anonymousMode)
-            addProperty("status_message", statusMessage)
         }
         send("init", params)
     }
 
-    fun sendActivity(filePath: String, cwd: String, language: String?) {
+    fun sendActivity(filePath: String, language: String?) {
         val params = JsonObject().apply {
-            addProperty("file_path", filePath)
-            addProperty("cwd", cwd)
+            addProperty("file", filePath)
             language?.let { addProperty("language", it) }
         }
         send("activity", params)
-    }
-
-    fun sendSetConfig(shareRepo: Boolean?, anonymousMode: Boolean?) {
-        val params = JsonObject().apply {
-            shareRepo?.let { addProperty("share_repo", it) }
-            anonymousMode?.let { addProperty("anonymous_mode", it) }
-        }
-        send("set_config", params)
     }
 
     fun sendSetStatus(message: String) {
@@ -122,32 +108,24 @@ class CoreClient(private val binaryPath: String) : Disposable {
         try {
             val obj = JsonParser.parseString(line).asJsonObject
             val event = obj.get("event")?.asString ?: return
-            val data = obj.getAsJsonObject("data") ?: return
+            val data = obj.getAsJsonObject("data")
 
             ApplicationManager.getApplication().invokeLater {
                 when (event) {
-                    "state" -> {
-                        val state = TrackerState(
-                            connected = data.get("connected")?.asBoolean ?: false,
-                            tracking = data.get("tracking")?.asBoolean ?: false,
-                            codingTime = data.get("coding_time")?.asString ?: "0m",
-                            language = data.get("language")?.takeIf { !it.isJsonNull }?.asString,
-                            shareRepo = data.get("share_repo")?.asBoolean ?: false,
-                            anonymousMode = data.get("anonymous_mode")?.asBoolean ?: false,
-                            statusMessage = data.get("status_message")?.asString ?: "",
-                            offline = data.get("offline")?.asBoolean ?: false,
-                        )
-                        onState?.invoke(state)
+                    "ready" -> {
+                        val configured = data?.get("configured")?.asBoolean ?: false
+                        onReady?.invoke(configured)
                     }
+                    "not_configured" -> onNotConfigured?.invoke()
                     "heartbeat_ok" -> {
-                        val todaySeconds = data.get("today_seconds")?.asInt ?: 0
-                        val language = data.get("language")?.takeIf { !it.isJsonNull }?.asString
+                        val todaySeconds = data?.get("today_seconds")?.asInt ?: 0
+                        val language = data?.get("language")?.takeIf { !it.isJsonNull }?.asString
                         onHeartbeatOk?.invoke(todaySeconds, language)
                     }
-                    "offline" -> onOffline?.invoke(data.get("message")?.asString ?: "")
-                    "online" -> onOnline?.invoke(data.get("message")?.asString ?: "")
-                    "status_ok" -> onStatusOk?.invoke(data.get("message")?.asString ?: "")
-                    "status_error" -> onStatusError?.invoke(data.get("message")?.asString ?: "")
+                    "offline" -> onOffline?.invoke()
+                    "online" -> onOnline?.invoke()
+                    "status_ok" -> onStatusOk?.invoke()
+                    "status_error" -> onStatusError?.invoke(data?.get("message")?.asString ?: "")
                 }
             }
         } catch (e: Exception) {

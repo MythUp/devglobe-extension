@@ -48,7 +48,7 @@ devglobe-core is built automatically on install and update. Requires Node.js 18+
 ## Setup
 
 ```vim
-:DevGlobe setup devglobe_YOUR_KEY_HERE
+:DevGlobe setup YOUR_API_KEY
 ```
 
 Or manually:
@@ -57,17 +57,21 @@ Or manually:
 
 ```bash
 mkdir -p ~/.devglobe
-echo -n "devglobe_YOUR_KEY_HERE" > ~/.devglobe/api_key
-echo '{"shareRepo": false, "anonymousMode": true}' > ~/.devglobe/config.json
+cat > ~/.devglobe/config.toml <<'EOF'
+api_key = "YOUR_API_KEY"
+EOF
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.devglobe"
-"devglobe_YOUR_KEY_HERE" | Out-File -NoNewline "$env:USERPROFILE\.devglobe\api_key"
-'{"shareRepo": false, "anonymousMode": true}' | Out-File "$env:USERPROFILE\.devglobe\config.json"
+@'
+api_key = "YOUR_API_KEY"
+'@ | Out-File -Encoding utf8 "$env:USERPROFILE\.devglobe\config.toml"
 ```
+
+Visibility settings (anonymous mode, repo sharing, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
 
 ## Commands
 
@@ -75,8 +79,6 @@ New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.devglobe"
 |---------|-------------|
 | `:DevGlobe setup KEY` | Configure your API key |
 | `:DevGlobe status MSG` | Set your status message |
-| `:DevGlobe anonymous` | Toggle anonymous mode |
-| `:DevGlobe share-repo` | Toggle repo sharing |
 | `:DevGlobe today` | Show your coding time today |
 | `:DevGlobe open` | Open devglobe.xyz in your browser |
 
@@ -113,10 +115,18 @@ Verifies Node.js, devglobe-core, API key, and daemon status.
 
 ## How it Works
 
-The plugin spawns a `devglobe-core` daemon process that handles heartbeats, geolocation, git detection, and offline recovery. NeoVim communicates with the daemon via JSONL over stdin/stdout. Activity is detected through NeoVim autocommands (`BufEnter`, `TextChanged`, `BufWritePost`).
+The plugin spawns a `devglobe-core` daemon process that handles heartbeats, git detection, and offline recovery. NeoVim communicates with the daemon via JSONL over stdin/stdout. Activity is detected through NeoVim autocommands (`BufEnter`, `TextChanged`, `BufWritePost`).
 
 Heartbeats are sent every 30 seconds while you're actively coding. After 1 minute of inactivity, heartbeats pause automatically.
 
 ## Privacy
 
-No source code, file contents, or keystrokes are sent. Only language name, operating system (macOS, Windows or Linux), city-level location, and editor name. See [PRIVACY.md](../PRIVACY.md).
+The plugin sends programming language, editor name, OS, coding time, the origin remote URL of your current git repo (when present), branch name, and the file path **relative to your repo root** — never an absolute home path.
+
+Files outside any git repository are not tracked beyond their language. We never read source code, file contents, keystrokes, or commit messages.
+
+Local privacy flags can be toggled in `~/.devglobe/config.toml` under `[privacy]`: `hide_file_names`, `hide_branch_names`, `hide_project_names` (the project flag also hides branches).
+
+Globe-side visibility (anonymous mode, repo sharing on the live globe, profile mode) is managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+
+See [PRIVACY.md](../PRIVACY.md) for full details.

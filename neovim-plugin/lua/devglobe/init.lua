@@ -57,8 +57,8 @@ function M.command(args)
 
   if sub == "setup" then
     local key = args[2]
-    if not key or not key:match("^devglobe_") then
-      vim.notify("[DevGlobe] Usage: :DevGlobe setup devglobe_YOUR_KEY", vim.log.levels.WARN)
+    if not key then
+      vim.notify("[DevGlobe] Usage: :DevGlobe setup YOUR_API_KEY", vim.log.levels.WARN)
       return
     end
     vim.fn.mkdir(config.config_dir(), "p")

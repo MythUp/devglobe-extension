@@ -50,6 +50,8 @@ DevGlobe is a **free, open-source** platform for developer metrics, insights and
 
 The extension sends a heartbeat every 30 seconds while you code. Stop typing for 1 minute and heartbeats pause. After 10 minutes of inactivity, you disappear from the globe.
 
+Visibility settings (anonymous mode, repo sharing, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+
 ---
 
 ## Supported IDEs
@@ -64,25 +66,27 @@ The extension sends a heartbeat every 30 seconds while you code. Stop typing for
 
 #### Sidebar
 
-Two views in the side panel:
-
 - **Login** — masked API key field + link to get your key on devglobe.xyz
-- **Dashboard** — live coding time, active language, status message, repo sharing toggle, start/stop buttons, logout
+- **Dashboard** — live coding time, active language, status message, start/stop tracking, disconnect
 
-#### Command
+#### Commands
 
-`DevGlobe: Set Status Message` — accessible from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
+Available from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
 
-#### Requirements
+- `DevGlobe: Set Status Message`
+- `DevGlobe: Show Coding Time`
+- `DevGlobe: Open Globe`
 
-- VS Code **1.80+** — also works with **Cursor**, **Windsurf**, **Antigravity**, and other VS Code forks
-- **Zero external dependencies** — uses only native VS Code and Node.js APIs
+#### Compatibility
+
+- VS Code **1.80+** — also works with **Cursor**, **Windsurf**, **VSCodium**, **Positron**, **Antigravity** and other VS Code forks
+- Zero external dependencies
 
 ---
 
 ### JetBrains
 
-Compatible with **all JetBrains IDEs**: IntelliJ IDEA, WebStorm, PyCharm, GoLand, Rider, PhpStorm, CLion, RubyMine, DataGrip, Android Studio.
+Compatible with **all JetBrains IDEs**: IntelliJ IDEA, WebStorm, PyCharm, GoLand, Rider, PhpStorm, CLion, RubyMine, DataGrip, Android Studio, RustRover.
 
 #### Installation
 
@@ -93,8 +97,8 @@ Compatible with **all JetBrains IDEs**: IntelliJ IDEA, WebStorm, PyCharm, GoLand
 
 #### Compatibility
 
-- **IDE builds**: 242 — 263.* (2024.2 to 2026.3)
-- **Java**: 17+
+- IDE builds **242 — 263.\*** (2024.2 to 2026.3)
+- Java 17+
 
 ---
 
@@ -104,39 +108,32 @@ Compatible with **all JetBrains IDEs**: IntelliJ IDEA, WebStorm, PyCharm, GoLand
 
 #### Installation
 
-**Option A — Standalone repo (no build required):**
-
 ```bash
 git clone https://github.com/CaadriFR/zed-devglobe.git
 ```
 
 In Zed: `Cmd+Shift+P` → "zed: install dev extension" → select the `zed-devglobe/` folder.
 
-**Option B — From this repo (requires build):**
-
-```bash
-cd devglobe-core && npm install && npm run build
-cd ../zed-extension/server && npm install && npm run build
-```
-
-In Zed: `Cmd+Shift+P` → "zed: install dev extension" → select the `zed-extension/` folder.
-
 #### Setup
+
+Create `~/.devglobe/config.toml` with your API key:
 
 **macOS / Linux:**
 
 ```bash
 mkdir -p ~/.devglobe
-echo -n "devglobe_YOUR_KEY_HERE" > ~/.devglobe/api_key
-echo '{"shareRepo": false, "anonymousMode": true}' > ~/.devglobe/config.json
+cat > ~/.devglobe/config.toml <<'EOF'
+api_key = "YOUR_API_KEY"
+EOF
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.devglobe"
-"devglobe_YOUR_KEY_HERE" | Out-File -NoNewline "$env:USERPROFILE\.devglobe\api_key"
-'{"shareRepo": false, "anonymousMode": true}' | Out-File "$env:USERPROFILE\.devglobe\config.json"
+@'
+api_key = "YOUR_API_KEY"
+'@ | Out-File -Encoding utf8 "$env:USERPROFILE\.devglobe\config.toml"
 ```
 
 Open a project in Zed, trust the worktree when prompted, and start coding. You'll appear on the globe within 30 seconds.
@@ -172,10 +169,10 @@ devglobe-core is built automatically on install. Requires Node.js 18+.
 #### Setup
 
 ```vim
-:DevGlobe setup devglobe_YOUR_KEY_HERE
+:DevGlobe setup YOUR_API_KEY
 ```
 
-Or create `~/.devglobe/api_key` manually (same as Zed / Claude Code).
+Or create `~/.devglobe/config.toml` manually with `api_key = "YOUR_API_KEY"`.
 
 #### Commands
 
@@ -183,8 +180,6 @@ Or create `~/.devglobe/api_key` manually (same as Zed / Claude Code).
 | ---------------------- | --------------------------- |
 | `:DevGlobe setup KEY`  | Configure your API key      |
 | `:DevGlobe status MSG` | Set your status message     |
-| `:DevGlobe anonymous`  | Toggle anonymous mode       |
-| `:DevGlobe share-repo` | Toggle repo sharing         |
 | `:DevGlobe today`      | Show your coding time today |
 | `:DevGlobe open`       | Open devglobe.xyz           |
 
@@ -219,18 +214,12 @@ After installing, **restart Claude Code** (`/exit`, then reopen) so the plugin a
 
 Get your API key at [devglobe.xyz](https://devglobe.xyz) — sign in, then open your **profile settings**.
 
-This saves your key and creates default settings in `~/.devglobe/`.
-
 #### Commands
 
-| Command                           | Description                                   |
-| --------------------------------- | --------------------------------------------- |
-| `/devglobe:setup YOUR_API_KEY`    | Configure the plugin with your API key        |
-| `/devglobe:anonymous true/false`  | Enable or disable anonymous mode              |
-| `/devglobe:share-repo true/false` | Enable or disable repo sharing                |
-| `/devglobe:status MESSAGE`        | Set a status message on your DevGlobe profile |
-
-Settings are stored in `~/.devglobe/config.json` and can also be edited manually.
+| Command                        | Description                                   |
+| ------------------------------ | --------------------------------------------- |
+| `/devglobe:setup YOUR_API_KEY` | Configure the plugin with your API key        |
+| `/devglobe:status MESSAGE`     | Set a status message on your DevGlobe profile |
 
 ---
 
@@ -252,20 +241,14 @@ After installing, **restart Codex** so the skill and its hooks are loaded.
 $devglobe setup YOUR_API_KEY
 ```
 
-Get your API key at [devglobe.xyz](https://devglobe.xyz) — sign in, then open your **profile settings**.
-
-This saves your key, installs heartbeat hooks, and enables the `codex_hooks` feature flag.
-
 #### Commands
 
-| Command                           | Description                                             |
-| --------------------------------- | ------------------------------------------------------- |
-| `$devglobe setup YOUR_API_KEY`    | Configure the skill with your API key and install hooks |
-| `$devglobe anonymous true/false`  | Enable or disable anonymous mode                        |
-| `$devglobe share-repo true/false` | Enable or disable repo sharing                          |
-| `$devglobe status MESSAGE`        | Set a status message on your DevGlobe profile           |
-| `$devglobe check`                 | Verify the installation                                 |
-| `$devglobe uninstall`             | Remove DevGlobe hooks from Codex                        |
+| Command                        | Description                                             |
+| ------------------------------ | ------------------------------------------------------- |
+| `$devglobe setup YOUR_API_KEY` | Configure the skill with your API key and install hooks |
+| `$devglobe status MESSAGE`     | Set a status message on your DevGlobe profile           |
+| `$devglobe check`              | Verify the installation                                 |
+| `$devglobe uninstall`          | Remove DevGlobe hooks from Codex                        |
 
 #### Requirements
 
@@ -296,19 +279,15 @@ Restart OpenCode and ask:
 setup devglobe with my key YOUR_API_KEY
 ```
 
-Get your API key at [devglobe.xyz](https://devglobe.xyz) — sign in, then open your **profile settings**.
-
 #### Commands
 
-Just ask in natural language — the plugin registers tools that the AI agent calls on your behalf:
+The plugin registers tools that the AI agent calls on your behalf:
 
-| What you say                  | Tool                  | Description                           |
-| ----------------------------- | --------------------- | ------------------------------------- |
-| "setup devglobe with key X"   | `devglobe_setup`      | Configure API key and create settings |
-| "enable anonymous mode"       | `devglobe_anonymous`  | Toggle anonymous mode                 |
-| "share my repo on devglobe"   | `devglobe_share_repo` | Toggle repo sharing                   |
-| "set my devglobe status to X" | `devglobe_status`     | Set a status message on the globe     |
-| "check devglobe"              | `devglobe_check`      | Verify installation                   |
+| What you say                  | Tool              | Description                           |
+| ----------------------------- | ----------------- | ------------------------------------- |
+| "setup devglobe with key X"   | `devglobe_setup`  | Configure API key                     |
+| "set my devglobe status to X" | `devglobe_status` | Set a status message on the globe     |
+| "check devglobe"              | `devglobe_check`  | Verify installation                   |
 
 #### Requirements
 
@@ -316,19 +295,42 @@ Just ask in natural language — the plugin registers tools that the AI agent ca
 
 ---
 
-## Privacy & Security
+## Privacy
 
-> **100% open source. No code is read. No sensitive data collected.**
+> **100% open source. We never read your code.**
 
-**What we send:** programming language, operating system, city-level location (snapped to city center from 152k+ cities), coding time, your status message.
+**What the extension sends to DevGlobe:**
 
-**What you control:** repo name (only shared if you enable it), anonymous mode (random city in your country).
+- Programming language detected by the IDE
+- Editor + operating system name
+- Coding time (per heartbeat, every 30 s)
+- Origin remote URL of your current git repo (when present)
+- Branch name (when present)
+- File path **relative to your repo root** — never the absolute home path
+- Status message (only what you set explicitly)
 
-**What we NEVER touch:** source code, file contents, file names, folder paths, keystrokes, commit messages, Git branches, environment variables, SSH keys. Your IP is used once for geolocation then discarded — never sent to DevGlobe.
+**What the extension never sends:**
 
-**API keys** are stored in your OS keychain (VS Code SecretStorage, JetBrains PasswordSafe) or local config file (Zed, NeoVim, Claude Code, Codex, OpenCode).
+- Source code, file contents, keystrokes
+- Files outside any git repository (no path leaks for scratch files / local folders)
+- Commit messages, environment variables, SSH keys
 
-**Network:** HTTPS only (TLS 1.2+), no intermediary server, Content Security Policy on webviews, Row Level Security on the database. No telemetry.
+**Local privacy flags** — edit `~/.devglobe/config.toml`:
+
+```toml
+api_key = "YOUR_API_KEY"
+
+[privacy]
+hide_file_names = false       # omit the file field
+hide_branch_names = false     # omit the branch field
+hide_project_names = false    # omit repo + branch (project-level hiding implies branch hiding)
+```
+
+**Globe visibility** (anonymous mode, repo sharing on the live globe, profile mode) is managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings) — not in the extension.
+
+**API keys** are stored in your OS keychain (VS Code SecretStorage, JetBrains PasswordSafe) or in `~/.devglobe/config.toml` (Zed, NeoVim, Claude Code, Codex, OpenCode). The file is created with `0600` permissions.
+
+**Network:** HTTPS only (TLS 1.2+), no telemetry, no third-party trackers.
 
 **[Read the full Privacy & Security documentation →](PRIVACY.md)**
 

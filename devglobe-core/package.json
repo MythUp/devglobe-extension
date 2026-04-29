@@ -1,7 +1,7 @@
 {
   "name": "devglobe-core",
-  "version": "1.1.0",
-  "description": "Shared core for DevGlobe IDE extensions — heartbeat, geolocation, git detection",
+  "version": "2.0.0",
+  "description": "Shared core for DevGlobe IDE extensions — batch heartbeats, git detection, privacy",
   "private": true,
   "type": "module",
   "main": "dist/devglobe-core.js",
