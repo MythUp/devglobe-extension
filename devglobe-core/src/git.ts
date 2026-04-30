@@ -192,3 +192,19 @@ export async function resolveRepoFields(
   }
   return fields;
 }
+
+// Repo/branch detection from a working directory only — used when no file is
+// available (UserPromptSubmit, Stop). Mirrors v1 behavior of falling back to
+// cwd so that prompt events still attribute to the active repo.
+export async function resolveRepoFromCwd(
+  cwd: string,
+  privacy: PrivacyFlags,
+): Promise<RepoFields> {
+  const git = await detectGit(cwd);
+  const fields: RepoFields = {};
+  if (!privacy.hideProjectNames && git.repo) fields.repo = git.repo;
+  if (!privacy.hideProjectNames && !privacy.hideBranchNames && git.branch) {
+    fields.branch = git.branch;
+  }
+  return fields;
+}

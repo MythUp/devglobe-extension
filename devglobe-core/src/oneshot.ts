@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { loadConfig, devglobeDir } from './config.js';
-import { resolveRepoFields } from './git.js';
+import { resolveRepoFields, resolveRepoFromCwd } from './git.js';
 import { langFromPath } from './language.js';
 import { sendBatch } from './heartbeat.js';
 import { ONESHOT_RATE_LIMIT_MS, currentPlatform } from './constants.js';
@@ -9,6 +9,7 @@ import type { HeartbeatBatch, HeartbeatEvent } from './types.js';
 
 export interface OneshotParams {
   file?: string;
+  cwd?: string;
   language?: string;
   editor: string;
   pluginVersion: string;
@@ -19,8 +20,6 @@ interface OneshotState {
   lastHeartbeatAt?: number;
   lastFile?: string;
   lastLanguage?: string;
-  lastRepo?: string;
-  lastBranch?: string;
 }
 
 export async function runOneshot(params: OneshotParams): Promise<void> {
@@ -32,7 +31,10 @@ export async function runOneshot(params: OneshotParams): Promise<void> {
 
   const now = Date.now();
   const state = loadState();
-  const language = params.language ?? (params.file ? langFromPath(params.file) : null) ?? undefined;
+  const language = params.language
+    ?? (params.file ? langFromPath(params.file) : null)
+    ?? state.lastLanguage
+    ?? undefined;
 
   const fileChanged = params.file !== undefined && params.file !== state.lastFile;
   const langChanged = language !== undefined && language !== state.lastLanguage;
@@ -47,6 +49,8 @@ export async function runOneshot(params: OneshotParams): Promise<void> {
   if (language) ev.language = language;
   if (params.file) {
     Object.assign(ev, await resolveRepoFields(params.file, cfg.privacy));
+  } else if (params.cwd) {
+    Object.assign(ev, await resolveRepoFromCwd(params.cwd, cfg.privacy));
   }
 
   const batch: HeartbeatBatch = {
@@ -59,13 +63,7 @@ export async function runOneshot(params: OneshotParams): Promise<void> {
 
   try {
     await sendBatch(batch);
-    saveState({
-      lastHeartbeatAt: now,
-      lastFile: params.file,
-      lastLanguage: language,
-      lastRepo: ev.repo,
-      lastBranch: ev.branch,
-    });
+    saveState({ lastHeartbeatAt: now, lastFile: params.file, lastLanguage: language });
   } catch {
     // Silent fail — state stays unchanged so the next call retries.
   }

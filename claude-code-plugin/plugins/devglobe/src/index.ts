@@ -15,6 +15,7 @@ async function main(): Promise<void> {
 
   await runOneshot({
     file: filePath,
+    cwd: input.cwd,
     editor: 'claude-code',
     pluginVersion: PLUGIN_VERSION,
     force: input.hook_event_name === 'Stop',

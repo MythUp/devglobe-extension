@@ -270,6 +270,15 @@ async function resolveRepoFields(filePath, privacy, cwd = path2.dirname(filePath
   }
   return fields;
 }
+async function resolveRepoFromCwd(cwd, privacy) {
+  const git = await detectGit(cwd);
+  const fields = {};
+  if (!privacy.hideProjectNames && git.repo) fields.repo = git.repo;
+  if (!privacy.hideProjectNames && !privacy.hideBranchNames && git.branch) {
+    fields.branch = git.branch;
+  }
+  return fields;
+}
 
 // ../../../devglobe-core/src/language.ts
 var import_path = require("path");
@@ -492,7 +501,7 @@ async function runOneshot(params) {
   }
   const now = Date.now();
   const state = loadState();
-  const language = params.language ?? (params.file ? langFromPath(params.file) : null) ?? void 0;
+  const language = params.language ?? (params.file ? langFromPath(params.file) : null) ?? state.lastLanguage ?? void 0;
   const fileChanged = params.file !== void 0 && params.file !== state.lastFile;
   const langChanged = language !== void 0 && language !== state.lastLanguage;
   const rateLimited = state.lastHeartbeatAt !== void 0 && now - state.lastHeartbeatAt < ONESHOT_RATE_LIMIT_MS;
@@ -503,6 +512,8 @@ async function runOneshot(params) {
   if (language) ev.language = language;
   if (params.file) {
     Object.assign(ev, await resolveRepoFields(params.file, cfg.privacy));
+  } else if (params.cwd) {
+    Object.assign(ev, await resolveRepoFromCwd(params.cwd, cfg.privacy));
   }
   const batch = {
     key: cfg.apiKey,
@@ -513,13 +524,7 @@ async function runOneshot(params) {
   };
   try {
     await sendBatch(batch);
-    saveState({
-      lastHeartbeatAt: now,
-      lastFile: params.file,
-      lastLanguage: language,
-      lastRepo: ev.repo,
-      lastBranch: ev.branch
-    });
+    saveState({ lastHeartbeatAt: now, lastFile: params.file, lastLanguage: language });
   } catch {
   }
 }
@@ -554,6 +559,7 @@ async function main() {
   const filePath = input.tool_input?.file_path || input.tool_response?.filePath || void 0;
   await runOneshot({
     file: filePath,
+    cwd: input.cwd,
     editor: "claude-code",
     pluginVersion: PLUGIN_VERSION,
     force: input.hook_event_name === "Stop"
