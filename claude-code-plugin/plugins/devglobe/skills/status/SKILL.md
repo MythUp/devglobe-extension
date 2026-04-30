@@ -3,7 +3,6 @@ name: status
 description: Set a status message on your DevGlobe profile
 user-invocable: true
 allowed-tools:
-  - Read
   - Bash
 ---
 
@@ -11,26 +10,22 @@ Update the DevGlobe status message. User arguments: $ARGUMENTS
 
 ## Error cases
 
-- If `$ARGUMENTS` is empty: show error explaining usage: `/devglobe:status Your message here` (max 100 characters)
-- If message is longer than 100 characters: show error with current length
-- If no API key exists (check `~/.devglobe/api_key` file and `DEVGLOBE_API_KEY` env var): show error asking to run `/devglobe:setup YOUR_API_KEY` first. Get key at https://devglobe.xyz. Contact: contact@devglobe.xyz
+- If `$ARGUMENTS` is empty: show usage `/devglobe:status Your message here` (max 100 characters)
+- If the message is longer than 100 characters: show error with current length
 
 ## Steps
 
-1. Read the API key from `~/.devglobe/api_key` (or env var `DEVGLOBE_API_KEY`)
-2. The status message is the full `$ARGUMENTS` string (preserve spaces)
-3. Send the update by piping JSON into the update-status script:
+The bundled status script reads the API key from `~/.devglobe/config.toml` directly — no need to extract it here. Just pipe the message:
 
 ```bash
-echo '{"api_key": "THE_KEY", "message": "THE_MESSAGE"}' | ${CLAUDE_PLUGIN_ROOT}/scripts/update-status
+echo '{"message":"<MESSAGE>"}' | node "${CLAUDE_PLUGIN_ROOT}/dist/update-status.js"
 ```
 
-Replace `THE_KEY` with the actual API key and `THE_MESSAGE` with the user's message (escape JSON special characters in the message).
+Escape JSON special characters in the message before substitution.
 
-4. The script returns JSON: `{"ok": true}` on success, `{"error": "..."}` on failure
-5. If error: show it and suggest checking the API key
+If the script returns `{"error":"not configured — run /devglobe:setup first"}`, tell the user to run `/devglobe:setup YOUR_API_KEY` first (key available at https://devglobe.xyz).
 
 ## Output
 
-- On success: confirm the status was set, show the message
-- On failure: show the error and suggest running `/devglobe:setup` if the key might be wrong
+- On success (`{"ok":true}`): confirm the status was set, echo the message
+- On error: show the error

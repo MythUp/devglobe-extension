@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import { runOneshot } from '../../../../devglobe-core/src/oneshot';
-import type { Input } from './types';
+import { PLUGIN_VERSION, type Input } from './types';
 
 async function main(): Promise<void> {
   const raw = readFileSync(0, 'utf-8');
@@ -11,15 +11,13 @@ async function main(): Promise<void> {
     return;
   }
 
-  const { session_id, cwd, hook_event_name } = input;
   const filePath = input.tool_input?.file_path || input.tool_response?.filePath || undefined;
 
   await runOneshot({
-    file_path: filePath,
-    cwd,
+    file: filePath,
     editor: 'claude-code',
-    session_id,
-    force: hook_event_name === 'Stop',
+    pluginVersion: PLUGIN_VERSION,
+    force: input.hook_event_name === 'Stop',
   });
 }
 

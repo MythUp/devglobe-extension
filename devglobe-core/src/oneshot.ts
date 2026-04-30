@@ -9,7 +9,6 @@ import type { HeartbeatBatch, HeartbeatEvent } from './types.js';
 
 export interface OneshotParams {
   file?: string;
-  cwd?: string;
   language?: string;
   editor: string;
   pluginVersion: string;
@@ -45,7 +44,7 @@ export async function runOneshot(params: OneshotParams): Promise<void> {
   const ev: HeartbeatEvent = { time: now / 1000 };
   if (language) ev.language = language;
   if (params.file) {
-    Object.assign(ev, await resolveRepoFields(params.file, cfg.privacy, params.cwd));
+    Object.assign(ev, await resolveRepoFields(params.file, cfg.privacy));
   }
 
   const batch: HeartbeatBatch = {

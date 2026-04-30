@@ -47,13 +47,28 @@ $devglobe setup YOUR_API_KEY
 Get your API key at [devglobe.xyz](https://devglobe.xyz) — sign in, then open your **profile settings**.
 
 This command:
-1. Saves your key to `~/.devglobe/config.toml`
-2. Installs heartbeat hooks in `~/.codex/hooks.json`
-3. Enables the `codex_hooks` feature flag in `~/.codex/config.toml`
+1. Saves your key to `~/.devglobe/api_key`
+2. Creates default settings in `~/.devglobe/config.json`
+3. Installs heartbeat hooks in `~/.codex/hooks.json`
+4. Enables the `codex_hooks` feature flag in `~/.codex/config.toml`
 
 > After setup, restart Codex one more time for hooks to take effect.
 
-Visibility settings (anonymous mode, repo sharing, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+### Settings
+
+```
+$devglobe anonymous true           # hide your exact location (default)
+$devglobe anonymous false          # show your real city on the globe
+$devglobe share-repo true          # display your repo name on the globe
+$devglobe share-repo false         # hide your repo name (default)
+```
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `anonymousMode` | `true` | Your marker is placed on a random city in your country (from 152,000+ cities). Your real location is never sent. |
+| `shareRepo` | `false` | Display your current repo on your DevGlobe profile. |
+
+Settings are stored in `~/.devglobe/config.json` and can also be edited manually.
 
 ### Status message
 
@@ -77,9 +92,7 @@ export DEVGLOBE_API_KEY="your-api-key-here"
 **Option B** — Config file:
 ```bash
 mkdir -p ~/.devglobe
-cat > ~/.devglobe/config.toml <<'EOF'
-api_key = "YOUR_API_KEY"
-EOF
+echo "your-api-key-here" > ~/.devglobe/api_key
 ```
 
 Then manually enable Codex hooks:
@@ -98,6 +111,7 @@ The skill installs hooks on three Codex lifecycle events (`SessionStart`, `UserP
 
 - The programming language from file paths mentioned in your prompts or recently modified files in your project
 - Your git repository (from `git remote get-url origin`)
+- Your approximate location (via IP geolocation, cached for 1 hour)
 
 Your coding session then appears live on the [DevGlobe map](https://devglobe.xyz) with the editor shown as `codex`.
 
@@ -108,19 +122,24 @@ Your coding session then appears live on the [DevGlobe map](https://devglobe.xyz
 | Command | Description |
 |---------|-------------|
 | `$devglobe setup YOUR_API_KEY` | Configure the skill with your API key and install hooks |
+| `$devglobe anonymous true/false` | Enable or disable anonymous mode |
+| `$devglobe share-repo true/false` | Enable or disable repo sharing |
 | `$devglobe status MESSAGE` | Set a status message on your DevGlobe profile |
 | `$devglobe check` | Verify the installation (API key, hooks, feature flag) |
 | `$devglobe uninstall` | Remove DevGlobe hooks from Codex |
 
 ## Privacy
 
-The skill sends programming language, editor name, OS, coding time, the origin remote URL of your current git repo (when present), branch name, and the file path **relative to your repo root** — never an absolute home path.
+| Data | Sent | Detail |
+|------|------|--------|
+| Programming language | Yes | Detected from file extensions mentioned in prompts or recently modified files. |
+| Operating system | Yes | One of `macOS`, `Windows` or `Linux`. Displayed on your profile next to your coding stats. |
+| Approximate location | Yes | Coordinates **snapped to your city center** (from a database of 152,000+ cities). |
+| Repo name | **You decide** | `owner/repo` is **only sent to the server if `shareRepo` is enabled** (disabled by default). When disabled, your repo name never leaves your machine. |
+| Anonymous mode | **You decide** | When enabled, real coordinates are replaced with a random city in your country. Your actual location is never transmitted. |
+| Coding time | Yes | Accumulated per day, per language. |
 
-Files outside any git repository are not tracked beyond their language. We never read source code, file contents, keystrokes, or commit messages.
-
-Local privacy flags can be toggled in `~/.devglobe/config.toml` under `[privacy]`: `hide_file_names`, `hide_branch_names`, `hide_project_names` (the project flag also hides branches).
-
-Globe-side visibility (anonymous mode, repo sharing on the live globe, profile mode) is managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+The skill **never** reads your source code, file contents, file names, keystrokes, commit messages, environment variables, or credentials.
 
 ## Support
 

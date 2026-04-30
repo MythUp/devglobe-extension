@@ -43,22 +43,19 @@ Then in your `opencode.json`:
 After installing, restart OpenCode and ask it to set up DevGlobe:
 
 ```
-setup devglobe with my key YOUR_API_KEY
+setup devglobe with my key devglobe_YOUR_KEY_HERE
 ```
 
 Get your API key at [devglobe.xyz](https://devglobe.xyz) — sign in, then open your **profile settings**.
 
-OpenCode will call the `devglobe_setup` tool, which saves your key. Heartbeats start automatically while you code.
-
-Visibility settings (anonymous mode, repo sharing, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+OpenCode will call the `devglobe_setup` tool, which saves your key and creates default settings. Heartbeats start automatically while you code.
 
 ### Alternative: manual setup
 
 ```bash
 mkdir -p ~/.devglobe
-cat > ~/.devglobe/config.toml <<'EOF'
-api_key = "YOUR_API_KEY"
-EOF
+echo "your-api-key-here" > ~/.devglobe/api_key
+echo '{"anonymousMode": true, "shareRepo": false}' > ~/.devglobe/config.json
 ```
 
 Or use an environment variable (add to `~/.zshrc` or `~/.bashrc`):
@@ -73,9 +70,20 @@ The plugin registers tools that the AI agent can call on your behalf. Just ask i
 
 | What you say | Tool called | Description |
 |--------------|-------------|-------------|
-| "setup devglobe with key X" | `devglobe_setup` | Configure your API key |
+| "setup devglobe with key X" | `devglobe_setup` | Configure your API key and create default settings |
+| "enable anonymous mode on devglobe" | `devglobe_anonymous` | Toggle anonymous mode (city-level location) |
+| "share my repo on devglobe" | `devglobe_share_repo` | Toggle repository sharing on the globe |
 | "set my devglobe status to Working on X" | `devglobe_status` | Set a status message on your globe profile |
 | "check devglobe status" | `devglobe_check` | Verify installation (API key, config) |
+
+### Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `anonymousMode` | `true` | Your marker is placed on a random city in your country (from 152,000+ cities). Your real location is never sent. |
+| `shareRepo` | `false` | Display your current repo on your DevGlobe profile. |
+
+Settings are stored in `~/.devglobe/config.json` and can also be modified via the tools above.
 
 ## How it works
 
@@ -83,6 +91,7 @@ The plugin hooks into OpenCode's `tool.execute.after` and `file.edited` events t
 
 - The programming language from the files you interact with (exact file paths from tool calls)
 - Your git repository (from `git remote get-url origin`)
+- Your approximate location (via IP geolocation, cached for 1 hour)
 
 Your coding session then appears live on the [DevGlobe map](https://devglobe.xyz) with the editor shown as `opencode`.
 
@@ -100,13 +109,16 @@ Then restart OpenCode.
 
 ## Privacy
 
-The plugin sends programming language, editor name, OS, coding time, the origin remote URL of your current git repo (when present), branch name, and the file path **relative to your repo root** — never an absolute home path.
+| Data | Sent | Detail |
+|------|------|--------|
+| Programming language | Yes | Detected from file extensions of files being edited. |
+| Operating system | Yes | One of `macOS`, `Windows` or `Linux`. Displayed on your profile next to your coding stats. |
+| Approximate location | Yes | Coordinates **snapped to your city center** (from a database of 152,000+ cities). |
+| Repo name | **You decide** | `owner/repo` is **only sent to the server if `shareRepo` is enabled** (disabled by default). When disabled, your repo name never leaves your machine. |
+| Anonymous mode | **You decide** | When enabled, real coordinates are replaced with a random city in your country (from a database of 152,000+ cities worldwide). Your actual location is never transmitted. |
+| Coding time | Yes | Accumulated per day, per language. |
 
-Files outside any git repository are not tracked beyond their language. We never read source code, file contents, keystrokes, or commit messages.
-
-Local privacy flags can be toggled in `~/.devglobe/config.toml` under `[privacy]`: `hide_file_names`, `hide_branch_names`, `hide_project_names` (the project flag also hides branches).
-
-Globe-side visibility (anonymous mode, repo sharing on the live globe, profile mode) is managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+The plugin **never** reads your source code, file contents, file names, keystrokes, commit messages, environment variables, or credentials.
 
 ## Support
 

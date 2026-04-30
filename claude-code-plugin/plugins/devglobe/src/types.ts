@@ -14,3 +14,13 @@ export type Input = {
     [key: string]: unknown;
   };
 };
+
+export type SetupInput = {
+  api_key: string;
+};
+
+export type StatusInput = {
+  message: string;
+};
+
+export const PLUGIN_VERSION = '2.0.0';
