@@ -513,7 +513,13 @@ async function runOneshot(params) {
   };
   try {
     await sendBatch(batch);
-    saveState({ lastHeartbeatAt: now, lastFile: params.file, lastLanguage: language });
+    saveState({
+      lastHeartbeatAt: now,
+      lastFile: params.file,
+      lastLanguage: language,
+      lastRepo: ev.repo,
+      lastBranch: ev.branch
+    });
   } catch {
   }
 }

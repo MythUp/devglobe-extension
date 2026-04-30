@@ -19,6 +19,8 @@ interface OneshotState {
   lastHeartbeatAt?: number;
   lastFile?: string;
   lastLanguage?: string;
+  lastRepo?: string;
+  lastBranch?: string;
 }
 
 export async function runOneshot(params: OneshotParams): Promise<void> {
@@ -57,7 +59,13 @@ export async function runOneshot(params: OneshotParams): Promise<void> {
 
   try {
     await sendBatch(batch);
-    saveState({ lastHeartbeatAt: now, lastFile: params.file, lastLanguage: language });
+    saveState({
+      lastHeartbeatAt: now,
+      lastFile: params.file,
+      lastLanguage: language,
+      lastRepo: ev.repo,
+      lastBranch: ev.branch,
+    });
   } catch {
     // Silent fail — state stays unchanged so the next call retries.
   }
