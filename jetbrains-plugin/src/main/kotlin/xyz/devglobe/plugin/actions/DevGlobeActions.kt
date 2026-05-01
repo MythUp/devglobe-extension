@@ -37,7 +37,7 @@ class ShowCodingTimeAction : AnAction() {
 
 class OpenGlobeAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
-        BrowserUtil.browse("https://devglobe.xyz")
+        BrowserUtil.browse("https://devglobe.xyz/space")
     }
 }
 

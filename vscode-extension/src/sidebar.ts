@@ -319,7 +319,7 @@ export class DevGlobeSidebarProvider implements vscode.WebviewViewProvider {
     });
 
     getKeyLink.addEventListener('click', () => {
-        vscode.postMessage({ type: 'openExternal', url: 'https://devglobe.xyz/dashboard/plugins' });
+        vscode.postMessage({ type: 'openExternal', url: 'https://devglobe.xyz/dashboard/settings' });
     });
 
     settingsLink.addEventListener('click', () => {

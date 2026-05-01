@@ -100,7 +100,7 @@ API keys are stored in the OS keychain via VS Code SecretStorage (macOS Keychain
 
 ## Links
 
-- [devglobe.xyz](https://devglobe.xyz) — the globe
+- [devglobe.xyz/space](https://devglobe.xyz/space) — the globe
 - [Source code](https://github.com/Nako0/devglobe-extension) — public GitHub repo
 
 ---

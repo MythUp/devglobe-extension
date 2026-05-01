@@ -89,7 +89,7 @@ class SidebarPanel : JPanel() {
 
         gbc.gridy = row++; gbc.insets = JBUI.insets(6, 0, 0, 0)
         panel.add(createLink("Get your API key on devglobe.xyz") {
-            listener?.onOpenExternal("https://devglobe.xyz/dashboard/plugins")
+            listener?.onOpenExternal("https://devglobe.xyz/dashboard/settings")
         }, gbc)
 
         return panel
