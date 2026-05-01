@@ -2,7 +2,7 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'fs';
 import { join, extname, dirname } from 'path';
 import { runOneshot } from '../../devglobe-core/src/oneshot';
 import { langFromPath } from '../../devglobe-core/src/language';
-import type { Input } from './types';
+import { PLUGIN_VERSION, type Input } from './types';
 
 const BACKTICK_PATH_RE = /`(\/[^`\n]+\.\w{1,10})`/g;
 
@@ -98,7 +98,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  const { session_id, cwd, hook_event_name } = input;
+  const { cwd, hook_event_name } = input;
 
   let filePath: string | undefined;
   let language: string | undefined;
@@ -126,11 +126,11 @@ async function main(): Promise<void> {
   }
 
   await runOneshot({
-    file_path: filePath,
+    file: filePath,
     cwd,
     editor: 'codex',
     language,
-    session_id,
+    pluginVersion: PLUGIN_VERSION,
     force: hook_event_name === 'Stop',
   });
 }

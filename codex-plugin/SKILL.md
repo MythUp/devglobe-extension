@@ -38,9 +38,10 @@ After setup, restart Codex for hooks to take effect.
 Set a status message displayed on the globe next to your avatar.
 
 ```bash
-API_KEY=$(awk -F'"' '/^api_key/ {print $2}' "$HOME/.devglobe/config.toml" 2>/dev/null)
-echo "{\"api_key\":\"$API_KEY\",\"message\":\"<MESSAGE>\"}" | node "$DEVGLOBE_SKILL/dist/update-status.js"
+echo '{"message":"<MESSAGE>"}' | node "$DEVGLOBE_SKILL/dist/update-status.js"
 ```
+
+The script reads the API key from `~/.devglobe/config.toml` directly.
 
 ## Diagnostics
 

@@ -1,10 +1,10 @@
 {
   "name": "devglobe-codex-plugin",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "DevGlobe skill for Codex CLI - appear active on the globe while coding with AI",
   "private": true,
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --platform=node --target=node18 --outfile=dist/index.js && esbuild src/setup.ts --bundle --platform=node --target=node18 --outfile=dist/setup.js && esbuild src/uninstall.ts --bundle --platform=node --target=node18 --outfile=dist/uninstall.js && esbuild src/update-status.ts --bundle --platform=node --target=node18 --outfile=dist/update-status.js",
+    "build": "esbuild src/index.ts src/setup.ts src/uninstall.ts src/update-status.ts --bundle --platform=node --target=node18 --outdir=dist",
     "watch": "esbuild src/index.ts src/setup.ts src/uninstall.ts src/update-status.ts --bundle --platform=node --target=node18 --outdir=dist --watch"
   },
   "devDependencies": {

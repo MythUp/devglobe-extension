@@ -11,3 +11,5 @@ export type Input = {
   source?: string;
   stop_hook_active?: boolean;
 };
+
+export const PLUGIN_VERSION = '2.0.0';

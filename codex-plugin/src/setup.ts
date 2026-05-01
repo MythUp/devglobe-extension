@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync, chmodSync } from 'fs';
 import { homedir } from 'os';
 import { join, dirname } from 'path';
+import { setApiKey } from '../../devglobe-core/src/config';
 import type { HookEntry, HooksFile } from './hooks';
 
 async function main(): Promise<void> {
@@ -18,15 +19,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const devglobeDir = join(homedir(), '.devglobe');
-  mkdirSync(devglobeDir, { recursive: true });
-
-  writeFileSync(join(devglobeDir, 'api_key'), input.api_key.trim());
-
-  const configPath = join(devglobeDir, 'config.json');
-  if (!existsSync(configPath)) {
-    writeFileSync(configPath, JSON.stringify({ anonymousMode: true, shareRepo: false }, null, 2));
-  }
+  setApiKey(input.api_key.trim());
 
   const codexDir = join(homedir(), '.codex');
   mkdirSync(codexDir, { recursive: true });
@@ -83,7 +76,7 @@ async function main(): Promise<void> {
 
   console.log(JSON.stringify({
     ok: true,
-    message: `DevGlobe configured! API key saved, hooks installed in ${hooksPath}, codex_hooks feature enabled in config.toml. Restart Codex for hooks to take effect.`,
+    message: `DevGlobe configured! API key saved to ~/.devglobe/config.toml, hooks installed in ${hooksPath}, codex_hooks feature enabled in config.toml. Restart Codex for hooks to take effect.`,
   }));
 }
 
