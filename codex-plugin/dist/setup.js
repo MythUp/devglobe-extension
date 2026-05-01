@@ -28,55 +28,140 @@ var import_os = require("os");
 var import_path = require("path");
 
 // ../devglobe-core/src/config.ts
+var fs2 = __toESM(require("node:fs"), 1);
+var path2 = __toESM(require("node:path"), 1);
+var os = __toESM(require("node:os"), 1);
+
+// ../devglobe-core/src/logger.ts
 var fs = __toESM(require("node:fs"), 1);
 var path = __toESM(require("node:path"), 1);
-var os = __toESM(require("node:os"), 1);
+var LOG_FILE_NAME = "devglobe.log";
+var MAX_LOG_BYTES = 5 * 1024 * 1024;
+var TRUNCATE_KEEP_BYTES = 1 * 1024 * 1024;
+var Logger = class {
+  level = 0 /* Error */;
+  editor = "";
+  /**
+   * Enabled when the config has `debug = true` in `~/.devglobe/config.toml`.
+   * The editor tag is shown on every line so logs from multiple plugins
+   * sharing the same file stay readable.
+   */
+  configure(debugFromConfig, editor) {
+    this.level = debugFromConfig ? 2 /* Debug */ : 0 /* Error */;
+    if (editor) this.editor = editor;
+  }
+  setEditor(editor) {
+    this.editor = editor;
+  }
+  isEnabled() {
+    return this.level >= 2 /* Debug */;
+  }
+  error(...args) {
+    this.write("ERROR", args);
+  }
+  info(...args) {
+    if (this.level >= 1 /* Info */) this.write("INFO", args);
+  }
+  debug(...args) {
+    if (this.level >= 2 /* Debug */) this.write("DEBUG", args);
+  }
+  write(level, args) {
+    const timestamp = (/* @__PURE__ */ new Date()).toISOString();
+    const message = args.map(this.format).join(" ");
+    const tag = this.editor ? `[${this.editor}]` : "";
+    const line = `${timestamp} ${level} ${tag} ${message}
+`.replace(/  +/g, " ");
+    try {
+      const filePath = this.logPath();
+      const dir = path.dirname(filePath);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.appendFileSync(filePath, line, { mode: 384 });
+      this.maybeRotate(filePath);
+    } catch {
+    }
+  }
+  maybeRotate(filePath) {
+    try {
+      const stat = fs.statSync(filePath);
+      if (stat.size <= MAX_LOG_BYTES) return;
+      const fd = fs.openSync(filePath, "r");
+      const buf = Buffer.alloc(TRUNCATE_KEEP_BYTES);
+      fs.readSync(fd, buf, 0, TRUNCATE_KEEP_BYTES, stat.size - TRUNCATE_KEEP_BYTES);
+      fs.closeSync(fd);
+      fs.writeFileSync(filePath, buf, { mode: 384 });
+    } catch {
+    }
+  }
+  logPath() {
+    return path.join(devglobeDir(), LOG_FILE_NAME);
+  }
+  format(arg) {
+    if (typeof arg === "string") return arg;
+    if (arg instanceof Error) return `${arg.name}: ${arg.message}`;
+    try {
+      return JSON.stringify(arg);
+    } catch {
+      return String(arg);
+    }
+  }
+};
+var logger = new Logger();
+
+// ../devglobe-core/src/config.ts
 function defaultConfig() {
   return {
     apiKey: null,
+    debug: false,
     privacy: { hideFileNames: false, hideBranchNames: false, hideProjectNames: false }
   };
 }
 function devglobeDir() {
-  return path.join(os.homedir(), ".devglobe");
+  return path2.join(os.homedir(), ".devglobe");
 }
 function configPath() {
-  return path.join(devglobeDir(), "config.toml");
+  return path2.join(devglobeDir(), "config.toml");
 }
 function legacyApiKeyPath() {
-  return path.join(devglobeDir(), "api_key");
+  return path2.join(devglobeDir(), "api_key");
 }
 function loadConfig() {
   const cfgPath = configPath();
-  if (!fs.existsSync(cfgPath)) {
-    return migrateLegacyKey();
+  let cfg;
+  if (!fs2.existsSync(cfgPath)) {
+    cfg = migrateLegacyKey();
+  } else {
+    try {
+      cfg = parseToml(fs2.readFileSync(cfgPath, "utf-8"));
+    } catch {
+      cfg = defaultConfig();
+    }
   }
-  try {
-    return parseToml(fs.readFileSync(cfgPath, "utf-8"));
-  } catch {
-    return defaultConfig();
-  }
+  logger.configure(cfg.debug);
+  return cfg;
 }
 function saveConfig(cfg) {
   const dir = devglobeDir();
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(configPath(), stringifyToml(cfg), { mode: 384 });
+  if (!fs2.existsSync(dir)) fs2.mkdirSync(dir, { recursive: true });
+  fs2.writeFileSync(configPath(), stringifyToml(cfg), { mode: 384 });
 }
 function setApiKey(apiKey) {
   const cfg = loadConfig();
   cfg.apiKey = apiKey;
   saveConfig(cfg);
+  logger.info("api key saved to config.toml");
 }
 function migrateLegacyKey() {
   const legacyPath = legacyApiKeyPath();
-  if (!fs.existsSync(legacyPath)) return defaultConfig();
+  if (!fs2.existsSync(legacyPath)) return defaultConfig();
   try {
-    const key = fs.readFileSync(legacyPath, "utf-8").trim();
+    const key = fs2.readFileSync(legacyPath, "utf-8").trim();
     const cfg = defaultConfig();
     cfg.apiKey = key || null;
     saveConfig(cfg);
+    logger.info("migrated legacy ~/.devglobe/api_key to config.toml");
     return cfg;
-  } catch {
+  } catch (err) {
+    logger.error("failed to migrate legacy api_key", err);
     return defaultConfig();
   }
 }
@@ -102,6 +187,8 @@ function parseToml(content) {
     const value = parseTomlValue(line.slice(eqIdx + 1).trim());
     if (section === "" && key === "api_key" && typeof value === "string") {
       cfg.apiKey = value || null;
+    } else if (section === "" && key === "debug" && typeof value === "boolean") {
+      cfg.debug = value;
     } else if (section === "privacy" && typeof value === "boolean") {
       if (key === "hide_file_names") cfg.privacy.hideFileNames = value;
       else if (key === "hide_branch_names") cfg.privacy.hideBranchNames = value;
@@ -113,6 +200,7 @@ function parseToml(content) {
 function stringifyToml(cfg) {
   const lines = [];
   if (cfg.apiKey) lines.push(`api_key = "${cfg.apiKey}"`);
+  if (cfg.debug) lines.push(`debug = true`);
   lines.push("");
   lines.push("[privacy]");
   lines.push(`hide_file_names = ${cfg.privacy.hideFileNames}`);

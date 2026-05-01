@@ -31,23 +31,9 @@ var HEARTBEAT_ENDPOINT = `${API_BASE_URL}/api/v2/heartbeat`;
 var STATUS_ENDPOINT = `${API_BASE_URL}/api/v2/status`;
 var FETCH_TIMEOUT_MS = 15e3;
 
-// ../../../devglobe-core/src/heartbeat.ts
-async function sendStatus(apiKey, message) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  try {
-    const truncated = message.slice(0, 100);
-    const res = await fetch(STATUS_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: apiKey, message: truncated }),
-      signal: controller.signal
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  } finally {
-    clearTimeout(timer);
-  }
-}
+// ../../../devglobe-core/src/logger.ts
+var fs2 = __toESM(require("node:fs"), 1);
+var path2 = __toESM(require("node:path"), 1);
 
 // ../../../devglobe-core/src/config.ts
 var fs = __toESM(require("node:fs"), 1);
@@ -56,6 +42,7 @@ var os = __toESM(require("node:os"), 1);
 function defaultConfig() {
   return {
     apiKey: null,
+    debug: false,
     privacy: { hideFileNames: false, hideBranchNames: false, hideProjectNames: false }
   };
 }
@@ -70,14 +57,18 @@ function legacyApiKeyPath() {
 }
 function loadConfig() {
   const cfgPath = configPath();
+  let cfg;
   if (!fs.existsSync(cfgPath)) {
-    return migrateLegacyKey();
+    cfg = migrateLegacyKey();
+  } else {
+    try {
+      cfg = parseToml(fs.readFileSync(cfgPath, "utf-8"));
+    } catch {
+      cfg = defaultConfig();
+    }
   }
-  try {
-    return parseToml(fs.readFileSync(cfgPath, "utf-8"));
-  } catch {
-    return defaultConfig();
-  }
+  logger.configure(cfg.debug);
+  return cfg;
 }
 function saveConfig(cfg) {
   const dir = devglobeDir();
@@ -92,8 +83,10 @@ function migrateLegacyKey() {
     const cfg = defaultConfig();
     cfg.apiKey = key || null;
     saveConfig(cfg);
+    logger.info("migrated legacy ~/.devglobe/api_key to config.toml");
     return cfg;
-  } catch {
+  } catch (err) {
+    logger.error("failed to migrate legacy api_key", err);
     return defaultConfig();
   }
 }
@@ -119,6 +112,8 @@ function parseToml(content) {
     const value = parseTomlValue(line.slice(eqIdx + 1).trim());
     if (section === "" && key === "api_key" && typeof value === "string") {
       cfg.apiKey = value || null;
+    } else if (section === "" && key === "debug" && typeof value === "boolean") {
+      cfg.debug = value;
     } else if (section === "privacy" && typeof value === "boolean") {
       if (key === "hide_file_names") cfg.privacy.hideFileNames = value;
       else if (key === "hide_branch_names") cfg.privacy.hideBranchNames = value;
@@ -130,12 +125,117 @@ function parseToml(content) {
 function stringifyToml(cfg) {
   const lines = [];
   if (cfg.apiKey) lines.push(`api_key = "${cfg.apiKey}"`);
+  if (cfg.debug) lines.push(`debug = true`);
   lines.push("");
   lines.push("[privacy]");
   lines.push(`hide_file_names = ${cfg.privacy.hideFileNames}`);
   lines.push(`hide_branch_names = ${cfg.privacy.hideBranchNames}`);
   lines.push(`hide_project_names = ${cfg.privacy.hideProjectNames}`);
   return lines.join("\n") + "\n";
+}
+
+// ../../../devglobe-core/src/logger.ts
+var LOG_FILE_NAME = "devglobe.log";
+var MAX_LOG_BYTES = 5 * 1024 * 1024;
+var TRUNCATE_KEEP_BYTES = 1 * 1024 * 1024;
+var Logger = class {
+  level = 0 /* Error */;
+  editor = "";
+  /**
+   * Enabled when the config has `debug = true` in `~/.devglobe/config.toml`.
+   * The editor tag is shown on every line so logs from multiple plugins
+   * sharing the same file stay readable.
+   */
+  configure(debugFromConfig, editor) {
+    this.level = debugFromConfig ? 2 /* Debug */ : 0 /* Error */;
+    if (editor) this.editor = editor;
+  }
+  setEditor(editor) {
+    this.editor = editor;
+  }
+  isEnabled() {
+    return this.level >= 2 /* Debug */;
+  }
+  error(...args) {
+    this.write("ERROR", args);
+  }
+  info(...args) {
+    if (this.level >= 1 /* Info */) this.write("INFO", args);
+  }
+  debug(...args) {
+    if (this.level >= 2 /* Debug */) this.write("DEBUG", args);
+  }
+  write(level, args) {
+    const timestamp = (/* @__PURE__ */ new Date()).toISOString();
+    const message = args.map(this.format).join(" ");
+    const tag = this.editor ? `[${this.editor}]` : "";
+    const line = `${timestamp} ${level} ${tag} ${message}
+`.replace(/  +/g, " ");
+    try {
+      const filePath = this.logPath();
+      const dir = path2.dirname(filePath);
+      if (!fs2.existsSync(dir)) fs2.mkdirSync(dir, { recursive: true });
+      fs2.appendFileSync(filePath, line, { mode: 384 });
+      this.maybeRotate(filePath);
+    } catch {
+    }
+  }
+  maybeRotate(filePath) {
+    try {
+      const stat = fs2.statSync(filePath);
+      if (stat.size <= MAX_LOG_BYTES) return;
+      const fd = fs2.openSync(filePath, "r");
+      const buf = Buffer.alloc(TRUNCATE_KEEP_BYTES);
+      fs2.readSync(fd, buf, 0, TRUNCATE_KEEP_BYTES, stat.size - TRUNCATE_KEEP_BYTES);
+      fs2.closeSync(fd);
+      fs2.writeFileSync(filePath, buf, { mode: 384 });
+    } catch {
+    }
+  }
+  logPath() {
+    return path2.join(devglobeDir(), LOG_FILE_NAME);
+  }
+  format(arg) {
+    if (typeof arg === "string") return arg;
+    if (arg instanceof Error) return `${arg.name}: ${arg.message}`;
+    try {
+      return JSON.stringify(arg);
+    } catch {
+      return String(arg);
+    }
+  }
+};
+var logger = new Logger();
+
+// ../../../devglobe-core/src/heartbeat.ts
+async function sendStatus(apiKey, message) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const truncated = message.slice(0, 100);
+    logger.debug("status send", { length: truncated.length });
+    const res = await fetch(STATUS_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({ message: truncated }),
+      signal: controller.signal
+    });
+    if (!res.ok) {
+      logger.error(`status HTTP ${res.status}`);
+      throw new Error(`HTTP ${res.status}`);
+    }
+    logger.debug("status ok");
+  } catch (err) {
+    if (!(err instanceof Error && err.message.startsWith("HTTP "))) {
+      logger.error("status error", err);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // src/update-status.ts

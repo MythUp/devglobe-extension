@@ -1,6 +1,7 @@
 import { loadConfig } from './config.js';
 import { resolveRepoFields } from './git.js';
 import { sendBatch, sendStatus } from './heartbeat.js';
+import { logger } from './logger.js';
 import {
   KEEPALIVE_INTERVAL_MS,
   DEDUP_WINDOW_MS,
@@ -43,7 +44,9 @@ export class Tracker {
   init(pluginVersion: string, editor: string): void {
     this.pluginVersion = pluginVersion;
     this.editor = editor;
+    logger.setEditor(editor);
     const cfg = loadConfig();
+    logger.info(`tracker init pluginVersion=${pluginVersion} configured=${!!cfg.apiKey}`);
     this.emit({ event: 'ready', data: { configured: !!cfg.apiKey } });
     if (!cfg.apiKey) {
       this.emit({ event: 'not_configured' });
@@ -93,6 +96,7 @@ export class Tracker {
       this.currentFile = fields.file;
       this.currentRepo = fields.repo;
       this.currentBranch = fields.branch;
+      if (fileChanged) logger.debug('activity file', { file: fields.file, repo: fields.repo, branch: fields.branch });
     }
     if (language !== undefined) this.currentLanguage = language || undefined;
 
@@ -160,7 +164,6 @@ export class Tracker {
     if (this.pending.length === 0) return;
 
     const batch: HeartbeatBatch = {
-      key: cfg.apiKey,
       plugin_version: this.pluginVersion,
       editor: this.editor,
       platform: currentPlatform(),
@@ -168,11 +171,12 @@ export class Tracker {
     };
 
     try {
-      const resp = await sendBatch(batch);
+      const resp = await sendBatch(cfg.apiKey, batch);
       this.pending = [];
       this.consecutiveErrors = 0;
       if (this.offline) {
         this.offline = false;
+        logger.info('back online');
         this.emit({ event: 'online' });
       }
       if (resp.today_seconds !== undefined) {
@@ -182,11 +186,13 @@ export class Tracker {
           data: { today_seconds: resp.today_seconds, language: this.currentLanguage ?? null },
         });
       }
-    } catch {
+    } catch (err) {
       this.pending = [];
       this.consecutiveErrors++;
+      logger.error(`heartbeat tick failed (consecutive=${this.consecutiveErrors})`, err);
       if (this.consecutiveErrors >= OFFLINE_THRESHOLD && !this.offline) {
         this.offline = true;
+        logger.info('marking offline');
         this.emit({ event: 'offline' });
       }
     }

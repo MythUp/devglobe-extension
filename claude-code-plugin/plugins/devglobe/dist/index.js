@@ -26,54 +26,138 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 var import_fs = require("fs");
 
 // ../../../devglobe-core/src/oneshot.ts
-var fs2 = __toESM(require("node:fs"), 1);
-var path3 = __toESM(require("node:path"), 1);
+var fs3 = __toESM(require("node:fs"), 1);
+var path4 = __toESM(require("node:path"), 1);
 
 // ../../../devglobe-core/src/config.ts
+var fs2 = __toESM(require("node:fs"), 1);
+var path2 = __toESM(require("node:path"), 1);
+var os = __toESM(require("node:os"), 1);
+
+// ../../../devglobe-core/src/logger.ts
 var fs = __toESM(require("node:fs"), 1);
 var path = __toESM(require("node:path"), 1);
-var os = __toESM(require("node:os"), 1);
+var LOG_FILE_NAME = "devglobe.log";
+var MAX_LOG_BYTES = 5 * 1024 * 1024;
+var TRUNCATE_KEEP_BYTES = 1 * 1024 * 1024;
+var Logger = class {
+  level = 0 /* Error */;
+  editor = "";
+  /**
+   * Enabled when the config has `debug = true` in `~/.devglobe/config.toml`.
+   * The editor tag is shown on every line so logs from multiple plugins
+   * sharing the same file stay readable.
+   */
+  configure(debugFromConfig, editor) {
+    this.level = debugFromConfig ? 2 /* Debug */ : 0 /* Error */;
+    if (editor) this.editor = editor;
+  }
+  setEditor(editor) {
+    this.editor = editor;
+  }
+  isEnabled() {
+    return this.level >= 2 /* Debug */;
+  }
+  error(...args) {
+    this.write("ERROR", args);
+  }
+  info(...args) {
+    if (this.level >= 1 /* Info */) this.write("INFO", args);
+  }
+  debug(...args) {
+    if (this.level >= 2 /* Debug */) this.write("DEBUG", args);
+  }
+  write(level, args) {
+    const timestamp = (/* @__PURE__ */ new Date()).toISOString();
+    const message = args.map(this.format).join(" ");
+    const tag = this.editor ? `[${this.editor}]` : "";
+    const line = `${timestamp} ${level} ${tag} ${message}
+`.replace(/  +/g, " ");
+    try {
+      const filePath = this.logPath();
+      const dir = path.dirname(filePath);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.appendFileSync(filePath, line, { mode: 384 });
+      this.maybeRotate(filePath);
+    } catch {
+    }
+  }
+  maybeRotate(filePath) {
+    try {
+      const stat2 = fs.statSync(filePath);
+      if (stat2.size <= MAX_LOG_BYTES) return;
+      const fd = fs.openSync(filePath, "r");
+      const buf = Buffer.alloc(TRUNCATE_KEEP_BYTES);
+      fs.readSync(fd, buf, 0, TRUNCATE_KEEP_BYTES, stat2.size - TRUNCATE_KEEP_BYTES);
+      fs.closeSync(fd);
+      fs.writeFileSync(filePath, buf, { mode: 384 });
+    } catch {
+    }
+  }
+  logPath() {
+    return path.join(devglobeDir(), LOG_FILE_NAME);
+  }
+  format(arg) {
+    if (typeof arg === "string") return arg;
+    if (arg instanceof Error) return `${arg.name}: ${arg.message}`;
+    try {
+      return JSON.stringify(arg);
+    } catch {
+      return String(arg);
+    }
+  }
+};
+var logger = new Logger();
+
+// ../../../devglobe-core/src/config.ts
 function defaultConfig() {
   return {
     apiKey: null,
+    debug: false,
     privacy: { hideFileNames: false, hideBranchNames: false, hideProjectNames: false }
   };
 }
 function devglobeDir() {
-  return path.join(os.homedir(), ".devglobe");
+  return path2.join(os.homedir(), ".devglobe");
 }
 function configPath() {
-  return path.join(devglobeDir(), "config.toml");
+  return path2.join(devglobeDir(), "config.toml");
 }
 function legacyApiKeyPath() {
-  return path.join(devglobeDir(), "api_key");
+  return path2.join(devglobeDir(), "api_key");
 }
 function loadConfig() {
   const cfgPath = configPath();
-  if (!fs.existsSync(cfgPath)) {
-    return migrateLegacyKey();
+  let cfg;
+  if (!fs2.existsSync(cfgPath)) {
+    cfg = migrateLegacyKey();
+  } else {
+    try {
+      cfg = parseToml(fs2.readFileSync(cfgPath, "utf-8"));
+    } catch {
+      cfg = defaultConfig();
+    }
   }
-  try {
-    return parseToml(fs.readFileSync(cfgPath, "utf-8"));
-  } catch {
-    return defaultConfig();
-  }
+  logger.configure(cfg.debug);
+  return cfg;
 }
 function saveConfig(cfg) {
   const dir = devglobeDir();
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(configPath(), stringifyToml(cfg), { mode: 384 });
+  if (!fs2.existsSync(dir)) fs2.mkdirSync(dir, { recursive: true });
+  fs2.writeFileSync(configPath(), stringifyToml(cfg), { mode: 384 });
 }
 function migrateLegacyKey() {
   const legacyPath = legacyApiKeyPath();
-  if (!fs.existsSync(legacyPath)) return defaultConfig();
+  if (!fs2.existsSync(legacyPath)) return defaultConfig();
   try {
-    const key = fs.readFileSync(legacyPath, "utf-8").trim();
+    const key = fs2.readFileSync(legacyPath, "utf-8").trim();
     const cfg = defaultConfig();
     cfg.apiKey = key || null;
     saveConfig(cfg);
+    logger.info("migrated legacy ~/.devglobe/api_key to config.toml");
     return cfg;
-  } catch {
+  } catch (err) {
+    logger.error("failed to migrate legacy api_key", err);
     return defaultConfig();
   }
 }
@@ -99,6 +183,8 @@ function parseToml(content) {
     const value = parseTomlValue(line.slice(eqIdx + 1).trim());
     if (section === "" && key === "api_key" && typeof value === "string") {
       cfg.apiKey = value || null;
+    } else if (section === "" && key === "debug" && typeof value === "boolean") {
+      cfg.debug = value;
     } else if (section === "privacy" && typeof value === "boolean") {
       if (key === "hide_file_names") cfg.privacy.hideFileNames = value;
       else if (key === "hide_branch_names") cfg.privacy.hideBranchNames = value;
@@ -110,6 +196,7 @@ function parseToml(content) {
 function stringifyToml(cfg) {
   const lines = [];
   if (cfg.apiKey) lines.push(`api_key = "${cfg.apiKey}"`);
+  if (cfg.debug) lines.push(`debug = true`);
   lines.push("");
   lines.push("[privacy]");
   lines.push(`hide_file_names = ${cfg.privacy.hideFileNames}`);
@@ -120,7 +207,7 @@ function stringifyToml(cfg) {
 
 // ../../../devglobe-core/src/git.ts
 var fsp = __toESM(require("node:fs/promises"), 1);
-var path2 = __toESM(require("node:path"), 1);
+var path3 = __toESM(require("node:path"), 1);
 
 // ../../../devglobe-core/src/constants.ts
 var API_BASE_URL = "https://devglobe.xyz";
@@ -178,14 +265,14 @@ async function findGit(start) {
       const [branch, repo] = await Promise.all([readBranch(gitDir), readRepo(gitDir)]);
       return { repo, branch, root: dir };
     }
-    const parent = path2.dirname(dir);
+    const parent = path3.dirname(dir);
     if (parent === dir) break;
     dir = parent;
   }
   return NO_GIT;
 }
 async function resolveGitDir(dir) {
-  const gitPath = path2.join(dir, ".git");
+  const gitPath = path3.join(dir, ".git");
   const stat2 = await fsp.stat(gitPath).catch(() => null);
   if (!stat2) return null;
   if (stat2.isDirectory()) return gitPath;
@@ -194,11 +281,11 @@ async function resolveGitDir(dir) {
   const match = content.match(/^gitdir:\s*(.+)$/m);
   if (!match) return "not-a-repo";
   const target = match[1].trim();
-  return path2.isAbsolute(target) ? target : path2.resolve(dir, target);
+  return path3.isAbsolute(target) ? target : path3.resolve(dir, target);
 }
 async function readBranch(gitDir) {
   try {
-    const head = (await fsp.readFile(path2.join(gitDir, "HEAD"), "utf8")).trim();
+    const head = (await fsp.readFile(path3.join(gitDir, "HEAD"), "utf8")).trim();
     const refMatch = head.match(/^ref:\s*refs\/heads\/(.+)$/);
     return refMatch ? refMatch[1] : null;
   } catch {
@@ -216,13 +303,13 @@ async function readRepo(gitDir) {
 }
 async function resolveConfigPath(gitDir) {
   try {
-    const commondir = (await fsp.readFile(path2.join(gitDir, "commondir"), "utf8")).trim();
-    const resolved = path2.isAbsolute(commondir) ? commondir : path2.resolve(gitDir, commondir);
-    const altConfig = path2.join(resolved, "config");
+    const commondir = (await fsp.readFile(path3.join(gitDir, "commondir"), "utf8")).trim();
+    const resolved = path3.isAbsolute(commondir) ? commondir : path3.resolve(gitDir, commondir);
+    const altConfig = path3.join(resolved, "config");
     await fsp.access(altConfig);
     return altConfig;
   } catch {
-    return path2.join(gitDir, "config");
+    return path3.join(gitDir, "config");
   }
 }
 function parseOriginUrl(config) {
@@ -255,10 +342,10 @@ function canonicalizeRepoUrl(raw) {
   return null;
 }
 function relativeToRoot(filePath, repoRoot) {
-  const rel = path2.relative(repoRoot, filePath);
+  const rel = path3.relative(repoRoot, filePath);
   return rel.startsWith("..") ? filePath : rel;
 }
-async function resolveRepoFields(filePath, privacy, cwd = path2.dirname(filePath)) {
+async function resolveRepoFields(filePath, privacy, cwd = path3.dirname(filePath)) {
   const git = await detectGit(cwd);
   const fields = {};
   if (!privacy.hideProjectNames && git.repo) fields.repo = git.repo;
@@ -473,20 +560,37 @@ function langFromPath(filePath) {
 }
 
 // ../../../devglobe-core/src/heartbeat.ts
-async function sendBatch(batch) {
+async function sendBatch(apiKey, batch) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  const started = Date.now();
   try {
+    logger.debug("heartbeat send", {
+      events: batch.heartbeats.length,
+      editor: batch.editor,
+      first: batch.heartbeats[0]
+    });
     const res = await fetch(HEARTBEAT_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
       body: JSON.stringify(batch),
       signal: controller.signal
     });
     if (!res.ok) {
+      logger.error(`heartbeat HTTP ${res.status} (${Date.now() - started}ms)`);
       throw new Error(`HTTP ${res.status}`);
     }
-    return await res.json();
+    const body = await res.json();
+    logger.debug(`heartbeat ok (${Date.now() - started}ms)`, body);
+    return body;
+  } catch (err) {
+    if (!(err instanceof Error && err.message.startsWith("HTTP "))) {
+      logger.error("heartbeat error", err);
+    }
+    throw err;
   } finally {
     clearTimeout(timer);
   }
@@ -495,7 +599,9 @@ async function sendBatch(batch) {
 // ../../../devglobe-core/src/oneshot.ts
 async function runOneshot(params) {
   const cfg = loadConfig();
+  logger.setEditor(params.editor);
   if (!cfg.apiKey) {
+    logger.error("oneshot skipped: not configured");
     process.stderr.write("not configured \u2014 run: devglobe-core setup <API_KEY>\n");
     process.exit(1);
   }
@@ -506,6 +612,7 @@ async function runOneshot(params) {
   const langChanged = language !== void 0 && language !== state.lastLanguage;
   const rateLimited = state.lastHeartbeatAt !== void 0 && now - state.lastHeartbeatAt < ONESHOT_RATE_LIMIT_MS;
   if (!params.force && !fileChanged && !langChanged && rateLimited) {
+    logger.debug("oneshot rate-limited", { sinceLast: now - (state.lastHeartbeatAt ?? 0) });
     return;
   }
   const ev = { time: now / 1e3 };
@@ -516,32 +623,32 @@ async function runOneshot(params) {
     Object.assign(ev, await resolveRepoFromCwd(params.cwd, cfg.privacy));
   }
   const batch = {
-    key: cfg.apiKey,
     plugin_version: params.pluginVersion,
     editor: params.editor,
     platform: currentPlatform(),
     heartbeats: [ev]
   };
   try {
-    await sendBatch(batch);
+    await sendBatch(cfg.apiKey, batch);
     saveState({ lastHeartbeatAt: now, lastFile: params.file, lastLanguage: language });
-  } catch {
+  } catch (err) {
+    logger.error("oneshot send failed; state preserved for retry", err);
   }
 }
 function stateFile() {
-  return path3.join(devglobeDir(), "oneshot-state.json");
+  return path4.join(devglobeDir(), "oneshot-state.json");
 }
 function loadState() {
   try {
-    return JSON.parse(fs2.readFileSync(stateFile(), "utf-8"));
+    return JSON.parse(fs3.readFileSync(stateFile(), "utf-8"));
   } catch {
     return {};
   }
 }
 function saveState(state) {
   const dir = devglobeDir();
-  if (!fs2.existsSync(dir)) fs2.mkdirSync(dir, { recursive: true });
-  fs2.writeFileSync(stateFile(), JSON.stringify(state), { mode: 384 });
+  if (!fs3.existsSync(dir)) fs3.mkdirSync(dir, { recursive: true });
+  fs3.writeFileSync(stateFile(), JSON.stringify(state), { mode: 384 });
 }
 
 // src/types.ts

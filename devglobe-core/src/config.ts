@@ -1,9 +1,11 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
+import { logger } from './logger.js';
 
 export interface DevGlobeConfig {
   apiKey: string | null;
+  debug: boolean;
   privacy: {
     hideFileNames: boolean;
     hideBranchNames: boolean;
@@ -14,6 +16,7 @@ export interface DevGlobeConfig {
 function defaultConfig(): DevGlobeConfig {
   return {
     apiKey: null,
+    debug: false,
     privacy: { hideFileNames: false, hideBranchNames: false, hideProjectNames: false },
   };
 }
@@ -32,14 +35,18 @@ export function legacyApiKeyPath(): string {
 
 export function loadConfig(): DevGlobeConfig {
   const cfgPath = configPath();
+  let cfg: DevGlobeConfig;
   if (!fs.existsSync(cfgPath)) {
-    return migrateLegacyKey();
+    cfg = migrateLegacyKey();
+  } else {
+    try {
+      cfg = parseToml(fs.readFileSync(cfgPath, 'utf-8'));
+    } catch {
+      cfg = defaultConfig();
+    }
   }
-  try {
-    return parseToml(fs.readFileSync(cfgPath, 'utf-8'));
-  } catch {
-    return defaultConfig();
-  }
+  logger.configure(cfg.debug);
+  return cfg;
 }
 
 export function saveConfig(cfg: DevGlobeConfig): void {
@@ -52,6 +59,7 @@ export function setApiKey(apiKey: string): void {
   const cfg = loadConfig();
   cfg.apiKey = apiKey;
   saveConfig(cfg);
+  logger.info('api key saved to config.toml');
 }
 
 function migrateLegacyKey(): DevGlobeConfig {
@@ -62,8 +70,10 @@ function migrateLegacyKey(): DevGlobeConfig {
     const cfg = defaultConfig();
     cfg.apiKey = key || null;
     saveConfig(cfg);
+    logger.info('migrated legacy ~/.devglobe/api_key to config.toml');
     return cfg;
-  } catch {
+  } catch (err) {
+    logger.error('failed to migrate legacy api_key', err);
     return defaultConfig();
   }
 }
@@ -92,6 +102,8 @@ function parseToml(content: string): DevGlobeConfig {
 
     if (section === '' && key === 'api_key' && typeof value === 'string') {
       cfg.apiKey = value || null;
+    } else if (section === '' && key === 'debug' && typeof value === 'boolean') {
+      cfg.debug = value;
     } else if (section === 'privacy' && typeof value === 'boolean') {
       if (key === 'hide_file_names') cfg.privacy.hideFileNames = value;
       else if (key === 'hide_branch_names') cfg.privacy.hideBranchNames = value;
@@ -104,6 +116,7 @@ function parseToml(content: string): DevGlobeConfig {
 function stringifyToml(cfg: DevGlobeConfig): string {
   const lines: string[] = [];
   if (cfg.apiKey) lines.push(`api_key = "${cfg.apiKey}"`);
+  if (cfg.debug) lines.push(`debug = true`);
   lines.push('');
   lines.push('[privacy]');
   lines.push(`hide_file_names = ${cfg.privacy.hideFileNames}`);

@@ -46,7 +46,6 @@ export interface HeartbeatEvent {
 }
 
 export interface HeartbeatBatch {
-  key: string;
   plugin_version: string;
   editor: string;
   platform: string;

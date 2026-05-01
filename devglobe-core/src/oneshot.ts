@@ -4,6 +4,7 @@ import { loadConfig, devglobeDir } from './config.js';
 import { resolveRepoFields, resolveRepoFromCwd } from './git.js';
 import { langFromPath } from './language.js';
 import { sendBatch } from './heartbeat.js';
+import { logger } from './logger.js';
 import { ONESHOT_RATE_LIMIT_MS, currentPlatform } from './constants.js';
 import type { HeartbeatBatch, HeartbeatEvent } from './types.js';
 
@@ -24,7 +25,9 @@ interface OneshotState {
 
 export async function runOneshot(params: OneshotParams): Promise<void> {
   const cfg = loadConfig();
+  logger.setEditor(params.editor);
   if (!cfg.apiKey) {
+    logger.error('oneshot skipped: not configured');
     process.stderr.write('not configured — run: devglobe-core setup <API_KEY>\n');
     process.exit(1);
   }
@@ -42,6 +45,7 @@ export async function runOneshot(params: OneshotParams): Promise<void> {
   const rateLimited = state.lastHeartbeatAt !== undefined
     && now - state.lastHeartbeatAt < ONESHOT_RATE_LIMIT_MS;
   if (!params.force && !fileChanged && !langChanged && rateLimited) {
+    logger.debug('oneshot rate-limited', { sinceLast: now - (state.lastHeartbeatAt ?? 0) });
     return;
   }
 
@@ -54,7 +58,6 @@ export async function runOneshot(params: OneshotParams): Promise<void> {
   }
 
   const batch: HeartbeatBatch = {
-    key: cfg.apiKey,
     plugin_version: params.pluginVersion,
     editor: params.editor,
     platform: currentPlatform(),
@@ -62,10 +65,10 @@ export async function runOneshot(params: OneshotParams): Promise<void> {
   };
 
   try {
-    await sendBatch(batch);
+    await sendBatch(cfg.apiKey, batch);
     saveState({ lastHeartbeatAt: now, lastFile: params.file, lastLanguage: language });
-  } catch {
-    // Silent fail — state stays unchanged so the next call retries.
+  } catch (err) {
+    logger.error('oneshot send failed; state preserved for retry', err);
   }
 }
 
