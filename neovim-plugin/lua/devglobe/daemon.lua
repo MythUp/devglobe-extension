@@ -1,5 +1,7 @@
 local config = require("devglobe.config")
 
+local PLUGIN_VERSION = "2.0.0"
+
 local M = {}
 
 local state = {
@@ -11,9 +13,6 @@ local state = {
   tracking = false,
   coding_time = "0m",
   language = nil,
-  share_repo = false,
-  anonymous_mode = false,
-  status_message = "",
   offline = false,
   on_state_change = nil,
 }
@@ -24,9 +23,6 @@ function M.get_state()
     tracking = state.tracking,
     coding_time = state.coding_time,
     language = state.language,
-    share_repo = state.share_repo,
-    anonymous_mode = state.anonymous_mode,
-    status_message = state.status_message,
     offline = state.offline,
   }
 end
@@ -51,9 +47,6 @@ local function handle_message(raw)
     state.tracking = d.tracking or false
     state.coding_time = d.coding_time or "0m"
     state.language = (d.language ~= vim.NIL) and d.language or nil
-    state.share_repo = d.share_repo or false
-    state.anonymous_mode = d.anonymous_mode or false
-    state.status_message = (d.status_message ~= vim.NIL) and d.status_message or ""
     state.offline = d.offline or false
     if state.on_state_change then state.on_state_change(M.get_state()) end
   elseif msg.event == "heartbeat_ok" and type(msg.data) == "table" then
@@ -148,17 +141,12 @@ function M.start()
     end
   end)
 
-  local api_key = config.read_api_key()
-  if api_key then
-    local cfg = config.read_config()
+  if config.has_api_key() then
     send({
       method = "init",
       params = {
-        api_key = api_key,
+        plugin_version = PLUGIN_VERSION,
         editor = "neovim",
-        share_repo = cfg.shareRepo or false,
-        anonymous_mode = cfg.anonymousMode ~= false,
-        status_message = cfg.statusMessage or "",
       },
     })
   end
@@ -198,14 +186,6 @@ end
 function M.send_pause()
   if not state.handle then return end
   send({ method = "pause" })
-end
-
-function M.send_set_config(share_repo, anonymous_mode)
-  if not state.handle then return end
-  local params = {}
-  if share_repo ~= nil then params.share_repo = share_repo end
-  if anonymous_mode ~= nil then params.anonymous_mode = anonymous_mode end
-  send({ method = "set_config", params = params })
 end
 
 function M.send_set_status(message)

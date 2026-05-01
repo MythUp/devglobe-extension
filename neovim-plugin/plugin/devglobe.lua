@@ -8,7 +8,7 @@ vim.api.nvim_create_user_command("DevGlobe", function(opts)
 end, {
   nargs = "*",
   complete = function()
-    return { "setup", "status", "anonymous", "share-repo", "today", "open" }
+    return { "setup", "status", "today", "open", "debug", "log", "config" }
   end,
   desc = "DevGlobe activity tracker",
 })

@@ -61,6 +61,20 @@ Two views in the DevGlobe tool window:
 - **Login** — masked API key field + link to get your key on devglobe.xyz
 - **Dashboard** — live coding time, active language, status message, start/stop buttons, logout
 
+### Actions
+
+Available under **Tools → DevGlobe** (and via _Find Action_ `⇧⌘A` / `Ctrl+Shift+A`):
+
+| Action | Description |
+|---|---|
+| `Set Status Message` | Set your status message on the globe |
+| `Show Coding Time` | Show your coding time today |
+| `Open Panel` | Open the DevGlobe tool window |
+| `Open Globe` | Open [devglobe.xyz/space](https://devglobe.xyz/space) in your browser |
+| `Debug` | Toggle debug logging in `~/.devglobe/devglobe.log` |
+| `Open Log File…` | Open `~/.devglobe/devglobe.log` |
+| `Open Config File…` | Open `~/.devglobe/config.toml` |
+
 ---
 
 ## What DevGlobe brings you

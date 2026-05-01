@@ -32,13 +32,12 @@ function M.check()
     })
   end
 
-  local key = config.read_api_key()
-  if key then
-    vim.health.ok("API key configured (" .. key:sub(1, 12) .. "...)")
+  if config.has_api_key() then
+    vim.health.ok("API key configured (" .. config.config_path() .. ")")
   else
     vim.health.warn("No API key found", {
       "Run :DevGlobe setup YOUR_API_KEY",
-      "Or create ~/.devglobe/api_key",
+      "Get your key at https://devglobe.xyz/dashboard/settings",
     })
   end
 

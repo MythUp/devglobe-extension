@@ -50,16 +50,24 @@ Two views in the side panel:
 - **Login** — masked API key field + link to get your key on devglobe.xyz
 - **Dashboard** — live coding time, active language, status message, start/stop buttons, logout
 
-### Command
+### Commands
 
-`DevGlobe: Set Status Message` — accessible from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
+Accessible from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
+
+| Command | Description |
+|---------|-------------|
+| `DevGlobe: Set Status Message` | Set your status message on the globe |
+| `DevGlobe: Show Coding Time` | Show your coding time today |
+| `DevGlobe: Open Globe` | Open [devglobe.xyz/space](https://devglobe.xyz/space) in your browser |
+| `DevGlobe: Debug` | Toggle debug logging in `~/.devglobe/devglobe.log` |
+| `DevGlobe: Open Log File…` | Open `~/.devglobe/devglobe.log` |
+| `DevGlobe: Open Config File…` | Open `~/.devglobe/config.toml` |
 
 ### Settings
 
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `devglobe.trackingEnabled` | `true` | Enable/disable tracking |
-| `devglobe.statusMessage` | `""` | Your status message (max 100 characters) |
 
 ---
 

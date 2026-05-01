@@ -50,7 +50,7 @@ DevGlobe is a **free, open-source** platform for developer metrics, insights and
 
 The extension sends a heartbeat every 30 seconds while you code. Stop typing for 1 minute and heartbeats pause. After 10 minutes of inactivity, you disappear from the globe.
 
-For VS Code, JetBrains, and Claude Code, visibility settings (anonymous mode, repo sharing, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings). Other extensions still expose local toggles — see their sections below.
+For VS Code, JetBrains, Neovim, Claude Code, Codex, and OpenCode, visibility settings (anonymous mode, repo sharing, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings). Zed still exposes local toggles — see its section below.
 
 ---
 
@@ -179,18 +179,21 @@ devglobe-core is built automatically on install. Requires Node.js 18+.
 :DevGlobe setup devglobe_YOUR_KEY_HERE
 ```
 
-Or create `~/.devglobe/api_key` manually (same as Zed / Claude Code).
+Or create `~/.devglobe/config.toml` manually with `api_key = "..."`.
 
 #### Commands
 
-| Command                | Description                 |
-| ---------------------- | --------------------------- |
-| `:DevGlobe setup KEY`  | Configure your API key      |
-| `:DevGlobe status MSG` | Set your status message     |
-| `:DevGlobe anonymous`  | Toggle anonymous mode       |
-| `:DevGlobe share-repo` | Toggle repo sharing         |
-| `:DevGlobe today`      | Show your coding time today |
-| `:DevGlobe open`       | Open devglobe.xyz           |
+| Command                       | Description                            |
+| ----------------------------- | -------------------------------------- |
+| `:DevGlobe setup KEY`         | Configure your API key                 |
+| `:DevGlobe status MSG`        | Set your status message                |
+| `:DevGlobe today`             | Show your coding time today            |
+| `:DevGlobe open`              | Open the globe at devglobe.xyz/space   |
+| `:DevGlobe debug true\|false` | Toggle debug logging                   |
+| `:DevGlobe log`               | Open `~/.devglobe/devglobe.log`        |
+| `:DevGlobe config`            | Open `~/.devglobe/config.toml`         |
+
+Visibility settings (anonymous mode, repo sharing on the live globe, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
 
 #### Requirements
 
@@ -256,14 +259,14 @@ This saves your key, installs heartbeat hooks, and enables the `codex_hooks` fea
 
 #### Commands
 
-| Command                           | Description                                             |
-| --------------------------------- | ------------------------------------------------------- |
-| `$devglobe setup YOUR_API_KEY`    | Configure the skill with your API key and install hooks |
-| `$devglobe anonymous true/false`  | Enable or disable anonymous mode                        |
-| `$devglobe share-repo true/false` | Enable or disable repo sharing                          |
-| `$devglobe status MESSAGE`        | Set a status message on your DevGlobe profile           |
-| `$devglobe check`                 | Verify the installation                                 |
-| `$devglobe uninstall`             | Remove DevGlobe hooks from Codex                        |
+| Command                        | Description                                             |
+| ------------------------------ | ------------------------------------------------------- |
+| `$devglobe setup YOUR_API_KEY` | Configure the skill with your API key and install hooks |
+| `$devglobe status MESSAGE`     | Set a status message on your DevGlobe profile           |
+| `$devglobe check`              | Verify the installation                                 |
+| `$devglobe uninstall`          | Remove DevGlobe hooks from Codex                        |
+
+Visibility settings (anonymous mode, repo sharing on the live globe, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
 
 #### Requirements
 
@@ -300,13 +303,13 @@ Get your API key at [devglobe.xyz](https://devglobe.xyz) — sign in, then open 
 
 Just ask in natural language — the plugin registers tools that the AI agent calls on your behalf:
 
-| What you say                  | Tool                  | Description                           |
-| ----------------------------- | --------------------- | ------------------------------------- |
-| "setup devglobe with key X"   | `devglobe_setup`      | Configure API key and create settings |
-| "enable anonymous mode"       | `devglobe_anonymous`  | Toggle anonymous mode                 |
-| "share my repo on devglobe"   | `devglobe_share_repo` | Toggle repo sharing                   |
-| "set my devglobe status to X" | `devglobe_status`     | Set a status message on the globe     |
-| "check devglobe"              | `devglobe_check`      | Verify installation                   |
+| What you say                  | Tool              | Description                       |
+| ----------------------------- | ----------------- | --------------------------------- |
+| "setup devglobe with key X"   | `devglobe_setup`  | Configure API key                 |
+| "set my devglobe status to X" | `devglobe_status` | Set a status message on the globe |
+| "check devglobe"              | `devglobe_check`  | Verify installation               |
+
+Visibility settings (anonymous mode, repo sharing on the live globe, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
 
 #### Requirements
 
