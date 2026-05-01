@@ -29,6 +29,7 @@ export interface SetStatusParams {
 export type CoreEvent =
   | { event: 'ready'; data: { configured: boolean } }
   | { event: 'not_configured' }
+  | { event: 'invalid_api_key' }
   | { event: 'heartbeat_ok'; data: { today_seconds: number; language: string | null } }
   | { event: 'offline' }
   | { event: 'online' }

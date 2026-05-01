@@ -21,6 +21,7 @@ class CoreClient(private val binaryPath: String) : Disposable {
 
     var onReady: ((Boolean) -> Unit)? = null
     var onNotConfigured: (() -> Unit)? = null
+    var onInvalidApiKey: (() -> Unit)? = null
     var onHeartbeatOk: ((Int, String?) -> Unit)? = null
     var onOffline: (() -> Unit)? = null
     var onOnline: (() -> Unit)? = null
@@ -117,6 +118,7 @@ class CoreClient(private val binaryPath: String) : Disposable {
                         onReady?.invoke(configured)
                     }
                     "not_configured" -> onNotConfigured?.invoke()
+                    "invalid_api_key" -> onInvalidApiKey?.invoke()
                     "heartbeat_ok" -> {
                         val todaySeconds = data?.get("today_seconds")?.asInt ?: 0
                         val language = data?.get("language")?.takeIf { !it.isJsonNull }?.asString

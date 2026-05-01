@@ -561,6 +561,13 @@ function langFromPath(filePath) {
 }
 
 // ../devglobe-core/src/heartbeat.ts
+var InvalidApiKeyError = class extends Error {
+  code = "INVALID_API_KEY";
+  constructor() {
+    super("Invalid API key");
+    this.name = "InvalidApiKeyError";
+  }
+};
 async function sendBatch(apiKey, batch) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -580,6 +587,10 @@ async function sendBatch(apiKey, batch) {
       body: JSON.stringify(batch),
       signal: controller.signal
     });
+    if (res.status === 401) {
+      logger.error(`heartbeat rejected: invalid api key (${Date.now() - started}ms)`);
+      throw new InvalidApiKeyError();
+    }
     if (!res.ok) {
       logger.error(`heartbeat HTTP ${res.status} (${Date.now() - started}ms)`);
       throw new Error(`HTTP ${res.status}`);
@@ -588,6 +599,7 @@ async function sendBatch(apiKey, batch) {
     logger.debug(`heartbeat ok (${Date.now() - started}ms)`, body);
     return body;
   } catch (err) {
+    if (err instanceof InvalidApiKeyError) throw err;
     if (!(err instanceof Error && err.message.startsWith("HTTP "))) {
       logger.error("heartbeat error", err);
     }
@@ -633,6 +645,13 @@ async function runOneshot(params) {
     await sendBatch(cfg.apiKey, batch);
     saveState({ lastHeartbeatAt: now, lastFile: params.file, lastLanguage: language });
   } catch (err) {
+    if (err instanceof InvalidApiKeyError) {
+      logger.error("oneshot stopping: invalid api key \u2014 re-run setup with a valid key");
+      process.stderr.write(
+        "devglobe: invalid API key. Re-run setup with a valid key from https://devglobe.xyz/dashboard/settings\n"
+      );
+      return;
+    }
     logger.error("oneshot send failed; state preserved for retry", err);
   }
 }

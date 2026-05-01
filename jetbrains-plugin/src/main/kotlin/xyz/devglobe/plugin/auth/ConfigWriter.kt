@@ -14,7 +14,8 @@ object ConfigWriter {
     private val LOG = Logger.getInstance(ConfigWriter::class.java)
 
     private fun devglobeDir(): File = File(System.getProperty("user.home"), ".devglobe")
-    private fun configPath(): File = File(devglobeDir(), "config.toml")
+    fun configPath(): File = File(devglobeDir(), "config.toml")
+    fun logPath(): File = File(devglobeDir(), "devglobe.log")
 
     fun writeApiKey(apiKey: String) {
         try {
@@ -51,6 +52,58 @@ object ConfigWriter {
         } catch (e: Exception) {
             LOG.warn("Failed to read config.toml: ${e.message}")
             false
+        }
+    }
+
+    fun isDebugEnabled(): Boolean {
+        return try {
+            val configFile = configPath()
+            if (!configFile.exists()) return false
+            for (line in configFile.readText().split("\n")) {
+                val trimmed = line.trim()
+                if (trimmed.startsWith("[")) return false
+                val m = Regex("^debug\\s*=\\s*(true|false)").find(trimmed) ?: continue
+                return m.groupValues[1] == "true"
+            }
+            false
+        } catch (e: Exception) {
+            LOG.warn("Failed to read debug flag: ${e.message}")
+            false
+        }
+    }
+
+    fun setDebug(enabled: Boolean) {
+        try {
+            val dir = devglobeDir()
+            if (!dir.exists()) dir.mkdirs()
+
+            val configFile = configPath()
+            val original = if (configFile.exists()) configFile.readText().split("\n") else emptyList()
+            val lines = original.toMutableList()
+
+            // Find or remove existing root-level debug line.
+            var idx = -1
+            for ((i, line) in lines.withIndex()) {
+                val trimmed = line.trim()
+                if (trimmed.startsWith("[")) break
+                if (trimmed.startsWith("debug")) { idx = i; break }
+            }
+
+            when {
+                idx >= 0 && enabled -> lines[idx] = "debug = true"
+                idx >= 0 && !enabled -> lines.removeAt(idx)
+                idx < 0 && enabled -> {
+                    val apiKeyIdx = lines.indexOfFirst { it.trim().startsWith("api_key") }
+                    if (apiKeyIdx >= 0) lines.add(apiKeyIdx + 1, "debug = true")
+                    else lines.add(0, "debug = true")
+                }
+            }
+
+            val output = lines.joinToString("\n").replace(Regex("\n{3,}"), "\n\n")
+            configFile.writeText(if (output.endsWith("\n")) output else "$output\n")
+            setRestrictivePermissions(configFile)
+        } catch (e: Exception) {
+            LOG.warn("Failed to set debug flag: ${e.message}")
         }
     }
 

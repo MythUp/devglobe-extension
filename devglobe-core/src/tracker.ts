@@ -1,6 +1,6 @@
 import { loadConfig } from './config.js';
 import { resolveRepoFields } from './git.js';
-import { sendBatch, sendStatus } from './heartbeat.js';
+import { sendBatch, sendStatus, InvalidApiKeyError } from './heartbeat.js';
 import { logger } from './logger.js';
 import {
   KEEPALIVE_INTERVAL_MS,
@@ -120,6 +120,11 @@ export class Tracker {
       await sendStatus(cfg.apiKey, message);
       this.emit({ event: 'status_ok' });
     } catch (e) {
+      if (e instanceof InvalidApiKeyError) {
+        this.stopTimer();
+        this.emit({ event: 'invalid_api_key' });
+        return;
+      }
       this.emit({ event: 'status_error', data: { message: (e as Error).message } });
     }
   }
@@ -188,6 +193,12 @@ export class Tracker {
       }
     } catch (err) {
       this.pending = [];
+      if (err instanceof InvalidApiKeyError) {
+        logger.error('tracker stopping: invalid api key');
+        this.stopTimer();
+        this.emit({ event: 'invalid_api_key' });
+        return;
+      }
       this.consecutiveErrors++;
       logger.error(`heartbeat tick failed (consecutive=${this.consecutiveErrors})`, err);
       if (this.consecutiveErrors >= OFFLINE_THRESHOLD && !this.offline) {

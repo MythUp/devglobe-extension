@@ -124,6 +124,16 @@ class DevGlobeTracker : Disposable {
         client.onNotConfigured = {
             updateState { it.copy(configured = false, tracking = false) }
         }
+        client.onInvalidApiKey = {
+            LOG.warn("API key rejected by server (401), clearing local key")
+            ApiKeyStorage.clear()
+            ConfigWriter.clearApiKey()
+            updateState { it.copy(configured = false, tracking = false) }
+            notify(
+                "Invalid API key. Please reconnect with a valid key from devglobe.xyz/dashboard/settings.",
+                NotificationType.ERROR,
+            )
+        }
         client.onHeartbeatOk = { todaySeconds, language ->
             updateState {
                 it.copy(

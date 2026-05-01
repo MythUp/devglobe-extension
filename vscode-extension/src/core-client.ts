@@ -25,6 +25,7 @@ export const DEFAULT_STATE: TrackerState = {
 type CoreEvent =
     | { event: 'ready'; data: { configured: boolean } }
     | { event: 'not_configured' }
+    | { event: 'invalid_api_key' }
     | { event: 'heartbeat_ok'; data: { today_seconds: number; language: string | null } }
     | { event: 'offline' }
     | { event: 'online' }
@@ -108,6 +109,7 @@ export class CoreClient implements vscode.Disposable {
         private readonly context: vscode.ExtensionContext,
         private readonly onStateChange: (state: TrackerState) => void,
         private readonly pluginVersion: string,
+        private readonly onInvalidApiKey: () => void = () => {},
     ) {
         context.subscriptions.push(this);
     }
@@ -197,6 +199,21 @@ export class CoreClient implements vscode.Disposable {
                 this.state.configured = false;
                 this.state.tracking = false;
                 this.onStateChange(this.state);
+                break;
+
+            case 'invalid_api_key':
+                this.state.configured = false;
+                this.state.tracking = false;
+                this.onStateChange(this.state);
+                vscode.window.showErrorMessage(
+                    'DevGlobe: invalid API key. Please reconnect with a valid key.',
+                    'Get API key',
+                ).then((choice) => {
+                    if (choice === 'Get API key') {
+                        vscode.env.openExternal(vscode.Uri.parse('https://devglobe.xyz/dashboard/settings'));
+                    }
+                });
+                this.onInvalidApiKey();
                 break;
 
             case 'heartbeat_ok':

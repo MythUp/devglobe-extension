@@ -102,6 +102,19 @@
                 class="xyz.devglobe.plugin.actions.OpenGlobeAction"
                 text="Open Globe"
                 description="Open DevGlobe in your browser"/>
+            <separator/>
+            <action id="DevGlobe.ToggleDebug"
+                class="xyz.devglobe.plugin.actions.ToggleDebugAction"
+                text="Debug"
+                description="Toggle debug logging in ~/.devglobe/devglobe.log"/>
+            <action id="DevGlobe.OpenLogFile"
+                class="xyz.devglobe.plugin.actions.OpenLogFileAction"
+                text="Open Log File…"
+                description="Open ~/.devglobe/devglobe.log"/>
+            <action id="DevGlobe.OpenConfigFile"
+                class="xyz.devglobe.plugin.actions.OpenConfigFileAction"
+                text="Open Config File…"
+                description="Open ~/.devglobe/config.toml"/>
         </group>
     </actions>
 </idea-plugin>

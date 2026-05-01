@@ -208,6 +208,13 @@ var Logger = class {
 var logger = new Logger();
 
 // ../devglobe-core/src/heartbeat.ts
+var InvalidApiKeyError = class extends Error {
+  code = "INVALID_API_KEY";
+  constructor() {
+    super("Invalid API key");
+    this.name = "InvalidApiKeyError";
+  }
+};
 async function sendStatus(apiKey, message) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -223,12 +230,17 @@ async function sendStatus(apiKey, message) {
       body: JSON.stringify({ message: truncated }),
       signal: controller.signal
     });
+    if (res.status === 401) {
+      logger.error("status rejected: invalid api key");
+      throw new InvalidApiKeyError();
+    }
     if (!res.ok) {
       logger.error(`status HTTP ${res.status}`);
       throw new Error(`HTTP ${res.status}`);
     }
     logger.debug("status ok");
   } catch (err) {
+    if (err instanceof InvalidApiKeyError) throw err;
     if (!(err instanceof Error && err.message.startsWith("HTTP "))) {
       logger.error("status error", err);
     }

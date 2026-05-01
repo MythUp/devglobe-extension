@@ -77,8 +77,16 @@
         "title": "DevGlobe: Open Globe"
       },
       {
-        "command": "devglobe.openPanel",
-        "title": "DevGlobe: Open Panel"
+        "command": "devglobe.toggleDebug",
+        "title": "DevGlobe: Debug"
+      },
+      {
+        "command": "devglobe.openLogFile",
+        "title": "DevGlobe: Open Log File…"
+      },
+      {
+        "command": "devglobe.openConfigFile",
+        "title": "DevGlobe: Open Config File…"
       }
     ],
     "configuration": {

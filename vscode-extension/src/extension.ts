@@ -4,7 +4,14 @@ import * as path from 'path';
 import { initLogger, log } from './logger';
 import { CoreClient, mapLanguageId } from './core-client';
 import { DevGlobeSidebarProvider } from './sidebar';
-import { writeApiKey, clearApiKey } from './config-writer';
+import {
+    writeApiKey,
+    clearApiKey,
+    setDebug,
+    isDebugEnabled,
+    configPath,
+    logPath,
+} from './config-writer';
 
 const SECRET_API_KEY = 'devglobe.apiKey';
 
@@ -58,7 +65,18 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         )
     );
 
-    const client = new CoreClient(context, (state) => sidebar.updateState(state), pluginVersion);
+    const onInvalidApiKey = async (): Promise<void> => {
+        await context.secrets.delete(SECRET_API_KEY);
+        clearApiKey();
+        log.info('API key cleared after server rejected it (401)');
+    };
+
+    const client = new CoreClient(
+        context,
+        (state) => sidebar.updateState(state),
+        pluginVersion,
+        () => { void onInvalidApiKey(); },
+    );
     sidebar.setStateGetter(() => client.getState());
 
     sidebar.setMessageHandler(async (msg) => {
@@ -169,8 +187,44 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('devglobe.openPanel', () => {
-            vscode.commands.executeCommand('workbench.view.extension.devglobe-sidebar');
+        vscode.commands.registerCommand('devglobe.toggleDebug', async () => {
+            const current = isDebugEnabled();
+            const pick = await vscode.window.showQuickPick(['true', 'false'], {
+                title: 'DevGlobe Debug',
+                placeHolder: `current value: ${current}`,
+            });
+            if (pick === undefined) return;
+            const enabled = pick === 'true';
+            setDebug(enabled);
+            vscode.window.showInformationMessage(
+                `DevGlobe: debug ${enabled ? 'enabled' : 'disabled'}. Restart tracking to apply.`,
+            );
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('devglobe.openLogFile', async () => {
+            const p = logPath();
+            if (!fs.existsSync(p)) {
+                vscode.window.showInformationMessage(
+                    'DevGlobe: log file is empty. Enable debug first (DevGlobe: Debug → true).',
+                );
+                return;
+            }
+            await vscode.window.showTextDocument(vscode.Uri.file(p));
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('devglobe.openConfigFile', async () => {
+            const p = configPath();
+            if (!fs.existsSync(p)) {
+                vscode.window.showWarningMessage(
+                    'DevGlobe: no config file yet. Run setup first.',
+                );
+                return;
+            }
+            await vscode.window.showTextDocument(vscode.Uri.file(p));
         })
     );
 

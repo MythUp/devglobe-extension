@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { loadConfig, devglobeDir } from './config.js';
 import { resolveRepoFields, resolveRepoFromCwd } from './git.js';
 import { langFromPath } from './language.js';
-import { sendBatch } from './heartbeat.js';
+import { sendBatch, InvalidApiKeyError } from './heartbeat.js';
 import { logger } from './logger.js';
 import { ONESHOT_RATE_LIMIT_MS, currentPlatform } from './constants.js';
 import type { HeartbeatBatch, HeartbeatEvent } from './types.js';
@@ -68,6 +68,13 @@ export async function runOneshot(params: OneshotParams): Promise<void> {
     await sendBatch(cfg.apiKey, batch);
     saveState({ lastHeartbeatAt: now, lastFile: params.file, lastLanguage: language });
   } catch (err) {
+    if (err instanceof InvalidApiKeyError) {
+      logger.error('oneshot stopping: invalid api key — re-run setup with a valid key');
+      process.stderr.write(
+        'devglobe: invalid API key. Re-run setup with a valid key from https://devglobe.xyz/dashboard/settings\n',
+      );
+      return;
+    }
     logger.error('oneshot send failed; state preserved for retry', err);
   }
 }

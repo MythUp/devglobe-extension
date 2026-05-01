@@ -69,6 +69,16 @@ local function handle_message(raw)
   elseif msg.event == "online" then
     state.offline = false
     vim.schedule(function() vim.notify("[DevGlobe] Back online", vim.log.levels.INFO) end)
+  elseif msg.event == "invalid_api_key" then
+    state.connected = false
+    state.tracking = false
+    if state.on_state_change then state.on_state_change(M.get_state()) end
+    vim.schedule(function()
+      vim.notify(
+        "[DevGlobe] Invalid API key. Get a valid one at https://devglobe.xyz/dashboard/settings",
+        vim.log.levels.ERROR
+      )
+    end)
   end
 end
 
