@@ -104,7 +104,7 @@ Compatible with **all JetBrains IDEs**: IntelliJ IDEA, WebStorm, PyCharm, GoLand
 
 ### Zed
 
-> **Pending review for the Zed marketplace** ([PR #5237](https://github.com/zed-industries/extensions/pull/5237)). Install manually as a dev extension for now.
+> **Pending review for the Zed marketplace** ([PR #5841](https://github.com/zed-industries/extensions/pull/5841)). Install manually as a dev extension for now.
 
 #### Installation
 

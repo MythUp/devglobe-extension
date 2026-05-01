@@ -2,7 +2,7 @@
 
 Show your live coding presence on the [DevGlobe](https://devglobe.xyz) world map from Zed.
 
-> **Note:** This extension is pending review for the Zed marketplace ([PR #5237](https://github.com/zed-industries/extensions/pull/5237)). In the meantime, you can install it manually as a dev extension.
+> **Note:** This extension is pending review for the Zed marketplace ([PR #5841](https://github.com/zed-industries/extensions/pull/5841)). In the meantime, you can install it manually as a dev extension.
 
 ## Requirements
 
