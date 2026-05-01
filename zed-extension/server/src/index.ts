@@ -1,14 +1,11 @@
-import { readFileSync, writeFileSync, watch, existsSync, mkdirSync } from "fs";
-import { homedir } from "os";
-import { join, dirname } from "path";
+import { dirname } from "path";
 import { Tracker } from "../../../devglobe-core/src/tracker";
 import { langFromPath } from "../../../devglobe-core/src/language";
-import { updateStatusMessage } from "../../../devglobe-core/src/heartbeat";
-import type { CoreEvent, Config } from "../../../devglobe-core/src/types";
+import { sendStatus } from "../../../devglobe-core/src/heartbeat";
+import { loadConfig, setApiKey, configPath } from "../../../devglobe-core/src/config";
+import type { CoreEvent } from "../../../devglobe-core/src/types";
 
-const CONFIG_DIR = join(homedir(), ".devglobe");
-const API_KEY_PATH = join(CONFIG_DIR, "api_key");
-const CONFIG_PATH = join(CONFIG_DIR, "config.json");
+const PLUGIN_VERSION = "2.0.0";
 
 const mode = process.argv[2];
 if (mode === "lsp") {
@@ -16,7 +13,7 @@ if (mode === "lsp") {
 } else if (mode) {
   runSubcommand(mode, process.argv.slice(3));
 } else {
-  process.stderr.write("Usage: server.js <lsp|setup|anonymous|share-repo|status>\n");
+  process.stderr.write("Usage: server.js <lsp|setup|status>\n");
   process.exit(1);
 }
 
@@ -32,6 +29,12 @@ function startLsp(): void {
       const m = Math.floor((today_seconds % 3600) / 60);
       const time = h > 0 ? `${h}h ${m}m` : `${m}m`;
       log(`Heartbeat OK — ${language || "Unknown"} — ${time} today`);
+    } else if (event.event === "invalid_api_key") {
+      log("Invalid API key — tracking stopped. Run /devglobe-setup with a valid key.");
+    } else if (event.event === "offline") {
+      log("Offline — heartbeats will retry when connection is back");
+    } else if (event.event === "online") {
+      log("Back online");
     }
   });
 
@@ -39,27 +42,15 @@ function startLsp(): void {
 
   function ensureStarted(): void {
     if (started) return;
-    const apiKey = readApiKey();
-    if (!apiKey) return;
-    const config = readConfig();
-    tracker.init(apiKey, "zed", config.shareRepo, config.anonymousMode);
-    tracker.resume();
+    const cfg = loadConfig();
+    if (!cfg.apiKey) return;
+    tracker.init(PLUGIN_VERSION, "zed");
     started = true;
     log("Tracking started");
   }
 
-  // Watch config for changes
-  try {
-    watch(CONFIG_DIR, (_event, filename) => {
-      if (filename === "api_key" && !started) {
-        ensureStarted();
-      }
-      if (filename === "config.json") {
-        const config = readConfig();
-        tracker.setConfig(config.shareRepo, config.anonymousMode);
-      }
-    });
-  } catch { /* ~/.devglobe/ doesn't exist yet */ }
+  // Try to start on boot in case the key is already configured.
+  ensureStarted();
 
   const fileLangs = new Map<string, string>();
 
@@ -88,6 +79,19 @@ function startLsp(): void {
     process.stdout.write(`Content-Length: ${Buffer.byteLength(body)}\r\n\r\n${body}`);
   }
 
+  function recordActivity(uri: string, languageHint?: string): void {
+    if (!uri) return;
+    const filePath = uriToPath(uri);
+    const language =
+      capitalizeLanguageId(languageHint) ||
+      fileLangs.get(uri) ||
+      langFromPath(filePath) ||
+      undefined;
+    if (language) fileLangs.set(uri, language);
+    ensureStarted();
+    if (started) tracker.activity(filePath, language);
+  }
+
   function handleLspMessage(raw: string): void {
     let msg: { jsonrpc: string; id?: number; method?: string; params?: any };
     try { msg = JSON.parse(raw); } catch { return; }
@@ -105,7 +109,7 @@ function startLsp(): void {
                 save: { includeText: false },
               },
             },
-            serverInfo: { name: "devglobe-ls", version: "0.1.0" },
+            serverInfo: { name: "devglobe-ls", version: PLUGIN_VERSION },
           },
         });
         log("LSP initialized");
@@ -114,43 +118,17 @@ function startLsp(): void {
       case "initialized":
         break;
 
-      case "textDocument/didOpen": {
-        const uri = msg.params?.textDocument?.uri as string;
-        const languageId = msg.params?.textDocument?.languageId as string;
-        if (uri) {
-          const filePath = uriToPath(uri);
-          const cwd = dirname(filePath);
-          const language = capitalizeLanguageId(languageId) || langFromPath(filePath) || undefined;
-          if (language) fileLangs.set(uri, language);
-          ensureStarted();
-          tracker.recordActivity(filePath, cwd, language);
-        }
+      case "textDocument/didOpen":
+        recordActivity(msg.params?.textDocument?.uri, msg.params?.textDocument?.languageId);
         break;
-      }
 
-      case "textDocument/didChange": {
-        const uri = msg.params?.textDocument?.uri as string;
-        if (uri) {
-          const filePath = uriToPath(uri);
-          const cwd = dirname(filePath);
-          const language = fileLangs.get(uri) || langFromPath(filePath) || undefined;
-          ensureStarted();
-          tracker.recordActivity(filePath, cwd, language);
-        }
+      case "textDocument/didChange":
+        recordActivity(msg.params?.textDocument?.uri);
         break;
-      }
 
-      case "textDocument/didSave": {
-        const uri = msg.params?.textDocument?.uri as string;
-        if (uri) {
-          const filePath = uriToPath(uri);
-          const cwd = dirname(filePath);
-          const language = fileLangs.get(uri) || langFromPath(filePath) || undefined;
-          ensureStarted();
-          tracker.recordActivity(filePath, cwd, language);
-        }
+      case "textDocument/didSave":
+        recordActivity(msg.params?.textDocument?.uri);
         break;
-      }
 
       case "textDocument/didClose": {
         const uri = msg.params?.textDocument?.uri as string;
@@ -186,74 +164,48 @@ function runSubcommand(cmd: string, args: string[]): void {
   switch (cmd) {
     case "setup": {
       const key = args[0];
-      if (!key) {
-        console.log("Usage: /devglobe-setup YOUR_API_KEY\n\nGet your key at https://devglobe.xyz (profile settings).");
+      if (!key?.trim()) {
+        console.log(
+          "Usage: /devglobe-setup YOUR_API_KEY\n\n" +
+          "Get your key at https://devglobe.xyz/dashboard/settings",
+        );
         process.exit(1);
       }
-      mkdirSync(CONFIG_DIR, { recursive: true });
-      writeFileSync(API_KEY_PATH, key);
-      if (!existsSync(CONFIG_PATH)) {
-        writeFileSync(CONFIG_PATH, JSON.stringify({ shareRepo: false, anonymousMode: true }, null, 2));
-      }
-      const config = readConfig();
-      console.log(`Connected to DevGlobe!\n\nAPI key saved. You'll appear on the globe within 30 seconds.\n\nCurrent settings:\n- Anonymous mode: ${config.anonymousMode !== false}\n- Share repository: ${config.shareRepo === true}\n\nOther commands: /devglobe-status, /devglobe-anonymous, /devglobe-share-repo`);
-      break;
-    }
-    case "anonymous": {
-      const value = args[0];
-      if (value !== "true" && value !== "false") { console.log("Usage: /devglobe-anonymous true|false"); process.exit(1); }
-      const config = readConfig();
-      config.anonymousMode = value === "true";
-      writeConfig(config);
-      console.log(value === "true" ? "Anonymous mode enabled. You now appear on a random city in your country." : "Anonymous mode disabled. Your approximate location is shown.");
-      break;
-    }
-    case "share-repo": {
-      const value = args[0];
-      if (value !== "true" && value !== "false") { console.log("Usage: /devglobe-share-repo true|false"); process.exit(1); }
-      const config = readConfig();
-      config.shareRepo = value === "true";
-      writeConfig(config);
-      console.log(value === "true" ? "Repository sharing enabled. Your repo name is now visible on the globe." : "Repository sharing disabled. Your repo name is hidden.");
+      setApiKey(key.trim());
+      console.log(
+        `Connected to DevGlobe!\n\n` +
+        `API key saved to ${configPath()}.\n` +
+        `You'll appear on the globe within 30 seconds.\n\n` +
+        `Visibility settings (anonymous mode, repo sharing on the globe, profile mode) ` +
+        `are managed at https://devglobe.xyz/dashboard/settings\n\n` +
+        `Other commands: /devglobe-status MESSAGE`,
+      );
       break;
     }
     case "status": {
       const message = args.join(" ");
-      const apiKey = readApiKey();
-      if (!apiKey) { console.log("No API key found. Run /devglobe-setup YOUR_KEY first."); process.exit(1); }
-      updateStatusMessage(apiKey, message).then((ok) => {
-        console.log(ok ? (message ? `Status set to "${message}"` : "Status cleared.") : "Failed to update status. Check your API key.");
-        if (!ok) process.exit(1);
-      });
+      const cfg = loadConfig();
+      if (!cfg.apiKey) {
+        console.log("No API key found. Run /devglobe-setup YOUR_KEY first.");
+        process.exit(1);
+      }
+      sendStatus(cfg.apiKey, message)
+        .then(() => {
+          console.log(message ? `Status set to "${message}"` : "Status cleared.");
+        })
+        .catch((err) => {
+          console.log(`Failed to update status: ${err instanceof Error ? err.message : "unknown"}`);
+          process.exit(1);
+        });
       break;
     }
     default:
-      console.log("Unknown command. Available: setup, anonymous, share-repo, status");
+      console.log("Unknown command. Available: setup, status");
       process.exit(1);
   }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────
-
-function readApiKey(): string | null {
-  const envKey = process.env.DEVGLOBE_API_KEY;
-  if (envKey?.trim()) return envKey.trim();
-  try {
-    const key = readFileSync(API_KEY_PATH, "utf-8").trim();
-    if (key) return key;
-  } catch { /* not found */ }
-  return null;
-}
-
-function readConfig(): Config {
-  try { return JSON.parse(readFileSync(CONFIG_PATH, "utf-8")); }
-  catch { return {}; }
-}
-
-function writeConfig(config: Config): void {
-  mkdirSync(CONFIG_DIR, { recursive: true });
-  writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
-}
 
 function uriToPath(uri: string): string {
   try {

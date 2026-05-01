@@ -50,7 +50,7 @@ DevGlobe is a **free, open-source** platform for developer metrics, insights and
 
 The extension sends a heartbeat every 30 seconds while you code. Stop typing for 1 minute and heartbeats pause. After 10 minutes of inactivity, you disappear from the globe.
 
-For VS Code, JetBrains, Neovim, Claude Code, Codex, and OpenCode, visibility settings (anonymous mode, repo sharing, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings). Zed still exposes local toggles — see its section below.
+All extensions read your API key from `~/.devglobe/config.toml` and let you toggle local privacy flags (`hide_file_names`, `hide_branch_names`, `hide_project_names`) there. Globe-side visibility (anonymous mode, repo sharing, profile mode) is managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
 
 ---
 
@@ -127,20 +127,19 @@ In Zed: `Cmd+Shift+P` → "zed: install dev extension" → select the `zed-exten
 
 #### Setup
 
-**macOS / Linux:**
+Run the setup command from your terminal:
+
+```bash
+node /path/to/zed-extension/server/dist/server.js setup devglobe_YOUR_KEY_HERE
+```
+
+This writes your key to `~/.devglobe/config.toml` (mode `0600`). Or create the file manually:
 
 ```bash
 mkdir -p ~/.devglobe
-echo -n "devglobe_YOUR_KEY_HERE" > ~/.devglobe/api_key
-echo '{"shareRepo": false, "anonymousMode": true}' > ~/.devglobe/config.json
-```
-
-**Windows (PowerShell):**
-
-```powershell
-New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.devglobe"
-"devglobe_YOUR_KEY_HERE" | Out-File -NoNewline "$env:USERPROFILE\.devglobe\api_key"
-'{"shareRepo": false, "anonymousMode": true}' | Out-File "$env:USERPROFILE\.devglobe\config.json"
+cat > ~/.devglobe/config.toml <<'EOF'
+api_key = "devglobe_YOUR_KEY_HERE"
+EOF
 ```
 
 Open a project in Zed, trust the worktree when prompted, and start coding. You'll appear on the globe within 30 seconds.
