@@ -111,7 +111,7 @@ Compatible with **all JetBrains IDEs**: IntelliJ IDEA, WebStorm, PyCharm, GoLand
 **Option A — Standalone repo (no build required):**
 
 ```bash
-git clone https://github.com/CaadriFR/zed-devglobe.git
+git clone https://github.com/devglobe-xyz/zed-devglobe.git
 ```
 
 In Zed: `Cmd+Shift+P` → "zed: install dev extension" → select the `zed-devglobe/` folder.

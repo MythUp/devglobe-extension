@@ -16,7 +16,7 @@ Show your live coding presence on the [DevGlobe](https://devglobe.xyz) world map
 {
   "Nako0/devglobe-extension",
   event = "BufEnter",
-  build = "cd devglobe-core && npm install && npm run build",
+  build = "cd devglobe-core && npm ci && npm run build",
   config = function()
     vim.opt.rtp:append(vim.fn.stdpath("data") .. "/lazy/devglobe-extension/neovim-plugin")
     vim.cmd("runtime plugin/devglobe.lua")
@@ -31,7 +31,7 @@ Show your live coding presence on the [DevGlobe](https://devglobe.xyz) world map
 use {
   "Nako0/devglobe-extension",
   rtp = "neovim-plugin",
-  run = "cd devglobe-core && npm install && npm run build",
+  run = "cd devglobe-core && npm ci && npm run build",
   config = function() require("devglobe").setup() end,
 }
 ```
@@ -39,7 +39,7 @@ use {
 ### vim-plug
 
 ```vim
-Plug 'Nako0/devglobe-extension', { 'rtp': 'neovim-plugin', 'do': 'cd devglobe-core && npm install && npm run build' }
+Plug 'Nako0/devglobe-extension', { 'rtp': 'neovim-plugin', 'do': 'cd devglobe-core && npm ci && npm run build' }
 lua require("devglobe").setup()
 ```
 

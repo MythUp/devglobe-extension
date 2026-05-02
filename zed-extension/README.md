@@ -15,7 +15,7 @@ Show your live coding presence on the [DevGlobe](https://devglobe.xyz) world map
 ### Option A: From the standalone repo (no build required)
 
 ```bash
-git clone https://github.com/CaadriFR/zed-devglobe.git
+git clone https://github.com/devglobe-xyz/zed-devglobe.git
 ```
 
 Then in Zed: `Cmd+Shift+P` (macOS) or `Ctrl+Shift+P` (Linux) → "zed: install dev extension" → select the `zed-devglobe/` folder.
