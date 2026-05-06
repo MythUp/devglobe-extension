@@ -1,6 +1,9 @@
 import { runDaemon } from './daemon.js';
 import { runOneshot } from './oneshot.js';
+import { runLsp } from './lsp.js';
 import { setApiKey } from './config.js';
+
+const CORE_VERSION = '2.0.0';
 
 const args = process.argv.slice(2);
 const mode = args[0];
@@ -8,6 +11,10 @@ const mode = args[0];
 async function main(): Promise<void> {
   if (mode === 'daemon') {
     await runDaemon();
+    return;
+  }
+  if (mode === 'lsp') {
+    await runLsp(CORE_VERSION);
     return;
   }
   if (mode === 'setup' && args[1]) {
@@ -20,7 +27,7 @@ async function main(): Promise<void> {
     await runOneshot(params);
     return;
   }
-  process.stderr.write('Usage: devglobe-core <daemon|heartbeat|setup>\n');
+  process.stderr.write('Usage: devglobe-core <daemon|lsp|heartbeat|setup>\n');
   process.exit(1);
 }
 

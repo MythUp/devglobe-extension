@@ -108,7 +108,7 @@ Compatible with **all JetBrains IDEs**: IntelliJ IDEA, WebStorm, PyCharm, GoLand
 
 #### Installation
 
-**Option A — Standalone repo (no build required):**
+**Option A — Standalone repo (recommended):**
 
 ```bash
 git clone https://github.com/devglobe-xyz/zed-devglobe.git
@@ -116,24 +116,19 @@ git clone https://github.com/devglobe-xyz/zed-devglobe.git
 
 In Zed: `Cmd+Shift+P` → "zed: install dev extension" → select the `zed-devglobe/` folder.
 
-**Option B — From this repo (requires build):**
+**Option B — From this repo:**
 
 ```bash
-cd devglobe-core && npm install && npm run build
-cd ../zed-extension/server && npm install && npm run build
+git clone https://github.com/Nako0/devglobe-extension.git
 ```
 
 In Zed: `Cmd+Shift+P` → "zed: install dev extension" → select the `zed-extension/` folder.
 
+On first activation, the extension downloads the matching `devglobe-core` binary for your platform from [GitHub Releases](https://github.com/Nako0/devglobe-extension/releases) (one-time, ~60 MB).
+
 #### Setup
 
-Run the setup command from your terminal:
-
-```bash
-node /path/to/zed-extension/server/dist/server.js setup devglobe_YOUR_KEY_HERE
-```
-
-This writes your key to `~/.devglobe/config.toml` (mode `0600`). Or create the file manually:
+Create your config file:
 
 ```bash
 mkdir -p ~/.devglobe
@@ -146,7 +141,6 @@ Open a project in Zed, trust the worktree when prompted, and start coding. You'l
 
 #### Requirements
 
-- [Node.js](https://nodejs.org) 18+
 - Zed editor
 
 ---

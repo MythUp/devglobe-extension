@@ -7,12 +7,11 @@ Show your live coding presence on the [DevGlobe](https://devglobe.xyz) world map
 ## Requirements
 
 - [Zed](https://zed.dev) editor
-- [Node.js](https://nodejs.org) 18 or later
 - A DevGlobe API key from [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings)
 
 ## Installation
 
-### Option A: From the standalone repo (no build required)
+### Option A: From the standalone repo (recommended)
 
 ```bash
 git clone https://github.com/devglobe-xyz/zed-devglobe.git
@@ -20,15 +19,15 @@ git clone https://github.com/devglobe-xyz/zed-devglobe.git
 
 Then in Zed: `Cmd+Shift+P` (macOS) or `Ctrl+Shift+P` (Linux) → "zed: install dev extension" → select the `zed-devglobe/` folder.
 
-### Option B: From the main DevGlobe repo (requires build)
+### Option B: From the main DevGlobe repo
 
 ```bash
 git clone https://github.com/Nako0/devglobe-extension.git
-cd devglobe-extension/devglobe-core && npm install && npm run build
-cd ../zed-extension/server && npm install && npm run build
 ```
 
 Then in Zed: `Cmd+Shift+P` → "zed: install dev extension" → select the `zed-extension/` folder.
+
+On first activation, the extension downloads the matching `devglobe-core` binary for your platform from [GitHub Releases](https://github.com/Nako0/devglobe-extension/releases) (one-time, ~60 MB).
 
 ## Setup
 
@@ -38,15 +37,7 @@ Sign in on [devglobe.xyz](https://devglobe.xyz) with GitHub, X (Twitter), or Goo
 
 ### 2. Configure DevGlobe
 
-Run the setup command from your terminal:
-
-```bash
-node /path/to/zed-devglobe/server/dist/server.js setup devglobe_YOUR_KEY_HERE
-```
-
-This writes your key to `~/.devglobe/config.toml` (mode `0600`).
-
-Or create the file manually:
+Create your config file:
 
 ```bash
 mkdir -p ~/.devglobe
@@ -65,16 +56,9 @@ When you open a project, Zed may ask you to trust the worktree. Accept to allow 
 
 Open any code file and start editing. You'll appear on the globe within 30 seconds. The extension detects your language automatically.
 
-### Update status message
-
-```bash
-node /path/to/server/dist/server.js status "Working on my project"
-node /path/to/server/dist/server.js status ""  # clear
-```
-
 ## How it works
 
-The extension runs a lightweight Language Server (LSP) that receives file open/change/save events from Zed. It uses DevGlobe's shared core to send heartbeats every 30 seconds while you're actively coding. After 1 minute of inactivity, heartbeats pause automatically.
+The extension downloads the prebuilt `devglobe-core` binary on first activation, then runs it as a Language Server. The LSP receives file open/change/save events from Zed and sends heartbeats every 30 seconds while you're actively coding. After 1 minute of inactivity, heartbeats pause automatically.
 
 ## Supported languages
 
