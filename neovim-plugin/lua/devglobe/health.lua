@@ -37,7 +37,7 @@ function M.check()
   else
     vim.health.warn("No API key found", {
       "Run :DevGlobe setup YOUR_API_KEY",
-      "Get your key at https://devglobe.xyz/dashboard/settings",
+      "Get your key at https://devglobe.app/dashboard/settings",
     })
   end
 

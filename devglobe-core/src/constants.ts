@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'https://devglobe.xyz';
+export const API_BASE_URL = 'https://devglobe.app';
 export const HEARTBEAT_ENDPOINT = `${API_BASE_URL}/api/v2/heartbeat`;
 export const STATUS_ENDPOINT = `${API_BASE_URL}/api/v2/status`;
 

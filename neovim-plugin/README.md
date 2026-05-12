@@ -1,12 +1,12 @@
 # DevGlobe — NeoVim Plugin
 
-Show your live coding presence on the [DevGlobe](https://devglobe.xyz) world map from NeoVim.
+Show your live coding presence on the [DevGlobe](https://devglobe.app) world map from NeoVim.
 
 ## Requirements
 
 - NeoVim 0.9+
 - [Node.js](https://nodejs.org) 18+
-- A DevGlobe API key from [devglobe.xyz](https://devglobe.xyz)
+- A DevGlobe API key from [devglobe.app](https://devglobe.app)
 
 ## Installation
 
@@ -51,7 +51,7 @@ devglobe-core is built automatically on install and update. Requires Node.js 18+
 :DevGlobe setup devglobe_YOUR_KEY_HERE
 ```
 
-Get your API key at [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+Get your API key at [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).
 
 This saves your key to `~/.devglobe/config.toml` (mode `0600`).
 
@@ -66,7 +66,7 @@ api_key = "devglobe_YOUR_KEY_HERE"
 EOF
 ```
 
-Visibility settings (anonymous mode, repo sharing on the live globe, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+Visibility settings (anonymous mode, repo sharing on the live globe, profile mode) are managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).
 
 ## Commands
 
@@ -75,7 +75,7 @@ Visibility settings (anonymous mode, repo sharing on the live globe, profile mod
 | `:DevGlobe setup KEY` | Configure your API key |
 | `:DevGlobe status MSG` | Set your status message |
 | `:DevGlobe today` | Show your coding time today |
-| `:DevGlobe open` | Open the globe at devglobe.xyz/space |
+| `:DevGlobe open` | Open the globe at devglobe.app/space |
 | `:DevGlobe debug true\|false` | Toggle debug logging |
 | `:DevGlobe log` | Open `~/.devglobe/devglobe.log` |
 | `:DevGlobe config` | Open `~/.devglobe/config.toml` |
@@ -113,7 +113,7 @@ Verifies Node.js, devglobe-core, API key, and daemon status.
 
 ## How it Works
 
-The plugin spawns a `devglobe-core` daemon process that handles heartbeats, geolocation, git detection, and offline recovery. NeoVim communicates with the daemon via JSONL over stdin/stdout. Activity is detected through NeoVim autocommands (`BufEnter`, `TextChanged`, `BufWritePost`).
+The plugin spawns a `devglobe-core` daemon process that handles heartbeats, geolocation, and git detection. NeoVim communicates with the daemon via JSONL over stdin/stdout. Activity is detected through NeoVim autocommands (`BufEnter`, `TextChanged`, `BufWritePost`).
 
 Heartbeats are sent every 30 seconds while you're actively coding. After 1 minute of inactivity, heartbeats pause automatically.
 
@@ -125,4 +125,4 @@ Files outside any git repository are not tracked beyond their language. We never
 
 Local privacy flags can be toggled in `~/.devglobe/config.toml` under `[privacy]`: `hide_file_names`, `hide_branch_names`, `hide_project_names` (the project flag also hides branches).
 
-Globe-side visibility (anonymous mode, repo sharing on the live globe, profile mode) is managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+Globe-side visibility (anonymous mode, repo sharing on the live globe, profile mode) is managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).

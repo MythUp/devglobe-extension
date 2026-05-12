@@ -71,7 +71,7 @@ export async function runOneshot(params: OneshotParams): Promise<void> {
     if (err instanceof InvalidApiKeyError) {
       logger.error('oneshot stopping: invalid api key — re-run setup with a valid key');
       process.stderr.write(
-        'devglobe: invalid API key. Re-run setup with a valid key from https://devglobe.xyz/dashboard/settings\n',
+        'devglobe: invalid API key. Re-run setup with a valid key from https://devglobe.app/dashboard/settings\n',
       );
       return;
     }

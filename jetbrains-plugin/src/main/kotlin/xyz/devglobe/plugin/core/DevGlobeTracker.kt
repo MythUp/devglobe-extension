@@ -130,7 +130,7 @@ class DevGlobeTracker : Disposable {
             ConfigWriter.clearApiKey()
             updateState { it.copy(configured = false, tracking = false) }
             notify(
-                "Invalid API key. Please reconnect with a valid key from devglobe.xyz/dashboard/settings.",
+                "Invalid API key. Please reconnect with a valid key from devglobe.app/dashboard/settings.",
                 NotificationType.ERROR,
             )
         }

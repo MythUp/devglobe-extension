@@ -1,12 +1,12 @@
 # DevGlobe — Codex CLI Skill
 
-Track your Codex CLI activity on the [DevGlobe](https://devglobe.xyz) world map.
+Track your Codex CLI activity on the [DevGlobe](https://devglobe.app) world map.
 
 ## Prerequisites
 
 - [Codex CLI](https://github.com/openai/codex) installed
 - [Node.js](https://nodejs.org) (v18+)
-- A DevGlobe account (sign in at [devglobe.xyz](https://devglobe.xyz) with GitHub, X (Twitter), or Google)
+- A DevGlobe account (sign in at [devglobe.app](https://devglobe.app) with GitHub, X (Twitter), or Google)
 
 ## Install
 
@@ -44,7 +44,7 @@ Once restarted, configure the skill directly from Codex:
 $devglobe setup YOUR_API_KEY
 ```
 
-Get your API key at [devglobe.xyz](https://devglobe.xyz) — sign in, then open your **profile settings**.
+Get your API key at [devglobe.app](https://devglobe.app) — sign in, then open your **profile settings**.
 
 This command:
 1. Saves your key to `~/.devglobe/config.toml` (mode `0600`)
@@ -53,7 +53,7 @@ This command:
 
 > After setup, restart Codex one more time for hooks to take effect.
 
-Visibility settings (anonymous mode, repo sharing on the globe, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+Visibility settings (anonymous mode, repo sharing on the globe, profile mode) are managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).
 
 ### Status message
 
@@ -99,7 +99,7 @@ The skill hooks into Codex lifecycle events (`SessionStart`, `UserPromptSubmit`,
 - The programming language from file paths mentioned in your prompts or recently modified files in your project
 - Your git repository (origin URL, branch, and the current file relative to the repo root)
 
-Your coding session then appears live on the [DevGlobe map](https://devglobe.xyz) with the editor shown as `codex`.
+Your coding session then appears live on the [DevGlobe map](https://devglobe.app) with the editor shown as `codex`.
 
 > **Note:** Codex hooks require the `codex_hooks` feature flag (enabled automatically by `$devglobe setup`). This feature is marked as under development by OpenAI.
 
@@ -120,10 +120,10 @@ Files outside any git repository are not tracked beyond their language. We never
 
 Local privacy flags can be toggled in `~/.devglobe/config.toml` under `[privacy]`: `hide_file_names`, `hide_branch_names`, `hide_project_names` (the project flag also hides branches).
 
-Globe-side visibility (anonymous mode, repo sharing on the live globe, profile mode) is managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+Globe-side visibility (anonymous mode, repo sharing on the live globe, profile mode) is managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).
 
 ## Support
 
-- Website: [devglobe.xyz](https://devglobe.xyz)
-- Contact: [contact@devglobe.xyz](mailto:contact@devglobe.xyz)
+- Website: [devglobe.app](https://devglobe.app)
+- Contact: [contact@devglobe.app](mailto:contact@devglobe.app)
 - Issues: [GitHub Issues](https://github.com/Nako0/devglobe-extension/issues)

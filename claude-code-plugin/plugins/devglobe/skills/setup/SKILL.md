@@ -17,8 +17,8 @@ Configure the DevGlobe plugin. User arguments: $ARGUMENTS
 
 If no API key is provided:
 - Usage: `/devglobe:setup YOUR_API_KEY`
-- Get your API key at https://devglobe.xyz (profile settings)
-- Contact: contact@devglobe.xyz
+- Get your API key at https://devglobe.app (profile settings)
+- Contact: contact@devglobe.app
 
 ## Steps
 
@@ -32,5 +32,5 @@ The script writes `api_key = "..."` to `~/.devglobe/config.toml` (mode `0600`), 
 
 ## Output
 
-Confirm the API key was saved. Mention they're now live on https://devglobe.xyz.
-Mention `/devglobe:status MESSAGE` for setting a status message, and that visibility settings (anonymous mode, repo sharing, profile mode) are managed at https://devglobe.xyz/dashboard/settings.
+Confirm the API key was saved. Mention they're now live on https://devglobe.app.
+Mention `/devglobe:status MESSAGE` for setting a status message, and that visibility settings (anonymous mode, repo sharing, profile mode) are managed at https://devglobe.app/dashboard/settings.

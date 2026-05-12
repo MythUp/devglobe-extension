@@ -2,12 +2,12 @@
 
 <p align="center">
   <strong>Show up on a 3D globe in real time while you code.</strong><br/>
-  Your activity is displayed live on <a href="https://devglobe.xyz">devglobe.xyz</a> — other developers see you, discover your projects and your links.
+  Your activity is displayed live on <a href="https://devglobe.app">devglobe.app</a> — other developers see you, discover your projects and your links.
 </p>
 
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=devglobe.devglobe">VS Code Marketplace</a> &nbsp;·&nbsp;
-  <a href="https://devglobe.xyz">devglobe.xyz</a> &nbsp;·&nbsp;
+  <a href="https://devglobe.app">devglobe.app</a> &nbsp;·&nbsp;
   <a href="https://github.com/Nako0/devglobe-extension">Source code</a>
 </p>
 
@@ -19,7 +19,7 @@
 
 ## How it works
 
-1. Sign in on [devglobe.xyz](https://devglobe.xyz) with GitHub, X (Twitter), or Google
+1. Sign in on [devglobe.app](https://devglobe.app) with GitHub, X (Twitter), or Google
 2. Copy your API key from the site settings
 3. Open the **DevGlobe** sidebar in VS Code (globe icon in the activity bar)
 4. Paste your API key → **Connect**
@@ -27,7 +27,7 @@
 
 The extension sends a **heartbeat every 30 seconds** as long as you're actively coding. It pauses after 1 minute of inactivity. **After 10 minutes of inactivity, you disappear from the globe.**
 
-Visibility settings (anonymous mode, repo sharing, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+Visibility settings (anonymous mode, repo sharing, profile mode) are managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).
 
 ---
 
@@ -40,14 +40,13 @@ Visibility settings (anonymous mode, repo sharing, profile mode) are managed on 
 | **Platform detection** | Sends your OS (macOS, Windows or Linux) alongside each heartbeat so it appears on your profile. |
 | **Git integration** | Detects your repo from the git remote. Commit data is never read or sent by the extension. |
 | **Status message** | Write what you're working on — visible on your globe profile. |
-| **Offline recovery** | Detects connection loss and automatically resumes when the network is back. |
 | **Status bar** | Displays your coding time for today (e.g. `2h 15m`) in the VS Code status bar. |
 
 ### Sidebar
 
 Two views in the side panel:
 
-- **Login** — masked API key field + link to get your key on devglobe.xyz
+- **Login** — masked API key field + link to get your key on devglobe.app
 - **Dashboard** — live coding time, active language, status message, start/stop buttons, logout
 
 ### Commands
@@ -58,7 +57,7 @@ Accessible from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
 |---------|-------------|
 | `DevGlobe: Set Status Message` | Set your status message on the globe |
 | `DevGlobe: Show Coding Time` | Show your coding time today |
-| `DevGlobe: Open Globe` | Open [devglobe.xyz/space](https://devglobe.xyz/space) in your browser |
+| `DevGlobe: Open Globe` | Open [devglobe.app/space](https://devglobe.app/space) in your browser |
 | `DevGlobe: Debug` | Toggle debug logging in `~/.devglobe/devglobe.log` |
 | `DevGlobe: Open Log File…` | Open `~/.devglobe/devglobe.log` |
 | `DevGlobe: Open Config File…` | Open `~/.devglobe/config.toml` |
@@ -91,7 +90,7 @@ Files outside any git repository are not tracked beyond their language. We never
 
 Local privacy flags can be toggled in `~/.devglobe/config.toml` under `[privacy]`: `hide_file_names`, `hide_branch_names`, `hide_project_names` (the project flag also hides branches).
 
-Globe-side visibility (anonymous mode, repo sharing on the live globe, profile mode) is managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+Globe-side visibility (anonymous mode, repo sharing on the live globe, profile mode) is managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).
 
 API keys are stored in the OS keychain via VS Code SecretStorage (macOS Keychain, Windows Credential Manager, Linux libsecret) — never in plain text.
 
@@ -108,11 +107,11 @@ API keys are stored in the OS keychain via VS Code SecretStorage (macOS Keychain
 
 ## Links
 
-- [devglobe.xyz/space](https://devglobe.xyz/space) — the globe
+- [devglobe.app/space](https://devglobe.app/space) — the globe
 - [Source code](https://github.com/Nako0/devglobe-extension) — public GitHub repo
 
 ---
 
 <p align="center">
-  <a href="https://devglobe.xyz">devglobe.xyz</a>
+  <a href="https://devglobe.app">devglobe.app</a>
 </p>

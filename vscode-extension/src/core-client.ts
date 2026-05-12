@@ -210,7 +210,7 @@ export class CoreClient implements vscode.Disposable {
                     'Get API key',
                 ).then((choice) => {
                     if (choice === 'Get API key') {
-                        vscode.env.openExternal(vscode.Uri.parse('https://devglobe.xyz/dashboard/settings'));
+                        vscode.env.openExternal(vscode.Uri.parse('https://devglobe.app/dashboard/settings'));
                     }
                 });
                 this.onInvalidApiKey();

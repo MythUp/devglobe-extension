@@ -54,9 +54,9 @@ Defaults are all `false`. Filtering happens locally before the request is built 
 
 ---
 
-## Globe-side visibility (managed on devglobe.xyz)
+## Globe-side visibility (managed on devglobe.app)
 
-The dashboard at [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings) controls what other users see on the public globe and on your profile:
+The dashboard at [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings) controls what other users see on the public globe and on your profile:
 
 - **Profile mode** — `normal`, `anonymous` (city-only, no exact coordinates), or `private` (no live presence on the globe)
 - **Repo sharing** — whether your current repo URL is broadcast to the live globe and shown on your profile
@@ -88,7 +88,7 @@ If your profile is set to `anonymous`, the server stores no precise coordinates 
 - **HTTPS only** (TLS 1.2+) — no HTTP fallback
 - The VS Code webview uses a **Content Security Policy** with a per-render nonce
 - **No telemetry**, no third-party analytics
-- All endpoints live under `https://devglobe.xyz`
+- All endpoints live under `https://devglobe.app`
 
 ---
 
@@ -130,4 +130,4 @@ Each `heartbeats[i]` represents the editor state at `time` going forward; the se
 
 - **Live presence**: a heartbeat keeps you on the globe for 10 minutes; older session rows are pruned.
 - **Coding time**: per-day, per-(language, editor, platform, repo, branch, file) buckets, retained for your dashboard, stats, streaks and badges.
-- **Account data**: kept until you delete your account on [devglobe.xyz](https://devglobe.xyz), then permanently erased.
+- **Account data**: kept until you delete your account on [devglobe.app](https://devglobe.app), then permanently erased.

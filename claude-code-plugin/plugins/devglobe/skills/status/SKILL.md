@@ -23,7 +23,7 @@ echo '{"message":"<MESSAGE>"}' | node "${CLAUDE_PLUGIN_ROOT}/dist/update-status.
 
 Escape JSON special characters in the message before substitution.
 
-If the script returns `{"error":"not configured — run /devglobe:setup first"}`, tell the user to run `/devglobe:setup YOUR_API_KEY` first (key available at https://devglobe.xyz).
+If the script returns `{"error":"not configured — run /devglobe:setup first"}`, tell the user to run `/devglobe:setup YOUR_API_KEY` first (key available at https://devglobe.app).
 
 ## Output
 

@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>Show up on a 3D globe in real time while you code.</strong><br/>
-  Official extensions for <a href="https://devglobe.xyz">devglobe.xyz</a>
+  Official extensions for <a href="https://devglobe.app">devglobe.app</a>
 </p>
 
 <p align="center">
@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-  <a href="https://devglobe.xyz">
+  <a href="https://devglobe.app">
     <img src="assets/europe.png" alt="DevGlobe — developers coding live on a 3D globe" width="800" />
   </a>
 </p>
@@ -41,7 +41,7 @@ DevGlobe is a **free, open-source** platform for developer metrics, insights and
 ## Quick Start
 
 ```
-1. Sign in on devglobe.xyz with GitHub, X (Twitter), or Google
+1. Sign in on devglobe.app with GitHub, X (Twitter), or Google
 2. Copy your API key from the profile settings
 3. Install the extension in your IDE and paste the key
 ```
@@ -50,7 +50,7 @@ DevGlobe is a **free, open-source** platform for developer metrics, insights and
 
 The extension sends a heartbeat every 30 seconds while you code. Stop typing for 1 minute and heartbeats pause. After 10 minutes of inactivity, you disappear from the globe.
 
-All extensions read your API key from `~/.devglobe/config.toml` and let you toggle local privacy flags (`hide_file_names`, `hide_branch_names`, `hide_project_names`) there. Globe-side visibility (anonymous mode, repo sharing, profile mode) is managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+All extensions read your API key from `~/.devglobe/config.toml` and let you toggle local privacy flags (`hide_file_names`, `hide_branch_names`, `hide_project_names`) there. Globe-side visibility (anonymous mode, repo sharing, profile mode) is managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).
 
 ---
 
@@ -66,7 +66,7 @@ All extensions read your API key from `~/.devglobe/config.toml` and let you togg
 
 #### Sidebar
 
-- **Login** — masked API key field + link to get your key on devglobe.xyz
+- **Login** — masked API key field + link to get your key on devglobe.app
 - **Dashboard** — live coding time, active language, status message, start/stop tracking, disconnect
 
 #### Commands
@@ -181,12 +181,12 @@ Or create `~/.devglobe/config.toml` manually with `api_key = "..."`.
 | `:DevGlobe setup KEY`         | Configure your API key                 |
 | `:DevGlobe status MSG`        | Set your status message                |
 | `:DevGlobe today`             | Show your coding time today            |
-| `:DevGlobe open`              | Open the globe at devglobe.xyz/space   |
+| `:DevGlobe open`              | Open the globe at devglobe.app/space   |
 | `:DevGlobe debug true\|false` | Toggle debug logging                   |
 | `:DevGlobe log`               | Open `~/.devglobe/devglobe.log`        |
 | `:DevGlobe config`            | Open `~/.devglobe/config.toml`         |
 
-Visibility settings (anonymous mode, repo sharing on the live globe, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+Visibility settings (anonymous mode, repo sharing on the live globe, profile mode) are managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).
 
 #### Requirements
 
@@ -217,7 +217,7 @@ After installing, **restart Claude Code** (`/exit`, then reopen) so the plugin a
 /devglobe:setup YOUR_API_KEY
 ```
 
-Get your API key at [devglobe.xyz](https://devglobe.xyz) — sign in, then open your **profile settings**.
+Get your API key at [devglobe.app](https://devglobe.app) — sign in, then open your **profile settings**.
 
 #### Commands
 
@@ -246,7 +246,7 @@ After installing, **restart Codex** so the skill and its hooks are loaded.
 $devglobe setup YOUR_API_KEY
 ```
 
-Get your API key at [devglobe.xyz](https://devglobe.xyz) — sign in, then open your **profile settings**.
+Get your API key at [devglobe.app](https://devglobe.app) — sign in, then open your **profile settings**.
 
 This saves your key, installs heartbeat hooks, and enables the `codex_hooks` feature flag.
 
@@ -259,7 +259,7 @@ This saves your key, installs heartbeat hooks, and enables the `codex_hooks` fea
 | `$devglobe check`              | Verify the installation                                 |
 | `$devglobe uninstall`          | Remove DevGlobe hooks from Codex                        |
 
-Visibility settings (anonymous mode, repo sharing on the live globe, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+Visibility settings (anonymous mode, repo sharing on the live globe, profile mode) are managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).
 
 #### Requirements
 
@@ -290,7 +290,7 @@ Restart OpenCode and ask:
 setup devglobe with my key YOUR_API_KEY
 ```
 
-Get your API key at [devglobe.xyz](https://devglobe.xyz) — sign in, then open your **profile settings**.
+Get your API key at [devglobe.app](https://devglobe.app) — sign in, then open your **profile settings**.
 
 #### Commands
 
@@ -302,7 +302,7 @@ Just ask in natural language — the plugin registers tools that the AI agent ca
 | "set my devglobe status to X" | `devglobe_status` | Set a status message on the globe |
 | "check devglobe"              | `devglobe_check`  | Verify installation               |
 
-Visibility settings (anonymous mode, repo sharing on the live globe, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+Visibility settings (anonymous mode, repo sharing on the live globe, profile mode) are managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).
 
 #### Requirements
 
@@ -341,7 +341,7 @@ hide_branch_names = false     # omit the branch field
 hide_project_names = false    # omit repo + branch (project-level hiding implies branch hiding)
 ```
 
-**Globe visibility** (anonymous mode, repo sharing on the live globe, profile mode) is managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings) — not in the extension.
+**Globe visibility** (anonymous mode, repo sharing on the live globe, profile mode) is managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings) — not in the extension.
 
 **API keys** are stored in your OS keychain (VS Code SecretStorage, JetBrains PasswordSafe) or in a local config file under `~/.devglobe/` (Zed, NeoVim, Claude Code, Codex, OpenCode). Config files are created with `0600` permissions.
 
@@ -368,4 +368,4 @@ MIT
 
 ---
 
-**[devglobe.xyz](https://devglobe.xyz)**
+**[devglobe.app](https://devglobe.app)**

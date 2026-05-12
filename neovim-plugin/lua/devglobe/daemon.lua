@@ -68,7 +68,7 @@ local function handle_message(raw)
     if state.on_state_change then state.on_state_change(M.get_state()) end
     vim.schedule(function()
       vim.notify(
-        "[DevGlobe] Invalid API key. Get a valid one at https://devglobe.xyz/dashboard/settings",
+        "[DevGlobe] Invalid API key. Get a valid one at https://devglobe.app/dashboard/settings",
         vim.log.levels.ERROR
       )
     end)

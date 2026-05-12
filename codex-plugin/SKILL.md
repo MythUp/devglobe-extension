@@ -5,9 +5,9 @@ description: DevGlobe activity tracker - appear on the interactive developer glo
 
 # DevGlobe for Codex
 
-Track your coding activity on [devglobe.xyz](https://devglobe.xyz) — an interactive 3D globe showing developers coding in real-time.
+Track your coding activity on [devglobe.app](https://devglobe.app) — an interactive 3D globe showing developers coding in real-time.
 
-Visibility settings (anonymous mode, repo sharing on the live globe, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+Visibility settings (anonymous mode, repo sharing on the live globe, profile mode) are managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).
 
 Before running any command below, locate the installed skill directory:
 ```bash
@@ -18,7 +18,7 @@ DEVGLOBE_SKILL="$(find ~/.codex/skills -name SKILL.md \( -path '*devglobe*' -o -
 
 ### `$devglobe setup <API_KEY>`
 
-Configure DevGlobe with your API key. Get your key at [devglobe.xyz](https://devglobe.xyz).
+Configure DevGlobe with your API key. Get your key at [devglobe.app](https://devglobe.app).
 
 ```bash
 echo '{"api_key":"<API_KEY>"}' | node "$DEVGLOBE_SKILL/dist/setup.js"

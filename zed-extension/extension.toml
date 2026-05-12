@@ -2,7 +2,7 @@ id = "devglobe"
 name = "DevGlobe"
 version = "2.0.0"
 schema_version = 1
-authors = ["DevGlobe <contact@devglobe.xyz>"]
+authors = ["DevGlobe <contact@devglobe.app>"]
 description = "Show your live coding presence on the DevGlobe world map"
 repository = "https://github.com/Nako0/devglobe-extension"
 

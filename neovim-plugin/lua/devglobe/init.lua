@@ -85,7 +85,7 @@ function M.command(args)
 
   elseif sub == "open" then
     local cmd = vim.fn.has("mac") == 1 and "open" or (vim.fn.has("win32") == 1 and "start" or "xdg-open")
-    vim.fn.system({ cmd, "https://devglobe.xyz/space" })
+    vim.fn.system({ cmd, "https://devglobe.app/space" })
 
   elseif sub == "debug" then
     local choice = args[2]
@@ -115,13 +115,13 @@ function M.command(args)
       "  :DevGlobe setup KEY      — Connect with your API key",
       "  :DevGlobe status MSG     — Set status message",
       "  :DevGlobe today          — Show coding time today",
-      "  :DevGlobe open           — Open the globe at devglobe.xyz/space",
+      "  :DevGlobe open           — Open the globe at devglobe.app/space",
       "  :DevGlobe debug true|false — Toggle debug logging",
       "  :DevGlobe log            — Open ~/.devglobe/devglobe.log",
       "  :DevGlobe config         — Open ~/.devglobe/config.toml",
       "",
       "  Visibility settings (anonymous, share-repo, profile mode) are managed at",
-      "  https://devglobe.xyz/dashboard/settings",
+      "  https://devglobe.app/dashboard/settings",
     }, "\n"), vim.log.levels.INFO)
   end
 end

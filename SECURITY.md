@@ -17,7 +17,7 @@ Only the latest release of each extension receives security updates.
 ### How to report
 
 1. **GitHub Private Vulnerability Reporting** (preferred) — go to the [Security tab](https://github.com/Nako0/devglobe-extension/security/advisories/new) and click *Report a vulnerability*.
-2. **Email** — send a detailed report to **contact@devglobe.xyz**.
+2. **Email** — send a detailed report to **contact@devglobe.app**.
 
 ### What to include
 
@@ -59,7 +59,7 @@ The following are **in scope** for security reports:
 
 ### Website
 
-- Vulnerabilities on [devglobe.xyz](https://devglobe.xyz) (XSS, CSRF, authentication bypass, data exposure)
+- Vulnerabilities on [devglobe.app](https://devglobe.app) (XSS, CSRF, authentication bypass, data exposure)
 
 ## Out of scope
 

@@ -239,7 +239,7 @@ export class DevGlobeSidebarProvider implements vscode.WebviewViewProvider {
             <h3>Connect to DevGlobe</h3>
             <input type="password" id="token-input" placeholder="Paste your API key" />
             <button id="connect-btn">Connect</button>
-            <a class="link" id="get-key-link">Get your API key on devglobe.xyz</a>
+            <a class="link" id="get-key-link">Get your API key on devglobe.app</a>
         </div>
     </div>
 
@@ -266,7 +266,7 @@ export class DevGlobeSidebarProvider implements vscode.WebviewViewProvider {
                 <button class="secondary" id="status-btn">Set</button>
             </div>
             <div style="font-size: 11px; color: var(--vscode-descriptionForeground); margin-top: 6px; line-height: 1.4;">
-                Privacy &amp; visibility settings are managed on <a class="link" id="settings-link" style="margin: 0;">devglobe.xyz</a>.
+                Privacy &amp; visibility settings are managed on <a class="link" id="settings-link" style="margin: 0;">devglobe.app</a>.
             </div>
         </div>
 
@@ -319,11 +319,11 @@ export class DevGlobeSidebarProvider implements vscode.WebviewViewProvider {
     });
 
     getKeyLink.addEventListener('click', () => {
-        vscode.postMessage({ type: 'openExternal', url: 'https://devglobe.xyz/dashboard/settings' });
+        vscode.postMessage({ type: 'openExternal', url: 'https://devglobe.app/dashboard/settings' });
     });
 
     settingsLink.addEventListener('click', () => {
-        vscode.postMessage({ type: 'openExternal', url: 'https://devglobe.xyz/dashboard/settings' });
+        vscode.postMessage({ type: 'openExternal', url: 'https://devglobe.app/dashboard/settings' });
     });
 
     statusBtn.addEventListener('click', () => {

@@ -44,7 +44,7 @@ export const DevGlobePlugin: Plugin = async (ctx) => {
   return {
     tool: {
       devglobe_setup: tool({
-        description: "Configure DevGlobe with an API key. Get your key at https://devglobe.xyz/dashboard/settings.",
+        description: "Configure DevGlobe with an API key. Get your key at https://devglobe.app/dashboard/settings.",
         args: {
           api_key: z.string().describe("Your DevGlobe API key"),
         },
@@ -88,7 +88,7 @@ export const DevGlobePlugin: Plugin = async (ctx) => {
           lines.push(`  hide_project_names = ${cfg.privacy.hideProjectNames}`);
           lines.push(`Editor: opencode`);
           lines.push(``);
-          lines.push(`Visibility settings (anonymous mode, repo sharing on the live globe, profile mode) are managed at https://devglobe.xyz/dashboard/settings`);
+          lines.push(`Visibility settings (anonymous mode, repo sharing on the live globe, profile mode) are managed at https://devglobe.app/dashboard/settings`);
           return lines.join("\n");
         },
       }),

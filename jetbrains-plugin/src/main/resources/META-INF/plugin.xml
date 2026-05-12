@@ -1,14 +1,14 @@
 <idea-plugin>
     <id>xyz.devglobe.plugin</id>
     <name>DevGlobe</name>
-    <vendor email="contact@devglobe.xyz" url="https://devglobe.xyz">DevGlobe</vendor>
+    <vendor email="contact@devglobe.app" url="https://devglobe.app">DevGlobe</vendor>
 
     <description><![CDATA[
-    <p>Appear on a 3D globe in real time while you code. Your activity shows up live on <a href="https://devglobe.xyz">devglobe.xyz</a> — other developers can see you, discover your projects, and find your links.</p>
+    <p>Appear on a 3D globe in real time while you code. Your activity shows up live on <a href="https://devglobe.app">devglobe.app</a> — other developers can see you, discover your projects, and find your links.</p>
 
     <h3>How it works</h3>
     <ol>
-        <li>Sign in on <a href="https://devglobe.xyz">devglobe.xyz</a> with GitHub</li>
+        <li>Sign in on <a href="https://devglobe.app">devglobe.app</a> with GitHub</li>
         <li>Copy your API key from settings</li>
         <li>Open the DevGlobe tool window in your IDE and paste the key</li>
         <li>You appear on the globe</li>
@@ -51,7 +51,7 @@
         <li>Sub-second file switching now correctly tracked (no more lost micro-edits).</li>
         <li>File paths sent only when in a git repository, always relative to the repo root.</li>
         <li>Privacy flags <code>hide_file_names</code>, <code>hide_branch_names</code>, <code>hide_project_names</code> in <code>~/.devglobe/config.toml</code>.</li>
-        <li>Visibility settings (anonymous mode, repo sharing, profile mode) moved to the dashboard at <a href="https://devglobe.xyz/dashboard/settings">devglobe.xyz/dashboard/settings</a>.</li>
+        <li>Visibility settings (anonymous mode, repo sharing, profile mode) moved to the dashboard at <a href="https://devglobe.app/dashboard/settings">devglobe.app/dashboard/settings</a>.</li>
         <li>Robust core process recovery, automatic retry on download failure.</li>
     </ul>
     ]]></change-notes>

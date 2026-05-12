@@ -88,8 +88,8 @@ class SidebarPanel : JPanel() {
         panel.add(connectButton, gbc)
 
         gbc.gridy = row++; gbc.insets = JBUI.insets(6, 0, 0, 0)
-        panel.add(createLink("Get your API key on devglobe.xyz") {
-            listener?.onOpenExternal("https://devglobe.xyz/dashboard/settings")
+        panel.add(createLink("Get your API key on devglobe.app") {
+            listener?.onOpenExternal("https://devglobe.app/dashboard/settings")
         }, gbc)
 
         return panel
@@ -126,13 +126,13 @@ class SidebarPanel : JPanel() {
         panel.add(statusRow, gbc)
 
         gbc.gridy = row++; gbc.insets = JBUI.insets(6, 0, 0, 0)
-        val settingsHint = JBLabel("<html>Privacy &amp; visibility settings are managed on <a href='#'>devglobe.xyz</a>.</html>")
+        val settingsHint = JBLabel("<html>Privacy &amp; visibility settings are managed on <a href='#'>devglobe.app</a>.</html>")
         settingsHint.font = settingsHint.font.deriveFont(Font.PLAIN, 11f)
         settingsHint.foreground = UIManager.getColor("Label.disabledForeground")
         settingsHint.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
         settingsHint.addMouseListener(object : java.awt.event.MouseAdapter() {
             override fun mouseClicked(e: java.awt.event.MouseEvent) {
-                listener?.onOpenExternal("https://devglobe.xyz/dashboard/settings")
+                listener?.onOpenExternal("https://devglobe.app/dashboard/settings")
             }
         })
         panel.add(settingsHint, gbc)

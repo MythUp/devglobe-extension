@@ -1,11 +1,11 @@
 # DevGlobe — OpenCode Plugin
 
-Track your OpenCode activity on the [DevGlobe](https://devglobe.xyz) world map.
+Track your OpenCode activity on the [DevGlobe](https://devglobe.app) world map.
 
 ## Prerequisites
 
 - [OpenCode](https://github.com/anomalyco/opencode) installed
-- A DevGlobe account (sign in at [devglobe.xyz](https://devglobe.xyz) with GitHub, X (Twitter), or Google)
+- A DevGlobe account (sign in at [devglobe.app](https://devglobe.app) with GitHub, X (Twitter), or Google)
 
 ## Install
 
@@ -46,11 +46,11 @@ After installing, restart OpenCode and ask it to set up DevGlobe:
 setup devglobe with my key devglobe_YOUR_KEY_HERE
 ```
 
-Get your API key at [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+Get your API key at [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).
 
 OpenCode will call the `devglobe_setup` tool, which saves your key to `~/.devglobe/config.toml` (mode `0600`). Heartbeats start automatically while you code.
 
-Visibility settings (anonymous mode, repo sharing on the live globe, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+Visibility settings (anonymous mode, repo sharing on the live globe, profile mode) are managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).
 
 ### Alternative: manual setup
 
@@ -84,7 +84,7 @@ The plugin hooks into OpenCode's `tool.execute.after` and `file.edited` events t
 - The programming language from the files you interact with (exact file paths from tool calls)
 - Your git repository (origin URL, branch, and the current file relative to the repo root)
 
-Your coding session then appears live on the [DevGlobe map](https://devglobe.xyz/space) with the editor shown as `opencode`.
+Your coding session then appears live on the [DevGlobe map](https://devglobe.app/space) with the editor shown as `opencode`.
 
 A forced heartbeat is sent when the session goes idle or is deleted, ensuring your last activity is always recorded.
 
@@ -106,10 +106,10 @@ Files outside any git repository are not tracked beyond their language. We never
 
 Local privacy flags can be toggled in `~/.devglobe/config.toml` under `[privacy]`: `hide_file_names`, `hide_branch_names`, `hide_project_names` (the project flag also hides branches).
 
-Globe-side visibility (anonymous mode, repo sharing on the live globe, profile mode) is managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+Globe-side visibility (anonymous mode, repo sharing on the live globe, profile mode) is managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).
 
 ## Support
 
-- Website: [devglobe.xyz](https://devglobe.xyz)
-- Contact: [contact@devglobe.xyz](mailto:contact@devglobe.xyz)
+- Website: [devglobe.app](https://devglobe.app)
+- Contact: [contact@devglobe.app](mailto:contact@devglobe.app)
 - Issues: [GitHub Issues](https://github.com/Nako0/devglobe-extension/issues)

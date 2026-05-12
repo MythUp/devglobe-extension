@@ -1,12 +1,12 @@
 # DevGlobe — Claude Code Plugin
 
-Track your Claude Code activity on the [DevGlobe](https://devglobe.xyz) world map.
+Track your Claude Code activity on the [DevGlobe](https://devglobe.app) world map.
 
 ## Prerequisites
 
 - [Claude Code](https://claude.com/claude-code) installed
 - [Node.js](https://nodejs.org) (v18+)
-- A DevGlobe account (sign in at [devglobe.xyz](https://devglobe.xyz) with GitHub, X (Twitter), or Google)
+- A DevGlobe account (sign in at [devglobe.app](https://devglobe.app) with GitHub, X (Twitter), or Google)
 
 ## Install
 
@@ -58,13 +58,13 @@ Once restarted, configure the plugin directly from Claude Code:
 /devglobe:setup YOUR_API_KEY
 ```
 
-Get your API key at [devglobe.xyz](https://devglobe.xyz) — sign in, then open your **profile settings**.
+Get your API key at [devglobe.app](https://devglobe.app) — sign in, then open your **profile settings**.
 
 This command saves your key to `~/.devglobe/config.toml`.
 
 > If no API key is provided, the command shows an error with instructions.
 
-Visibility settings (anonymous mode, repo sharing, profile mode) are managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+Visibility settings (anonymous mode, repo sharing, profile mode) are managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).
 
 ### Status message
 
@@ -100,7 +100,7 @@ The plugin hooks into Claude Code events (`PostToolUse`, `UserPromptSubmit`, `St
 - The programming language from the files you interact with
 - Your git repository (from `git remote get-url origin`)
 
-Your coding session then appears live on the [DevGlobe map](https://devglobe.xyz) with the editor shown as `claude-code`.
+Your coding session then appears live on the [DevGlobe map](https://devglobe.app) with the editor shown as `claude-code`.
 
 ## Commands
 
@@ -117,10 +117,10 @@ Files outside any git repository are not tracked beyond their language. We never
 
 Local privacy flags can be toggled in `~/.devglobe/config.toml` under `[privacy]`: `hide_file_names`, `hide_branch_names`, `hide_project_names` (the project flag also hides branches).
 
-Globe-side visibility (anonymous mode, repo sharing on the live globe, profile mode) is managed on [devglobe.xyz/dashboard/settings](https://devglobe.xyz/dashboard/settings).
+Globe-side visibility (anonymous mode, repo sharing on the live globe, profile mode) is managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).
 
 ## Support
 
-- Website: [devglobe.xyz](https://devglobe.xyz)
-- Contact: [contact@devglobe.xyz](mailto:contact@devglobe.xyz)
+- Website: [devglobe.app](https://devglobe.app)
+- Contact: [contact@devglobe.app](mailto:contact@devglobe.app)
 - Issues: [GitHub Issues](https://github.com/Nako0/devglobe-extension/issues)

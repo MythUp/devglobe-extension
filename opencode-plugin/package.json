@@ -21,7 +21,7 @@
     "url": "https://github.com/Nako0/devglobe-extension",
     "directory": "opencode-plugin"
   },
-  "homepage": "https://devglobe.xyz",
+  "homepage": "https://devglobe.app",
   "peerDependencies": {
     "@opencode-ai/plugin": ">=1.0.0"
   },

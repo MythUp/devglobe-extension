@@ -133,7 +133,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
                 const url = String(msg.url ?? '');
                 try {
                     const parsed = vscode.Uri.parse(url);
-                    if (parsed.scheme === 'https' && parsed.authority.endsWith('devglobe.xyz')) {
+                    if (parsed.scheme === 'https' && parsed.authority.endsWith('devglobe.app')) {
                         vscode.env.openExternal(parsed);
                     }
                 } catch {
@@ -182,7 +182,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
     context.subscriptions.push(
         vscode.commands.registerCommand('devglobe.openGlobe', () => {
-            vscode.env.openExternal(vscode.Uri.parse('https://devglobe.xyz/space'));
+            vscode.env.openExternal(vscode.Uri.parse('https://devglobe.app/space'));
         })
     );
 
