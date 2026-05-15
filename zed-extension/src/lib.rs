@@ -1,15 +1,15 @@
 use std::fs;
 use zed_extension_api::{self as zed, Command, LanguageServerId, Result, Worktree};
 
-const CORE_VERSION: &str = "2.0.0";
 const CORE_REPO: &str = "Nako0/devglobe-extension";
+const CORE_TAG: &str = "core-v2.0.0";
 
 struct DevGlobeExtension {
     cached_binary_path: Option<String>,
 }
 
 impl DevGlobeExtension {
-    fn target_suffix(&self) -> Result<String> {
+    fn binary_filename(&self) -> Result<String> {
         let (platform, arch) = zed::current_platform();
         let suffix = match (platform, arch) {
             (zed::Os::Mac, zed::Architecture::Aarch64) => "darwin-arm64",
@@ -19,7 +19,7 @@ impl DevGlobeExtension {
             (zed::Os::Windows, zed::Architecture::X8664) => "win-x64.exe",
             _ => return Err(format!("unsupported platform: {platform:?} {arch:?}")),
         };
-        Ok(suffix.to_string())
+        Ok(format!("devglobe-core-{suffix}"))
     }
 
     fn binary_path(&mut self, language_server_id: &LanguageServerId) -> Result<String> {
@@ -34,9 +34,17 @@ impl DevGlobeExtension {
             }
         }
 
-        let suffix = self.target_suffix()?;
-        let binary_name = format!("devglobe-core-{suffix}");
-        let version_dir = format!("devglobe-core-{CORE_VERSION}");
+        let release = zed::github_release_by_tag_name(CORE_REPO, CORE_TAG)?;
+        let binary_name = self.binary_filename()?;
+        let asset = release
+            .assets
+            .iter()
+            .find(|a| a.name == binary_name)
+            .ok_or_else(|| {
+                format!("asset {binary_name} not found in release {}", release.version)
+            })?;
+
+        let version_dir = format!("devglobe-core-{}", release.version);
         let binary_path = format!("{version_dir}/{binary_name}");
 
         if !fs::metadata(&binary_path).is_ok_and(|stat| stat.is_file()) {
@@ -45,7 +53,6 @@ impl DevGlobeExtension {
                 &zed::LanguageServerInstallationStatus::Downloading,
             );
 
-            // Remove older versions before downloading the new one.
             if let Ok(entries) = fs::read_dir(".") {
                 for entry in entries.flatten() {
                     if let Some(file_name) = entry.file_name().to_str() {
@@ -59,12 +66,12 @@ impl DevGlobeExtension {
             fs::create_dir_all(&version_dir)
                 .map_err(|err| format!("failed to create version directory: {err}"))?;
 
-            let url = format!(
-                "https://github.com/{CORE_REPO}/releases/download/core-v{CORE_VERSION}/{binary_name}"
-            );
-
-            zed::download_file(&url, &binary_path, zed::DownloadedFileType::Uncompressed)
-                .map_err(|err| format!("failed to download core binary: {err}"))?;
+            zed::download_file(
+                &asset.download_url,
+                &binary_path,
+                zed::DownloadedFileType::Uncompressed,
+            )
+            .map_err(|err| format!("failed to download core binary: {err}"))?;
 
             zed::make_file_executable(&binary_path)?;
         }
