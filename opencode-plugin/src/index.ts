@@ -1,13 +1,13 @@
 import type { Plugin } from "@opencode-ai/plugin";
 import { tool } from "@opencode-ai/plugin/tool";
-import { runOneshot } from "../../devglobe-core/src/oneshot";
+import { runOneshotInMemory, type OneshotState } from "../../devglobe-core/src/oneshot";
 import { langFromPath } from "../../devglobe-core/src/language";
 import { setApiKey, loadConfig, configPath } from "../../devglobe-core/src/config";
 import { sendStatus } from "../../devglobe-core/src/heartbeat";
 
 const z = tool.schema;
 
-const PLUGIN_VERSION = "2.0.0";
+const PLUGIN_VERSION = "2.0.1";
 
 function extractFilePath(toolName: string, args: any, title: string, metadata: any): string | null {
   if (metadata?.filediff?.file) return metadata.filediff.file;
@@ -28,17 +28,31 @@ function extractFilePath(toolName: string, args: any, title: string, metadata: a
 }
 
 export const DevGlobePlugin: Plugin = async (ctx) => {
+  // Per-instance state in the plugin closure — no shared file, no contention
+  // when multiple OpenCode processes run in parallel. Each process rate-limits
+  // and dedups independently. Server-side rate-limiting handles cross-process
+  // bursts.
+  const state: OneshotState = {};
+
   async function heartbeat(filePath: string | null, force: boolean): Promise<void> {
     const language = filePath ? langFromPath(filePath) ?? undefined : undefined;
 
-    await runOneshot({
-      file: filePath ?? undefined,
-      cwd: ctx.directory,
-      editor: "opencode",
-      language,
-      pluginVersion: PLUGIN_VERSION,
-      force,
-    });
+    try {
+      await runOneshotInMemory(
+        {
+          file: filePath ?? undefined,
+          cwd: ctx.directory,
+          editor: "opencode",
+          language,
+          pluginVersion: PLUGIN_VERSION,
+          force,
+        },
+        state,
+      );
+    } catch {
+      // Errors are already logged by devglobe-core; swallow here so plugin
+      // handlers never crash the OpenCode session.
+    }
   }
 
   return {

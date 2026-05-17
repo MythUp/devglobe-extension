@@ -17,23 +17,27 @@ export interface OneshotParams {
   force?: boolean;
 }
 
-interface OneshotState {
+export interface OneshotState {
   lastHeartbeatAt?: number;
   lastFile?: string;
   lastLanguage?: string;
 }
 
-export async function runOneshot(params: OneshotParams): Promise<void> {
+// In-memory variant for long-lived plugins (e.g. OpenCode) where the host
+// process owns the state and concurrent instances must not share a file.
+// Mutates `state` in place on a successful send.
+export async function runOneshotInMemory(
+  params: OneshotParams,
+  state: OneshotState,
+): Promise<void> {
   const cfg = loadConfig();
   logger.setEditor(params.editor);
   if (!cfg.apiKey) {
     logger.error('oneshot skipped: not configured');
-    process.stderr.write('not configured — run: devglobe-core setup <API_KEY>\n');
-    process.exit(1);
+    return;
   }
 
   const now = Date.now();
-  const state = loadState();
   const language = params.language
     ?? (params.file ? langFromPath(params.file) : null)
     ?? state.lastLanguage
@@ -66,17 +70,42 @@ export async function runOneshot(params: OneshotParams): Promise<void> {
 
   try {
     await sendBatch(cfg.apiKey, batch);
-    saveState({ lastHeartbeatAt: now, lastFile: params.file, lastLanguage: language });
+    state.lastHeartbeatAt = now;
+    state.lastFile = params.file;
+    state.lastLanguage = language;
   } catch (err) {
     if (err instanceof InvalidApiKeyError) {
       logger.error('oneshot stopping: invalid api key — re-run setup with a valid key');
-      process.stderr.write(
-        'devglobe: invalid API key. Re-run setup with a valid key from https://devglobe.app/dashboard/settings\n',
-      );
-      return;
+      throw err;
     }
     logger.error('oneshot send failed; state preserved for retry', err);
   }
+}
+
+// File-backed variant for one-shot CLI invocations (Claude Code, Codex, raw
+// `devglobe-core oneshot`). Each call is a separate process, so persisting
+// state to disk is the only way to dedup across invocations.
+export async function runOneshot(params: OneshotParams): Promise<void> {
+  const cfg = loadConfig();
+  logger.setEditor(params.editor);
+  if (!cfg.apiKey) {
+    logger.error('oneshot skipped: not configured');
+    process.stderr.write('not configured — run: devglobe-core setup <API_KEY>\n');
+    process.exit(1);
+  }
+
+  const state = loadState();
+  const before = state.lastHeartbeatAt;
+  try {
+    await runOneshotInMemory(params, state);
+  } catch (err) {
+    if (err instanceof InvalidApiKeyError) {
+      process.stderr.write(
+        'devglobe: invalid API key. Re-run setup with a valid key from https://devglobe.app/dashboard/settings\n',
+      );
+    }
+  }
+  if (state.lastHeartbeatAt !== before) saveState(state);
 }
 
 function stateFile(): string {

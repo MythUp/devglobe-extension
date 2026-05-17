@@ -1,6 +1,6 @@
 {
   "name": "opencode-devglobe",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "DevGlobe plugin for OpenCode - appear active on the globe while coding with AI",
   "type": "module",
   "main": "dist/index.js",
