@@ -6,6 +6,10 @@
 </p>
 
 <p align="center">
+  <a href="https://devglobe.app/plugins"><img src="https://devglobe.app/api/badge/CaadriFR/repo/Nako0/devglobe-extension/coding-time.svg?theme=dark" alt="DevGlobe coding time on Nako0/devglobe-extension" /></a>
+</p>
+
+<p align="center">
   <a href="https://github.com/Nako0/devglobe-extension/stargazers"><img src="https://img.shields.io/github/stars/Nako0/devglobe-extension?style=flat-square&color=yellow" alt="Stars" /></a>&nbsp;
   <a href="https://plugins.jetbrains.com/plugin/30572-devglobe"><img src="https://img.shields.io/jetbrains/plugin/d/xyz.devglobe.plugin?style=flat-square&label=JetBrains%20downloads&color=FE315D" alt="JetBrains Downloads" /></a>
 </p>
@@ -73,9 +77,14 @@ All extensions read your API key from `~/.devglobe/config.toml` and let you togg
 
 Available from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
 
-- `DevGlobe: Set Status Message`
-- `DevGlobe: Show Coding Time`
-- `DevGlobe: Open Globe`
+| Command | Description |
+|---|---|
+| `DevGlobe: Set Status Message` | Set your status message on the globe |
+| `DevGlobe: Show Coding Time` | Show your coding time today |
+| `DevGlobe: Open Globe` | Open [devglobe.app/space](https://devglobe.app/space) in your browser |
+| `DevGlobe: Debug` | Toggle debug logging in `~/.devglobe/devglobe.log` |
+| `DevGlobe: Open Log File…` | Open `~/.devglobe/devglobe.log` |
+| `DevGlobe: Open Config File…` | Open `~/.devglobe/config.toml` |
 
 #### Compatibility
 
@@ -95,6 +104,20 @@ Compatible with **all JetBrains IDEs**: IntelliJ IDEA, WebStorm, PyCharm, GoLand
 3. Open the **DevGlobe** tool window (right sidebar)
 4. Paste your API key → **Connect**
 
+#### Actions
+
+Available under **Tools → DevGlobe** (and via _Find Action_ `Shift+Cmd+A` / `Ctrl+Shift+A`):
+
+| Action | Description |
+|---|---|
+| `Set Status Message` | Set your status message on the globe |
+| `Show Coding Time` | Show your coding time today |
+| `Open Panel` | Open the DevGlobe tool window |
+| `Open Globe` | Open [devglobe.app/space](https://devglobe.app/space) in your browser |
+| `Debug` | Toggle debug logging in `~/.devglobe/devglobe.log` |
+| `Open Log File…` | Open `~/.devglobe/devglobe.log` |
+| `Open Config File…` | Open `~/.devglobe/config.toml` |
+
 #### Compatibility
 
 - IDE builds **242 — 263.\*** (2024.2 to 2026.3)
@@ -104,25 +127,10 @@ Compatible with **all JetBrains IDEs**: IntelliJ IDEA, WebStorm, PyCharm, GoLand
 
 ### Zed
 
-> **Pending review for the Zed marketplace** ([PR #5841](https://github.com/zed-industries/extensions/pull/5841)). Install manually as a dev extension for now.
-
 #### Installation
 
-**Option A — Standalone repo (recommended):**
-
-```bash
-git clone https://github.com/devglobe-xyz/zed-devglobe.git
-```
-
-In Zed: `Cmd+Shift+P` → "zed: install dev extension" → select the `zed-devglobe/` folder.
-
-**Option B — From this repo:**
-
-```bash
-git clone https://github.com/Nako0/devglobe-extension.git
-```
-
-In Zed: `Cmd+Shift+P` → "zed: install dev extension" → select the `zed-extension/` folder.
+1. In Zed: `Cmd+Shift+P` / `Ctrl+Shift+P` → **zed: extensions**
+2. Search **DevGlobe** → click **Install**
 
 On first activation, the extension downloads the matching `devglobe-core` binary for your platform from [GitHub Releases](https://github.com/Nako0/devglobe-extension/releases) (one-time, ~60 MB).
 
@@ -138,6 +146,16 @@ EOF
 ```
 
 Open a project in Zed, trust the worktree when prompted, and start coding. You'll appear on the globe within 30 seconds.
+
+#### Manual install (optional)
+
+If you'd rather build from source (e.g. to test a change), clone the standalone repo and install it as a dev extension:
+
+```bash
+git clone https://github.com/devglobe-xyz/zed-devglobe.git
+```
+
+In Zed: `Cmd+Shift+P` → "zed: install dev extension" → select the `zed-devglobe/` folder.
 
 #### Requirements
 
@@ -348,6 +366,28 @@ hide_project_names = false    # omit repo + branch (project-level hiding implies
 **Network:** HTTPS only (TLS 1.2+), no telemetry, no third-party trackers.
 
 **[Read the full Privacy & Security documentation →](PRIVACY.md)**
+
+---
+
+## Troubleshooting
+
+If you don't appear on the globe or the extension misbehaves, enable verbose logging by adding to `~/.devglobe/config.toml`:
+
+```toml
+debug = true
+```
+
+All logs are written to `~/.devglobe/devglobe.log` (mode `0600`, auto-truncates to the last 1 MB when the file exceeds 5 MB). The file is local and never sent anywhere.
+
+| Level | When written |
+|---|---|
+| `ERROR` | Always — failed heartbeats, invalid API key, missing/broken config |
+| `INFO` | Only when `debug = true` — API key saved, online/offline transitions, tracker init |
+| `DEBUG` | Only when `debug = true` — heartbeat & status payloads, HTTP responses, rate-limit hits, file/repo changes |
+
+Restart your editor for the change to take effect. Set `debug = false` (or remove the line) to go back to errors-only.
+
+**NeoVim shortcut:** `:DevGlobe debug true` / `:DevGlobe debug false` toggles it without editing the file.
 
 ---
 
