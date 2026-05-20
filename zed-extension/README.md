@@ -2,7 +2,7 @@
 
 [![devglobe-xyz/zed-devglobe](https://devglobe.app/api/badge/CaadriFR/repo/devglobe-xyz/zed-devglobe/coding-time.svg?theme=dark)](https://devglobe.app/plugins/zed)
 
-Show your live coding presence on the [DevGlobe](https://devglobe.app) world map from Zed.
+Show up on a 3D globe in real time while you code, with automatic time tracking and coding metrics powered by [DevGlobe](https://devglobe.app).
 
 ## Requirements
 
