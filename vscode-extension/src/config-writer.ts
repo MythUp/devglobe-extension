@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { log } from './logger';
 
 const DEVGLOBE_DIR = path.join(os.homedir(), '.devglobe');
 const CONFIG_PATH = path.join(DEVGLOBE_DIR, 'config.toml');
@@ -12,6 +13,28 @@ export function configPath(): string {
 
 export function logPath(): string {
     return LOG_PATH;
+}
+
+export function readApiKey(): string {
+    if (!fs.existsSync(CONFIG_PATH)) return '';
+    const content = fs.readFileSync(CONFIG_PATH, 'utf-8');
+    let beforeSection = true;
+
+    for (const rawLine of content.split('\n')) {
+        const line = rawLine.trim();
+        if (line.startsWith('[')) beforeSection = false;
+        if (!beforeSection) continue;
+
+        const match = line.match(/^api_key\s*=\s*"([^"]*)"/);
+        if (match) {
+            const key = match[1];
+            log.info('config api_key read', { exists: true, length: key.length, prefix: key.slice(0, 4), suffix: key.slice(-4) });
+            return key;
+        }
+    }
+
+    log.info('config api_key read', { exists: false });
+    return '';
 }
 
 export function isDebugEnabled(): boolean {
@@ -108,6 +131,7 @@ export function writeApiKey(apiKey: string): void {
 
     const output = updated.join('\n').replace(/\n{3,}/g, '\n\n');
     fs.writeFileSync(CONFIG_PATH, output.endsWith('\n') ? output : output + '\n', { mode: 0o600 });
+    log.info('config api_key written', { length: apiKey.length, prefix: apiKey.slice(0, 4), suffix: apiKey.slice(-4) });
 }
 
 /**
@@ -128,4 +152,5 @@ export function clearApiKey(): void {
     }
 
     fs.writeFileSync(CONFIG_PATH, updated.join('\n'), { mode: 0o600 });
+    log.info('config api_key cleared');
 }

@@ -6,7 +6,7 @@
       "type": "extensionHost",
       "request": "launch",
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--extensionDevelopmentPath=${workspaceFolder}/vscode-extension",
         "--user-data-dir=${workspaceFolder}/.vscode/dev-user-data",
         "--extensions-dir=${workspaceFolder}/.vscode/dev-extensions",
         "--disable-extensions"
@@ -14,10 +14,11 @@
     },
     {
       "name": "Run Web Extension (Isolé)",
-      "type": "extensionHost",
+      "type": "pwa-extensionHost",
+      "debugWebWorkerHost": true,
       "request": "launch",
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--extensionDevelopmentPath=${workspaceFolder}/vscode-extension",
         "--extensionDevelopmentKind=web",
         "--user-data-dir=${workspaceFolder}/.vscode/dev-user-data",
         "--extensions-dir=${workspaceFolder}/.vscode/dev-extensions",

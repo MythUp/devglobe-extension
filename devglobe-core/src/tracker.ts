@@ -1,4 +1,4 @@
-import { loadConfig } from './config.js';
+import { loadConfig, configPath } from './config.js';
 import { resolveRepoFields } from './git.js';
 import { sendBatch, sendStatus, InvalidApiKeyError } from './heartbeat.js';
 import { logger } from './logger.js';
@@ -110,19 +110,31 @@ export class Tracker {
     this.lastDedup = { file, language, at: now };
   }
 
-  async setStatus(message: string): Promise<void> {
+  async setStatus(message: string, apiKeyOverride?: string): Promise<void> {
     const cfg = loadConfig();
-    if (!cfg.apiKey) {
+    const apiKey = apiKeyOverride?.trim() || cfg.apiKey;
+    if (!apiKey) {
       this.emit({ event: 'status_error', data: { message: 'not configured' } });
       return;
     }
     try {
-      await sendStatus(cfg.apiKey, message);
+      logger.debug('setStatus requested', {
+        messageLength: message.length,
+        apiKeySource: apiKeyOverride?.trim() ? 'override' : 'config',
+        configured: !!apiKey,
+        keyLength: apiKey.length,
+        keyPrefix: apiKey.slice(0, 4),
+        keySuffix: apiKey.slice(-4),
+        editor: this.editor,
+        configPath: configPath(),
+      });
+      await sendStatus(apiKey, message);
       this.emit({ event: 'status_ok' });
     } catch (e) {
       if (e instanceof InvalidApiKeyError) {
-        this.stopTimer();
-        this.emit({ event: 'invalid_api_key' });
+        // A status-only 401 should not invalidate the whole session.
+        // Keep the key and let the next heartbeat be the source of truth.
+        this.emit({ event: 'status_error', data: { message: 'status rejected by server (401). Key kept; retry or reconnect if needed.' } });
         return;
       }
       this.emit({ event: 'status_error', data: { message: (e as Error).message } });
@@ -154,6 +166,17 @@ export class Tracker {
     if (this.paused) return;
     const cfg = loadConfig();
     if (!cfg.apiKey) return;
+
+    logger.debug('heartbeat tick', {
+      paused: this.paused,
+      pending: this.pending.length,
+      currentFile: this.currentFile,
+      currentLanguage: this.currentLanguage,
+      editor: this.editor,
+      keyLength: cfg.apiKey.length,
+      keyPrefix: cfg.apiKey.slice(0, 4),
+      keySuffix: cfg.apiKey.slice(-4),
+    });
 
     const now = Date.now();
     if (now - this.lastActivity > ACTIVITY_TIMEOUT_MS && this.pending.length === 0) {

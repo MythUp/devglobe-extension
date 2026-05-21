@@ -23,6 +23,7 @@ export interface ActivityParams {
 
 export interface SetStatusParams {
   message: string;
+  api_key?: string;
 }
 
 // Core → Client (stdout)

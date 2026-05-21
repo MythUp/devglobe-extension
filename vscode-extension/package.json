@@ -17,7 +17,10 @@
   "engines": {
     "vscode": "^1.80.0"
   },
-  "categories": ["Visualization", "Other"],
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
   "keywords": [
     "devglobe",
     "globe",
@@ -32,16 +35,25 @@
     "color": "#115bca",
     "theme": "dark"
   },
-  "activationEvents": ["onStartupFinished"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
+  "browser": "./out/extension-web.js",
+  "extensionKind": [
+    "ui"
+  ],
   "scripts": {
-    "compile": "tsc -p ./ && cp ../devglobe-core/dist/devglobe-core.js out/",
+    "build:desktop": "esbuild src/extension.ts --bundle --platform=node --format=cjs --target=node18 --external:vscode --outfile=out/extension.js",
+    "build:web": "esbuild src/extension-web.ts --bundle --platform=browser --format=cjs --target=es2020 --external:vscode --outfile=out/extension-web.js",
+    "compile": "npm run build:desktop && npm run build:web && node -e \"const fs=require('fs'); fs.copyFileSync('../devglobe-core/dist/devglobe-core.js', 'out/devglobe-core.js');\"",
     "watch": "tsc -watch -p ./",
     "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {
-    "@types/vscode": "^1.80.0",
     "@types/node": "^20.0.0",
+    "@types/vscode": "^1.80.0",
+    "esbuild": "^0.28.0",
     "typescript": "^5.0.0"
   },
   "contributes": {
