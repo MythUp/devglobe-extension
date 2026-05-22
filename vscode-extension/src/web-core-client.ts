@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { DEFAULT_STATE, type TrackerState } from './shared';
 import { log } from './logger';
-import { readApiKey } from './web-config';
+import { readApiKey, writeApiKey } from './web-config';
 
 const API_BASE_URL = 'https://devglobe.app';
 const KEEPALIVE_INTERVAL_MS = 30_000;
@@ -35,6 +35,12 @@ interface HeartbeatBatch {
 
 interface HeartbeatResponse {
     today_seconds?: number;
+}
+
+interface RepoFields {
+    file?: string;
+    repo?: string;
+    branch?: string;
 }
 
 async function sendBatch(apiKey: string, batch: HeartbeatBatch): Promise<HeartbeatResponse> {
@@ -153,6 +159,8 @@ export class WebCoreClient implements vscode.Disposable {
     private lastFileInput: string | undefined;
     private currentFile: string | undefined;
     private currentLanguage: string | undefined;
+    private currentRepo: string | undefined;
+    private currentBranch: string | undefined;
     private lastDedup: { file: string | undefined; language: string | undefined; at: number } = {
         file: undefined,
         language: undefined,
@@ -206,6 +214,8 @@ export class WebCoreClient implements vscode.Disposable {
         this.lastActivity = 0;
         this.currentFile = undefined;
         this.currentLanguage = undefined;
+        this.currentRepo = undefined;
+        this.currentBranch = undefined;
         this.lastFileInput = undefined;
         this.lastDedup = { file: undefined, language: undefined, at: 0 };
         this.offline = false;
@@ -214,8 +224,8 @@ export class WebCoreClient implements vscode.Disposable {
         this.onStateChange(this.state);
     }
 
-    activity(filePath: string, language?: string): void {
-        void this.handleActivity(filePath, language);
+    activity(resource: vscode.Uri, language?: string): void {
+        void this.handleActivity(resource, language);
     }
 
     setStatus(message: string): void {
@@ -320,20 +330,20 @@ export class WebCoreClient implements vscode.Disposable {
         throw new Error('No API key available');
     }
 
-    private async handleActivity(filePath: string, language?: string): Promise<void> {
+    private async handleActivity(resource: vscode.Uri, language?: string): Promise<void> {
         if (!this.state.tracking) return;
         const candidates = await this.resolveApiKeyCandidates('activity');
         const apiKey = candidates[0]?.key;
         if (!apiKey) {
             log.info('web activity skipped: no api key available', {
-                filePath,
+                filePath: resource.fsPath || resource.path,
                 language,
             });
             return;
         }
 
         log.info('web activity received', {
-            filePath,
+            filePath: resource.fsPath || resource.path,
             language,
             keyLength: apiKey.length,
             keyPrefix: apiKey.slice(0, 4),
@@ -341,12 +351,19 @@ export class WebCoreClient implements vscode.Disposable {
             origin: webOrigin(),
         });
 
+        const repoFields = await this.resolveRepoFields(resource);
+        const filePath = repoFields.file ?? resource.fsPath ?? resource.path;
+        const nextRepo = repoFields.repo;
+        const nextBranch = repoFields.branch;
+
         const now = Date.now();
         this.lastActivity = now;
 
         const fileChanged = filePath !== this.lastFileInput;
         const langChanged = language !== undefined && language !== this.currentLanguage;
-        if (!fileChanged && !langChanged) {
+        const repoChanged = nextRepo !== this.currentRepo;
+        const branchChanged = nextBranch !== this.currentBranch;
+        if (!fileChanged && !langChanged && !repoChanged && !branchChanged) {
             const dup = this.lastDedup;
             if (dup.file === filePath && dup.language === language && now - dup.at < 2_000) {
                 return;
@@ -354,10 +371,12 @@ export class WebCoreClient implements vscode.Disposable {
         }
 
         const firstActivity = this.lastFileInput === undefined;
-        const transition = (fileChanged || langChanged) && !firstActivity;
+        const transition = (fileChanged || langChanged || repoChanged || branchChanged) && !firstActivity;
 
         this.lastFileInput = filePath;
         this.currentFile = filePath;
+        this.currentRepo = nextRepo;
+        this.currentBranch = nextBranch;
         if (language !== undefined) {
             this.currentLanguage = language || undefined;
             const nextLanguage = this.currentLanguage ?? null;
@@ -492,7 +511,173 @@ export class WebCoreClient implements vscode.Disposable {
         const event: HeartbeatEvent = { time: now / 1_000 };
         if (this.currentFile !== undefined) event.file = this.currentFile;
         if (this.currentLanguage !== undefined) event.language = this.currentLanguage;
+        if (this.currentRepo !== undefined) event.repo = this.currentRepo;
+        if (this.currentBranch !== undefined) event.branch = this.currentBranch;
         return event;
+    }
+
+    private async resolveRepoFields(resource: vscode.Uri): Promise<RepoFields> {
+        const workspaceFolder = vscode.workspace.getWorkspaceFolder(resource) ?? vscode.workspace.workspaceFolders?.[0];
+        if (!workspaceFolder) return {};
+
+        const apiFields = await this.resolveRepoFieldsFromGitExtension(resource, workspaceFolder.uri);
+        if (apiFields.repo || apiFields.branch || apiFields.file) {
+            return apiFields;
+        }
+
+        const gitMarker = vscode.Uri.joinPath(workspaceFolder.uri, '.git');
+        const markerType = await this.statKind(gitMarker);
+        if (markerType === undefined) return {};
+
+        let gitDir = gitMarker;
+        if (markerType === 'file') {
+            const content = await this.readText(gitMarker);
+            const match = content.match(/^gitdir:\s*(.+)$/m);
+            if (!match) return {};
+            gitDir = this.resolveGitDir(workspaceFolder.uri, match[1].trim());
+        }
+
+        const [branch, repo] = await Promise.all([
+            this.readBranch(gitDir),
+            this.readRepo(gitDir),
+        ]);
+
+        const fields: RepoFields = {};
+        if (repo) fields.repo = repo;
+        if (branch) fields.branch = branch;
+        if (repo || branch) {
+            const root = workspaceFolder.uri.path;
+            const current = resource.path;
+            if (current.toLowerCase().startsWith(root.toLowerCase())) {
+                fields.file = current.slice(root.length).replace(/^\//, '');
+            } else {
+                fields.file = resource.fsPath || resource.path;
+            }
+        }
+        return fields;
+    }
+
+    private async resolveRepoFieldsFromGitExtension(resource: vscode.Uri, workspaceRoot: vscode.Uri): Promise<RepoFields> {
+        try {
+            const gitExtension = vscode.extensions.getExtension<any>('vscode.git');
+            const exported = gitExtension ? (gitExtension.isActive ? gitExtension.exports : await gitExtension.activate()) : undefined;
+            const api = exported?.getAPI?.(1);
+            const repositories = api?.repositories ?? [];
+            const repo = repositories.find((candidate: any) => this.isResourceUnderRoot(resource, candidate?.rootUri));
+            if (!repo) return {};
+
+            const repoFields: RepoFields = {};
+            const rootUri = repo.rootUri ?? workspaceRoot;
+            const headName = repo.state?.HEAD?.name ?? undefined;
+            if (headName) repoFields.branch = headName;
+
+            const remoteUrl = this.pickOriginRemoteUrl(repo);
+            if (remoteUrl) repoFields.repo = this.canonicalizeRepoUrl(remoteUrl) ?? undefined;
+
+            const relative = this.relativePathFromRoot(resource, rootUri);
+            if (relative) repoFields.file = relative;
+
+            if (repoFields.repo || repoFields.branch || repoFields.file) {
+                log.info('web repo resolved from git extension', {
+                    filePath: resource.fsPath || resource.path,
+                    repo: repoFields.repo,
+                    branch: repoFields.branch,
+                });
+            }
+
+            return repoFields;
+        } catch (err) {
+            log.warn('web git extension repo lookup failed', err instanceof Error ? err.message : String(err));
+            return {};
+        }
+    }
+
+    private isResourceUnderRoot(resource: vscode.Uri, rootUri: vscode.Uri | undefined): boolean {
+        if (!rootUri) return false;
+        const resourcePath = (resource.fsPath || resource.path).toLowerCase();
+        const rootPath = (rootUri.fsPath || rootUri.path).toLowerCase();
+        return resourcePath.startsWith(rootPath);
+    }
+
+    private relativePathFromRoot(resource: vscode.Uri, rootUri: vscode.Uri): string | undefined {
+        const resourcePath = resource.fsPath || resource.path;
+        const rootPath = rootUri.fsPath || rootUri.path;
+        if (!resourcePath.toLowerCase().startsWith(rootPath.toLowerCase())) {
+            return undefined;
+        }
+        const rel = resourcePath.slice(rootPath.length).replace(/^[/\\]/, '');
+        return rel || undefined;
+    }
+
+    private pickOriginRemoteUrl(repo: any): string | undefined {
+        const remotes = repo?.state?.remotes ?? [];
+        const origin = remotes.find((remote: any) => remote?.name === 'origin') ?? remotes[0];
+        if (!origin) return undefined;
+        return origin.fetchUrl ?? origin.pushUrl ?? origin.url ?? undefined;
+    }
+
+    private resolveGitDir(base: vscode.Uri, target: string): vscode.Uri {
+        if (/^[a-zA-Z]:[\\/]/.test(target) || target.startsWith('/')) {
+            return vscode.Uri.file(target);
+        }
+        return vscode.Uri.joinPath(base, target.replace(/\\/g, '/'));
+    }
+
+    private async statKind(uri: vscode.Uri): Promise<'file' | 'directory' | undefined> {
+        try {
+            const stat = await vscode.workspace.fs.stat(uri);
+            if (stat.type === vscode.FileType.File) return 'file';
+            if (stat.type === vscode.FileType.Directory) return 'directory';
+        } catch {
+        }
+        return undefined;
+    }
+
+    private async readText(uri: vscode.Uri): Promise<string> {
+        try {
+            const bytes = await vscode.workspace.fs.readFile(uri);
+            return new TextDecoder().decode(bytes).trim();
+        } catch {
+            return '';
+        }
+    }
+
+    private async readBranch(gitDir: vscode.Uri): Promise<string | undefined> {
+        const head = await this.readText(vscode.Uri.joinPath(gitDir, 'HEAD'));
+        const match = head.match(/^ref:\s*refs\/heads\/(.+)$/);
+        return match?.[1];
+    }
+
+    private async readRepo(gitDir: vscode.Uri): Promise<string | undefined> {
+        const config = await this.readText(vscode.Uri.joinPath(gitDir, 'config'));
+        const lines = config.split('\n');
+        let inOrigin = false;
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('[')) {
+                inOrigin = /^\[remote\s+"origin"\]$/.test(trimmed);
+                continue;
+            }
+            if (!inOrigin) continue;
+            const match = trimmed.match(/^url\s*=\s*(.+)$/);
+            if (match) {
+                return this.canonicalizeRepoUrl(match[1].trim()) ?? undefined;
+            }
+        }
+        return undefined;
+    }
+
+    private canonicalizeRepoUrl(raw: string): string | null {
+        if (!raw) return null;
+        const stripped = raw.replace(/\.git$/, '');
+        const ssh = stripped.match(/^[\w.-]+@([^:]+):(.+)$/);
+        if (ssh) return `https://${ssh[1]}/${ssh[2]}`;
+        const sshUrl = stripped.match(/^ssh:\/\/[^@]+@([^/:]+)(?::\d+)?\/(.+)$/);
+        if (sshUrl) return `https://${sshUrl[1]}/${sshUrl[2]}`;
+        if (/^https?:\/\//.test(stripped)) return stripped;
+        const gitProto = stripped.match(/^git:\/\/([^/]+)\/(.+)$/);
+        if (gitProto) return `https://${gitProto[1]}/${gitProto[2]}`;
+        return null;
     }
 
     private ensureStatusBar(): void {

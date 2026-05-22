@@ -161,7 +161,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     // The core debounces, so we just forward every editor event.
     function reportActivity(doc: vscode.TextDocument): void {
         if (doc.uri.scheme !== 'file') return;
-        client.activity(doc.uri.fsPath, mapLanguageId(doc.languageId));
+        client.activity(doc.uri, mapLanguageId(doc.languageId));
     }
 
     context.subscriptions.push(

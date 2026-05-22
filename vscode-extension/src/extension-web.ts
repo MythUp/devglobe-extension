@@ -151,7 +151,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     function reportActivity(doc: vscode.TextDocument): void {
         if (doc.isUntitled) return;
         const file = doc.uri.scheme === 'file' ? doc.uri.fsPath : doc.uri.path;
-        client.activity(file, mapLanguageId(doc.languageId));
+        client.activity(doc.uri, mapLanguageId(doc.languageId));
     }
 
     context.subscriptions.push(

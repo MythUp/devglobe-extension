@@ -277,10 +277,10 @@ export class CoreClient implements vscode.Disposable {
         this.onStateChange(this.state);
     }
 
-    activity(filePath: string, language?: string): void {
+    activity(resource: vscode.Uri, language?: string): void {
         this.send({
             method: 'activity',
-            params: { file: filePath, ...(language && { language }) },
+            params: { file: resource.fsPath, ...(language && { language }) },
         });
     }
 
