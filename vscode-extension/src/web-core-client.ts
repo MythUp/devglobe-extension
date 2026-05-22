@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { DEFAULT_STATE, type TrackerState } from './shared';
+import { DEFAULT_STATE, detectEditor, type TrackerState } from './shared';
 import { log } from './logger';
 import { readApiKey, writeApiKey } from './web-config';
 
@@ -120,17 +120,6 @@ function webOrigin(): string {
     } catch {
         return 'unknown-origin';
     }
-}
-
-function detectEditor(): string {
-    const name = vscode.env.appName.toLowerCase();
-    if (name.includes('cursor')) return 'cursor';
-    if (name.includes('windsurf')) return 'windsurf';
-    if (name.includes('vscodium')) return 'vscodium';
-    if (name.includes('positron')) return 'positron';
-    if (name.includes('void')) return 'void';
-    if (name.includes('antigravity')) return 'antigravity';
-    return 'vscode';
 }
 
 function webPlatform(): string {

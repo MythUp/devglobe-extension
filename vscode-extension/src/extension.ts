@@ -2,7 +2,8 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { initLogger, log } from './logger';
-import { CoreClient, mapLanguageId } from './core-client';
+import { CoreClient } from './core-client';
+import { mapLanguageId } from './shared';
 import { DevGlobeSidebarProvider } from './sidebar';
 import {
     writeApiKey,

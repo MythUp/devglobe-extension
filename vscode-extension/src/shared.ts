@@ -1,3 +1,5 @@
+import * as vscode from 'vscode';
+
 export interface TrackerState {
     configured: boolean;
     tracking: boolean;
@@ -70,4 +72,15 @@ const LANG_MAP: Record<string, string> = {
 
 export function mapLanguageId(id: string): string {
     return LANG_MAP[id] ?? id.charAt(0).toUpperCase() + id.slice(1);
+}
+
+export function detectEditor(): string {
+    const name = vscode.env.appName.toLowerCase();
+    if (name.includes('cursor')) return 'cursor';
+    if (name.includes('windsurf')) return 'windsurf';
+    if (name.includes('vscodium')) return 'vscodium';
+    if (name.includes('positron')) return 'positron';
+    if (name.includes('void')) return 'void';
+    if (name.includes('antigravity')) return 'antigravity';
+    return 'vscode';
 }

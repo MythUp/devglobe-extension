@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TrackerState } from './core-client';
+import type { TrackerState } from './shared';
 
 type MessageHandler = (msg: Record<string, unknown>) => void;
 type StateGetter = () => TrackerState;
