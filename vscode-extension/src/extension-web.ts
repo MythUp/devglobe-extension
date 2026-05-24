@@ -1,50 +1,41 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
-import { initLogger, log } from './logger';
-import { CoreClient } from './core-client';
-import { mapLanguageId } from './shared';
 import { DevGlobeSidebarProvider } from './sidebar';
+import { initLogger, log } from './logger';
+import { mapLanguageId } from './shared';
+import { WebCoreClient } from './web-core-client';
 import {
-    writeApiKey,
     clearApiKey,
-    setDebug,
-    isDebugEnabled,
-    configPath,
-    logPath,
+    getConfigUri,
+    getLogUri,
     readApiKey,
-} from './config-writer';
+    isDebugEnabled,
+    setDebug,
+    writeApiKey,
+} from './web-config';
 
 const SECRET_API_KEY = 'devglobe.apiKey';
 
-function getPluginVersion(context: vscode.ExtensionContext): string {
+async function getPluginVersion(context: vscode.ExtensionContext): Promise<string> {
     try {
-        const pkg = JSON.parse(
-            fs.readFileSync(path.join(context.extensionPath, 'package.json'), 'utf-8'),
-        );
+        const pkgUri = vscode.Uri.joinPath(context.extensionUri, 'package.json');
+        const bytes = await vscode.workspace.fs.readFile(pkgUri);
+        const pkg = JSON.parse(new TextDecoder().decode(bytes));
         return pkg.version || '0.0.0';
     } catch {
         return '0.0.0';
     }
 }
 
-/**
- * Retrieves the API key, migrating from old storage locations if needed.
- * Priority: secure storage → settings.json (legacy). Once found, writes to
- * ~/.devglobe/config.toml so the core can pick it up.
- */
 async function getAndMigrateApiKey(context: vscode.ExtensionContext): Promise<string> {
-    const configKey = readApiKey();
+    const configKey = await readApiKey(context);
     if (configKey) {
-        log.info('desktop api key resolved from config.toml', { length: configKey.length });
         await context.secrets.store(SECRET_API_KEY, configKey);
         return configKey;
     }
 
     const stored = await context.secrets.get(SECRET_API_KEY);
     if (stored) {
-        log.info('desktop api key resolved from secrets', { length: stored.length });
-        writeApiKey(stored);
+        await writeApiKey(stored, context);
         return stored;
     }
 
@@ -52,37 +43,40 @@ async function getAndMigrateApiKey(context: vscode.ExtensionContext): Promise<st
     const legacy = config.get<string>('apiKey', '');
     if (legacy) {
         await context.secrets.store(SECRET_API_KEY, legacy);
-        await config.update('apiKey', undefined, vscode.ConfigurationTarget.Global);
-        writeApiKey(legacy);
-        log.info('API key migrated from settings.json to secure storage + config.toml');
+        try {
+            await config.update('apiKey', undefined, vscode.ConfigurationTarget.Global);
+        } catch {
+        }
+        await writeApiKey(legacy, context);
+        log.info('API key migrated from settings.json to secure storage + globalStorage config.toml');
         return legacy;
     }
-    log.info('desktop api key resolved: none');
     return '';
 }
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
     initLogger(context.extensionMode === vscode.ExtensionMode.Development);
     log.info('DevGlobe activating…');
+    log.info(`Web origin: ${globalThis.location?.origin ?? 'unknown-origin'}`);
 
-    const pluginVersion = getPluginVersion(context);
-
+    const pluginVersion = await getPluginVersion(context);
     const sidebar = new DevGlobeSidebarProvider(context.extensionUri);
+
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
             DevGlobeSidebarProvider.viewType,
             sidebar,
             { webviewOptions: { retainContextWhenHidden: true } },
-        )
+        ),
     );
 
     const onInvalidApiKey = async (): Promise<void> => {
         await context.secrets.delete(SECRET_API_KEY);
-        clearApiKey();
+        await clearApiKey(context);
         log.info('API key cleared after server rejected it (401)');
     };
 
-    const client = new CoreClient(
+    const client = new WebCoreClient(
         context,
         (state) => sidebar.updateState(state),
         pluginVersion,
@@ -100,9 +94,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
                     vscode.window.showErrorMessage('DevGlobe: API key is empty.');
                     break;
                 }
-                log.info('desktop token saved from sidebar', { length: token.length });
                 await context.secrets.store(SECRET_API_KEY, token);
-                writeApiKey(token);
+                await writeApiKey(token, context);
                 client.init();
                 client.start();
                 sidebar.updateState(client.getState());
@@ -112,9 +105,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
             case 'setStatus': {
                 const message = String(msg.message ?? '');
-                const apiKey = await getAndMigrateApiKey(context);
-                if (!apiKey) break;
-                log.info('desktop sidebar setStatus', { length: message.length, hasKey: true, keyLength: apiKey.length });
                 client.setStatus(message);
                 break;
             }
@@ -138,7 +128,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
             case 'disconnect': {
                 await context.secrets.delete(SECRET_API_KEY);
-                clearApiKey();
+                await clearApiKey(context);
                 client.reset();
                 vscode.window.showInformationMessage('DevGlobe: Disconnected.');
                 break;
@@ -152,16 +142,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
                         vscode.env.openExternal(parsed);
                     }
                 } catch {
-                    // invalid URL, ignore
                 }
                 break;
             }
         }
     });
 
-    // The core debounces, so we just forward every editor event.
     function reportActivity(doc: vscode.TextDocument): void {
-        if (doc.uri.scheme !== 'file') return;
+        if (doc.isUntitled) return;
         client.activity(doc.uri, mapLanguageId(doc.languageId));
     }
 
@@ -191,64 +179,65 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
             });
 
             if (message === undefined) return;
-            log.info('desktop command setStatus', { length: message.length, hasKey: true, keyLength: apiKey.length });
             client.setStatus(message);
-        })
+        }),
     );
 
     context.subscriptions.push(
         vscode.commands.registerCommand('devglobe.showCodingTime', () => {
             const state = client.getState();
             vscode.window.showInformationMessage(`DevGlobe: ${state.codingTime} today`);
-        })
+        }),
     );
 
     context.subscriptions.push(
         vscode.commands.registerCommand('devglobe.openGlobe', () => {
             vscode.env.openExternal(vscode.Uri.parse('https://devglobe.app/space'));
-        })
+        }),
     );
 
     context.subscriptions.push(
         vscode.commands.registerCommand('devglobe.toggleDebug', async () => {
-            const current = isDebugEnabled();
+            const current = await isDebugEnabled(context);
             const pick = await vscode.window.showQuickPick(['true', 'false'], {
                 title: 'DevGlobe Debug',
                 placeHolder: `current value: ${current}`,
             });
             if (pick === undefined) return;
             const enabled = pick === 'true';
-            setDebug(enabled);
+            await setDebug(enabled, context);
             vscode.window.showInformationMessage(
                 `DevGlobe: debug ${enabled ? 'enabled' : 'disabled'}. Restart tracking to apply.`,
             );
-        })
+        }),
     );
 
     context.subscriptions.push(
         vscode.commands.registerCommand('devglobe.openLogFile', async () => {
-            const p = logPath();
-            if (!fs.existsSync(p)) {
+            try {
+                const uri = await getLogUri(context);
+                await vscode.workspace.fs.stat(uri);
+                await vscode.window.showTextDocument(uri);
+            } catch {
                 vscode.window.showInformationMessage(
                     'DevGlobe: log file is empty. Enable debug first (DevGlobe: Debug → true).',
                 );
-                return;
             }
-            await vscode.window.showTextDocument(vscode.Uri.file(p));
-        })
+        }),
     );
 
     context.subscriptions.push(
         vscode.commands.registerCommand('devglobe.openConfigFile', async () => {
-            const p = configPath();
-            if (!fs.existsSync(p)) {
+            try {
+                const uri = await getConfigUri(context);
+                await vscode.workspace.fs.stat(uri);
+                await vscode.window.showTextDocument(uri);
+            } catch {
                 vscode.window.showWarningMessage(
                     'DevGlobe: no config file yet. Run setup first.',
                 );
-                return;
             }
-            await vscode.window.showTextDocument(vscode.Uri.file(p));
-        })
+        }),
     );
 
     const savedConfig = vscode.workspace.getConfiguration('devglobe');
@@ -269,5 +258,5 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 }
 
 export function deactivate(): void {
-    // CoreClient.dispose() handles cleanup via context.subscriptions.
+    // WebCoreClient.dispose() handles cleanup via context.subscriptions.
 }

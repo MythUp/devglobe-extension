@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
-import * as crypto from 'crypto';
-import { TrackerState } from './core-client';
+import type { TrackerState } from './shared';
 
 type MessageHandler = (msg: Record<string, unknown>) => void;
 type StateGetter = () => TrackerState;
@@ -41,7 +40,7 @@ export class DevGlobeSidebarProvider implements vscode.WebviewViewProvider {
             localResourceRoots: [],
         };
 
-        const nonce = crypto.randomBytes(16).toString('base64');
+        const nonce = generateNonce();
 
         webviewView.webview.html = this.getHtml(nonce);
 
@@ -365,4 +364,17 @@ export class DevGlobeSidebarProvider implements vscode.WebviewViewProvider {
 </body>
 </html>`;
     }
+}
+
+function generateNonce(): string {
+    const bytes = new Uint8Array(16);
+    const cryptoApi = globalThis.crypto;
+    if (cryptoApi && typeof cryptoApi.getRandomValues === 'function') {
+        cryptoApi.getRandomValues(bytes);
+    } else {
+        for (let i = 0; i < bytes.length; i += 1) {
+            bytes[i] = Math.floor(Math.random() * 256);
+        }
+    }
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
