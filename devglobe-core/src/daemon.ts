@@ -31,7 +31,7 @@ export async function runDaemon(): Promise<void> {
           break;
         }
         case 'set_status':
-          await tracker.setStatus(msg.params.message, msg.params.api_key);
+          await tracker.setStatus(msg.params.message);
           break;
         case 'pause':
           tracker.pause();

@@ -2,14 +2,6 @@ import { HeartbeatBatch, HeartbeatResponse } from './types.js';
 import { HEARTBEAT_ENDPOINT, STATUS_ENDPOINT, FETCH_TIMEOUT_MS } from './constants.js';
 import { logger } from './logger.js';
 
-function summarizeKey(apiKey: string): { length: number; prefix: string; suffix: string } {
-  return {
-    length: apiKey.length,
-    prefix: apiKey.slice(0, 4),
-    suffix: apiKey.slice(-4),
-  };
-}
-
 /**
  * Thrown when the server explicitly rejects the API key (HTTP 401).
  * The tracker stops on this; plugins should surface a notification and
@@ -41,7 +33,7 @@ export async function sendBatch(apiKey: string, batch: HeartbeatBatch): Promise<
       events: batch.heartbeats.length,
       editor: batch.editor,
       platform: batch.platform,
-      key: summarizeKey(apiKey),
+      keyLength: apiKey.length,
       first: batch.heartbeats[0],
     });
     const res = await fetch(HEARTBEAT_ENDPOINT, {
@@ -82,8 +74,7 @@ export async function sendStatus(apiKey: string, message: string): Promise<void>
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
     const truncated = message.slice(0, 100);
-    logger.debug('status send', { length: truncated.length });
-    logger.debug('status key', summarizeKey(apiKey));
+    logger.debug('status send', { length: truncated.length, keyLength: apiKey.length });
     const res = await fetch(STATUS_ENDPOINT, {
       method: 'POST',
       headers: {
@@ -95,12 +86,12 @@ export async function sendStatus(apiKey: string, message: string): Promise<void>
     });
     if (res.status === 401) {
       const body = await readResponseText(res);
-      logger.error('status rejected: invalid api key', { body: body || '<empty body>', key: summarizeKey(apiKey), length: truncated.length });
+      logger.error('status rejected: invalid api key', { body: body || '<empty body>', keyLength: apiKey.length, length: truncated.length });
       throw new InvalidApiKeyError();
     }
     if (!res.ok) {
       const body = await readResponseText(res);
-      logger.error(`status HTTP ${res.status}`, { body: body || '<empty body>', key: summarizeKey(apiKey), length: truncated.length });
+      logger.error(`status HTTP ${res.status}`, { body: body || '<empty body>', keyLength: apiKey.length, length: truncated.length });
       throw new Error(`HTTP ${res.status}`);
     }
     logger.debug('status ok');

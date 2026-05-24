@@ -110,9 +110,9 @@ export class Tracker {
     this.lastDedup = { file, language, at: now };
   }
 
-  async setStatus(message: string, apiKeyOverride?: string): Promise<void> {
+  async setStatus(message: string): Promise<void> {
     const cfg = loadConfig();
-    const apiKey = apiKeyOverride?.trim() || cfg.apiKey;
+    const apiKey = cfg.apiKey;
     if (!apiKey) {
       this.emit({ event: 'status_error', data: { message: 'not configured' } });
       return;
@@ -120,11 +120,8 @@ export class Tracker {
     try {
       logger.debug('setStatus requested', {
         messageLength: message.length,
-        apiKeySource: apiKeyOverride?.trim() ? 'override' : 'config',
         configured: !!apiKey,
         keyLength: apiKey.length,
-        keyPrefix: apiKey.slice(0, 4),
-        keySuffix: apiKey.slice(-4),
         editor: this.editor,
         configPath: configPath(),
       });
@@ -174,8 +171,6 @@ export class Tracker {
       currentLanguage: this.currentLanguage,
       editor: this.editor,
       keyLength: cfg.apiKey.length,
-      keyPrefix: cfg.apiKey.slice(0, 4),
-      keySuffix: cfg.apiKey.slice(-4),
     });
 
     const now = Date.now();
