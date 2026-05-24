@@ -28,7 +28,7 @@ export function readApiKey(): string {
         const match = line.match(/^api_key\s*=\s*"([^"]*)"/);
         if (match) {
             const key = match[1];
-            log.info('config api_key read', { exists: true, length: key.length, prefix: key.slice(0, 4), suffix: key.slice(-4) });
+            log.info('config api_key read', { exists: true, length: key.length });
             return key;
         }
     }
@@ -131,7 +131,7 @@ export function writeApiKey(apiKey: string): void {
 
     const output = updated.join('\n').replace(/\n{3,}/g, '\n\n');
     fs.writeFileSync(CONFIG_PATH, output.endsWith('\n') ? output : output + '\n', { mode: 0o600 });
-    log.info('config api_key written', { length: apiKey.length, prefix: apiKey.slice(0, 4), suffix: apiKey.slice(-4) });
+    log.info('config api_key written', { length: apiKey.length });
 }
 
 /**

@@ -200,15 +200,9 @@ export class CoreClient implements vscode.Disposable {
         });
     }
 
-    setStatus(message: string, apiKey?: string): void {
-        log.info('core setStatus requested', {
-            length: message.length,
-            hasApiKeyOverride: !!apiKey,
-            keyLength: apiKey?.length ?? 0,
-            keyPrefix: apiKey ? apiKey.slice(0, 4) : '',
-            keySuffix: apiKey ? apiKey.slice(-4) : '',
-        });
-        this.send({ method: 'set_status', params: { message, ...(apiKey ? { api_key: apiKey } : {}) } });
+    setStatus(message: string): void {
+        log.info('core setStatus requested', { length: message.length });
+        this.send({ method: 'set_status', params: { message } });
     }
 
     reset(): void {

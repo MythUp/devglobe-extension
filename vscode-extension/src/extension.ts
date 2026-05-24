@@ -36,14 +36,14 @@ function getPluginVersion(context: vscode.ExtensionContext): string {
 async function getAndMigrateApiKey(context: vscode.ExtensionContext): Promise<string> {
     const configKey = readApiKey();
     if (configKey) {
-        log.info('desktop api key resolved from config.toml', { length: configKey.length, prefix: configKey.slice(0, 4), suffix: configKey.slice(-4) });
+        log.info('desktop api key resolved from config.toml', { length: configKey.length });
         await context.secrets.store(SECRET_API_KEY, configKey);
         return configKey;
     }
 
     const stored = await context.secrets.get(SECRET_API_KEY);
     if (stored) {
-        log.info('desktop api key resolved from secrets', { length: stored.length, prefix: stored.slice(0, 4), suffix: stored.slice(-4) });
+        log.info('desktop api key resolved from secrets', { length: stored.length });
         writeApiKey(stored);
         return stored;
     }
@@ -100,7 +100,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
                     vscode.window.showErrorMessage('DevGlobe: API key is empty.');
                     break;
                 }
-                log.info('desktop token saved from sidebar', { length: token.length, prefix: token.slice(0, 4), suffix: token.slice(-4) });
+                log.info('desktop token saved from sidebar', { length: token.length });
                 await context.secrets.store(SECRET_API_KEY, token);
                 writeApiKey(token);
                 client.init();
@@ -115,7 +115,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
                 const apiKey = await getAndMigrateApiKey(context);
                 if (!apiKey) break;
                 log.info('desktop sidebar setStatus', { length: message.length, hasKey: true, keyLength: apiKey.length });
-                client.setStatus(message, apiKey);
+                client.setStatus(message);
                 break;
             }
 
@@ -192,7 +192,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
             if (message === undefined) return;
             log.info('desktop command setStatus', { length: message.length, hasKey: true, keyLength: apiKey.length });
-            client.setStatus(message, apiKey);
+            client.setStatus(message);
         })
     );
 

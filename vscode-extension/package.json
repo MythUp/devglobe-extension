@@ -41,7 +41,8 @@
   "main": "./out/extension.js",
   "browser": "./out/extension-web.js",
   "extensionKind": [
-    "ui"
+    "ui",
+    "workspace"
   ],
   "scripts": {
     "build:desktop": "esbuild src/extension.ts --bundle --platform=node --format=cjs --target=node18 --external:vscode --outfile=out/extension.js",
