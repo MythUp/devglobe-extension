@@ -102,7 +102,7 @@ API keys are stored in the OS keychain via VS Code SecretStorage (macOS Keychain
 
 - VS Code **1.80+** — also works with **Cursor**, **Windsurf**, **VSCodium**, **Positron**, **Antigravity** and other VS Code forks
 - **Web compatible** — works in `vscode.dev` and `github.dev` in addition to desktop VS Code
-- **Zero external dependencies** — uses only native VS Code APIs
+- **Zero external dependencies** — uses only native VS Code APIs (and Node.js on desktop)
 
 ---
 
