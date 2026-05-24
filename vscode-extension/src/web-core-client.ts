@@ -49,8 +49,6 @@ async function sendBatch(apiKey: string, batch: HeartbeatBatch): Promise<Heartbe
         editor: batch.editor,
         platform: batch.platform,
         keyLength: apiKey.length,
-        keyPrefix: apiKey.slice(0, 4),
-        keySuffix: apiKey.slice(-4),
         origin: webOrigin(),
     });
     const res = await fetch(`${API_BASE_URL}/api/v2/heartbeat`, {
@@ -79,8 +77,6 @@ async function sendStatus(apiKey: string, message: string): Promise<void> {
     log.info('web status send', {
         length: message.length,
         keyLength: apiKey.length,
-        keyPrefix: apiKey.slice(0, 4),
-        keySuffix: apiKey.slice(-4),
         origin: webOrigin(),
     });
     const res = await fetch(`${API_BASE_URL}/api/v2/status`, {
@@ -155,6 +151,11 @@ export class WebCoreClient implements vscode.Disposable {
     private currentLanguage: string | undefined;
     private currentRepo: string | undefined;
     private currentBranch: string | undefined;
+    // Memoized API key resolution. Avoids a config.toml FS read + secrets
+    // round-trip on every activity event. Invalidated on reset() and when
+    // all candidates get rejected (401), so the next call re-fetches fresh
+    // values in case the user updated the key.
+    private cachedCandidates: Array<{ source: string; key: string }> | null = null;
     private lastDedup: { file: string | undefined; language: string | undefined; at: number } = {
         file: undefined,
         language: undefined,
@@ -214,6 +215,7 @@ export class WebCoreClient implements vscode.Disposable {
         this.lastDedup = { file: undefined, language: undefined, at: 0 };
         this.offline = false;
         this.consecutiveErrors = 0;
+        this.cachedCandidates = null;
         this.statusBarItem?.hide();
         this.onStateChange(this.state);
     }
@@ -227,28 +229,22 @@ export class WebCoreClient implements vscode.Disposable {
     }
 
     private async resolveApiKeyCandidates(scope: string): Promise<Array<{ source: string; key: string }>> {
+        if (this.cachedCandidates) {
+            return this.cachedCandidates;
+        }
+
         const candidates: Array<{ source: string; key: string }> = [];
         const configKey = await readApiKey(this.context);
         if (configKey) {
             await this.context.secrets.store(SECRET_API_KEY, configKey);
             candidates.push({ source: 'config.toml', key: configKey });
-            log.info('web api key resolved from config.toml', {
-                scope,
-                length: configKey.length,
-                prefix: configKey.slice(0, 4),
-                suffix: configKey.slice(-4),
-            });
+            log.info('web api key resolved from config.toml', { scope, length: configKey.length });
         }
 
         const secretKey = await this.context.secrets.get(SECRET_API_KEY);
         if (secretKey) {
             const duplicate = candidates.some((candidate) => candidate.key === secretKey);
-            log.info('web api key resolved from secrets', {
-                scope,
-                length: secretKey.length,
-                prefix: secretKey.slice(0, 4),
-                suffix: secretKey.slice(-4),
-            });
+            log.info('web api key resolved from secrets', { scope, length: secretKey.length });
             if (!duplicate) {
                 candidates.push({ source: 'secrets', key: secretKey });
             }
@@ -258,6 +254,7 @@ export class WebCoreClient implements vscode.Disposable {
             log.info('web api key resolved: none', { scope });
         }
 
+        this.cachedCandidates = candidates;
         return candidates;
     }
 
@@ -269,8 +266,6 @@ export class WebCoreClient implements vscode.Disposable {
                     source: candidate.source,
                     length: message.length,
                     keyLength: candidate.key.length,
-                    keyPrefix: candidate.key.slice(0, 4),
-                    keySuffix: candidate.key.slice(-4),
                     origin: webOrigin(),
                 });
                 await sendStatus(candidate.key, message);
@@ -286,6 +281,9 @@ export class WebCoreClient implements vscode.Disposable {
             }
         }
 
+        // All cached candidates rejected (401). Drop the cache so the next
+        // call re-reads fresh values in case the user rotated their key.
+        this.cachedCandidates = null;
         throw new InvalidApiKeyError();
     }
 
@@ -298,8 +296,6 @@ export class WebCoreClient implements vscode.Disposable {
                     source: candidate.source,
                     events: batch.heartbeats.length,
                     keyLength: candidate.key.length,
-                    keyPrefix: candidate.key.slice(0, 4),
-                    keySuffix: candidate.key.slice(-4),
                     origin: webOrigin(),
                 });
                 const resp = await sendBatch(candidate.key, batch);
@@ -318,6 +314,9 @@ export class WebCoreClient implements vscode.Disposable {
         }
 
         if (lastInvalid) {
+            // All cached candidates rejected (401). Drop the cache so the
+            // next call re-reads fresh values in case the user rotated.
+            this.cachedCandidates = null;
             throw new InvalidApiKeyError();
         }
 
@@ -340,8 +339,6 @@ export class WebCoreClient implements vscode.Disposable {
             filePath: resource.fsPath || resource.path,
             language,
             keyLength: apiKey.length,
-            keyPrefix: apiKey.slice(0, 4),
-            keySuffix: apiKey.slice(-4),
             origin: webOrigin(),
         });
 
@@ -402,8 +399,6 @@ export class WebCoreClient implements vscode.Disposable {
                 candidates: candidates.map((candidate) => ({
                     source: candidate.source,
                     length: candidate.key.length,
-                    prefix: candidate.key.slice(0, 4),
-                    suffix: candidate.key.slice(-4),
                 })),
             });
             await this.tryStatusWithCandidates(message);
