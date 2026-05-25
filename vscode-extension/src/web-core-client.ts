@@ -125,11 +125,11 @@ function webPlatform(): string {
             .filter(Boolean)
             .join(' ')
             .toLowerCase();
-        // Treat mobile UA hints as desktop equivalents for our reporting:
-        // - Android -> report as Linux
-        // - iPhone / iPad / iOS -> report as macOS
-        if (hint.includes('android')) return 'Linux';
-        if (hint.includes('iphone') || hint.includes('ipad') || hint.includes('ios')) return 'macOS';
+        // iPad must be checked before generic mac, since iPadOS user agents
+        // often contain "macintosh" for Safari compatibility.
+        if (hint.includes('ipad')) return 'iPadOS';
+        if (hint.includes('iphone') || hint.includes('ios')) return 'iOS';
+        if (hint.includes('android')) return 'Android';
         if (hint.includes('windows')) return 'Windows';
         if (hint.includes('mac')) return 'macOS';
         return 'Linux';
