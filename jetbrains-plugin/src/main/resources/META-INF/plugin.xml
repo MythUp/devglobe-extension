@@ -43,6 +43,15 @@
     ]]></description>
 
     <change-notes><![CDATA[
+    <h3>2.0.1</h3>
+    <ul>
+        <li>All endpoints now point to the new <code>devglobe.app</code> domain (migrated from <code>devglobe.xyz</code>).</li>
+        <li>Invalid API key (401) is now detected: the key is cleared and the user is prompted to reconnect.</li>
+        <li>New actions under <b>Tools → DevGlobe</b>: <i>Debug</i> (toggle verbose logging), <i>Open Log File…</i>, <i>Open Config File…</i>.</li>
+        <li>Refreshed marketplace logo for brand consistency.</li>
+        <li>README: added a troubleshooting section with debug logging instructions; RustRover listed in compatible IDEs.</li>
+    </ul>
+
     <h3>2.0.0</h3>
     <ul>
         <li>Multi-provider repo URL detection (GitHub, GitLab, Bitbucket, self-hosted Gitea/Forgejo, Azure DevOps).</li>

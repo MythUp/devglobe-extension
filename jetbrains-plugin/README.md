@@ -19,7 +19,7 @@
 
 ## Compatible IDEs
 
-Compatible with **all JetBrains IDEs**: IntelliJ IDEA, WebStorm, PyCharm, GoLand, Rider, PhpStorm, CLion, RubyMine, DataGrip, Android Studio.
+Compatible with **all JetBrains IDEs**: IntelliJ IDEA, WebStorm, PyCharm, GoLand, Rider, PhpStorm, CLion, RubyMine, DataGrip, Android Studio, RustRover.
 
 ---
 
@@ -108,6 +108,26 @@ API keys are stored in the IDE's native credential manager via PasswordSafe, bac
 
 - **IDE builds**: 242 — 263.* (2024.2 to 2026.3)
 - **Java**: 17+
+
+---
+
+## Troubleshooting
+
+If you don't appear on the globe or the plugin misbehaves, enable verbose logging by adding to `~/.devglobe/config.toml`:
+
+```toml
+debug = true
+```
+
+All logs are written to `~/.devglobe/devglobe.log` (mode `0600`, auto-truncates to the last 1 MB when the file exceeds 5 MB). The file is local and never sent anywhere.
+
+| Level | When written |
+|---|---|
+| `ERROR` | Always — failed heartbeats, invalid API key, missing/broken config |
+| `INFO` | Only when `debug = true` — API key saved, online/offline transitions, tracker init |
+| `DEBUG` | Only when `debug = true` — heartbeat & status payloads, HTTP responses, rate-limit hits, file/repo changes |
+
+Restart your IDE for the change to take effect. Set `debug = false` (or remove the line) to go back to errors-only. The `Debug` action under **Tools → DevGlobe** toggles it without editing the file.
 
 ---
 
