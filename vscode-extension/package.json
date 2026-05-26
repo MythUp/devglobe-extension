@@ -2,7 +2,7 @@
   "name": "devglobe",
   "displayName": "DevGlobe",
   "description": "Show your live coding presence on the DevGlobe world map. Track coding time, languages, repos, and stats.",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "publisher": "devglobe",
   "icon": "media/logo.png",
   "license": "MIT",
