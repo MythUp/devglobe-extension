@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.extensions.PluginId
 import xyz.devglobe.plugin.auth.ApiKeyStorage
 import xyz.devglobe.plugin.auth.ConfigWriter
@@ -198,7 +198,7 @@ class DevGlobeTracker : Disposable {
 
     private fun pluginVersion(): String {
         return try {
-            PluginManagerCore.getPlugin(PluginId.getId("xyz.devglobe.plugin"))?.version ?: "0.0.0"
+            PluginManager.getInstance().findEnabledPlugin(PluginId.getId("xyz.devglobe.plugin"))?.version ?: "0.0.0"
         } catch (_: Exception) {
             "0.0.0"
         }
