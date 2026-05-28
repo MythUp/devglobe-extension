@@ -63,7 +63,7 @@ In Zed: `Cmd+Shift+P` → **zed: install dev extension** → select the `zed-dev
 
 ## How it works
 
-Zed loads DevGlobe as an extension that registers a small Language Server. The "server" never analyzes your code: it only receives file open, change and save events from Zed, and uses them to send heartbeats to DevGlobe every 30 seconds while you're actively coding. After 1 minute of inactivity, heartbeats pause automatically. After 10 minutes without activity, you disappear from the globe.
+Zed loads DevGlobe as an extension that registers a small Language Server. The "server" never analyzes your code: it only receives file open, change and save events from Zed, and uses them to send heartbeats to DevGlobe every 30 seconds while you're actively coding. After 1 minute of inactivity, heartbeats pause automatically. After 15 minutes without activity, you disappear from the globe.
 
 ## Supported languages
 

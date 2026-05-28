@@ -52,7 +52,7 @@ DevGlobe is a **free, open-source** platform for developer metrics, insights and
 
 **That's it — your marker appears on the globe.**
 
-The extension sends a heartbeat every 30 seconds while you code. Stop typing for 1 minute and heartbeats pause. After 10 minutes of inactivity, you disappear from the globe.
+The extension sends a heartbeat every 30 seconds while you code. Stop typing for 1 minute and heartbeats pause. After 15 minutes of inactivity, you disappear from the globe.
 
 All extensions read your API key from `~/.devglobe/config.toml` and let you toggle local privacy flags (`hide_file_names`, `hide_branch_names`, `hide_project_names`) there. Globe-side visibility (anonymous mode, repo sharing, profile mode) is managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).
 

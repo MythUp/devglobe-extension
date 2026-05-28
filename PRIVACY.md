@@ -100,7 +100,7 @@ The extension hosts a JavaScript subprocess (`devglobe-core`) that:
 2. Detects git context by reading `.git/HEAD` and `.git/config` directly — no `git` binary required, no shell out.
 3. Resolves the origin remote URL into a canonical `https://host/owner/repo` form. Multi-provider (GitHub, GitLab, Bitbucket, self-hosted Gitea/Forgejo, Azure DevOps, …).
 4. Buffers heartbeat events and flushes a batch every 30 s while you're active.
-5. Pauses after 1 minute of editor inactivity. After 10 minutes the server removes you from the live globe.
+5. Pauses after 1 minute of editor inactivity. After 15 minutes the server removes you from the live globe.
 
 The wire payload of a single batch:
 
@@ -128,6 +128,6 @@ Each `heartbeats[i]` represents the editor state at `time` going forward; the se
 
 ## Data retention
 
-- **Live presence**: a heartbeat keeps you on the globe for 10 minutes; older session rows are pruned.
+- **Live presence**: a heartbeat keeps you on the globe for 15 minutes; older session rows are pruned.
 - **Coding time**: per-day, per-(language, editor, platform, repo, branch, file) buckets, retained for your dashboard, stats, streaks and badges.
 - **Account data**: kept until you delete your account on [devglobe.app](https://devglobe.app), then permanently erased.

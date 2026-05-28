@@ -25,7 +25,7 @@
 4. Paste your API key → **Connect**
 5. You're online — your marker appears on the globe
 
-The extension sends a **heartbeat every 30 seconds** as long as you're actively coding. It pauses after 1 minute of inactivity. **After 10 minutes of inactivity, you disappear from the globe.**
+The extension sends a **heartbeat every 30 seconds** as long as you're actively coding. It pauses after 1 minute of inactivity. **After 15 minutes of inactivity, you disappear from the globe.**
 
 Visibility settings (anonymous mode, repo sharing, profile mode) are managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings).
 

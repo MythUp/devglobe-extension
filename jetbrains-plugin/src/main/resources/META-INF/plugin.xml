@@ -13,7 +13,7 @@
         <li>Open the DevGlobe tool window in your IDE and paste the key</li>
         <li>You appear on the globe</li>
     </ol>
-    <p>The extension sends a heartbeat every 30 seconds while you code. It pauses automatically after 1 minute of inactivity. After 10 minutes without activity, you disappear from the globe.</p>
+    <p>The extension sends a heartbeat every 30 seconds while you code. It pauses automatically after 1 minute of inactivity. After 15 minutes without activity, you disappear from the globe.</p>
 
     <h3>Features</h3>
     <ul>
