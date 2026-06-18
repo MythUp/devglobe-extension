@@ -211,7 +211,7 @@ var fsp = __toESM(require("node:fs/promises"), 1);
 var path3 = __toESM(require("node:path"), 1);
 
 // ../devglobe-core/src/constants.ts
-var API_BASE_URL = "https://devglobe.xyz";
+var API_BASE_URL = "https://devglobe.app";
 var HEARTBEAT_ENDPOINT = `${API_BASE_URL}/api/v2/heartbeat`;
 var STATUS_ENDPOINT = `${API_BASE_URL}/api/v2/status`;
 var FETCH_TIMEOUT_MS = 15e3;
@@ -648,7 +648,7 @@ async function runOneshot(params) {
     if (err instanceof InvalidApiKeyError) {
       logger.error("oneshot stopping: invalid api key \u2014 re-run setup with a valid key");
       process.stderr.write(
-        "devglobe: invalid API key. Re-run setup with a valid key from https://devglobe.xyz/dashboard/settings\n"
+        "devglobe: invalid API key. Re-run setup with a valid key from https://devglobe.app/dashboard/settings\n"
       );
       return;
     }

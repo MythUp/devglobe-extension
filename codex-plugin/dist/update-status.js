@@ -26,7 +26,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 var import_fs = require("fs");
 
 // ../devglobe-core/src/constants.ts
-var API_BASE_URL = "https://devglobe.xyz";
+var API_BASE_URL = "https://devglobe.app";
 var HEARTBEAT_ENDPOINT = `${API_BASE_URL}/api/v2/heartbeat`;
 var STATUS_ENDPOINT = `${API_BASE_URL}/api/v2/status`;
 var FETCH_TIMEOUT_MS = 15e3;
