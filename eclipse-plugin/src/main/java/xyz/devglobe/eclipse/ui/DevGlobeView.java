@@ -315,7 +315,7 @@ public class DevGlobeView extends ViewPart {
 
         // ── Links ─────────────────────────────────────────────────────
         Link globeLink = new Link(dashboardCard, SWT.NONE);
-        globeLink.setText("🌍 <a href=\"https://devglobe.app/space\">View your globe</a>");
+        globeLink.setText("🌍 <a href=\"https://devglobe.app/space\">Open Globe</a>");
         globeLink.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
         globeLink.addSelectionListener(new SelectionAdapter() {
             @Override

@@ -24,11 +24,7 @@
         name="DevGlobe">
     </category>
 
-    <command
-        id="xyz.devglobe.eclipse.commands.setStatus"
-        name="Set Status"
-        categoryId="xyz.devglobe.eclipse.commands.category">
-    </command>
+
     <command
         id="xyz.devglobe.eclipse.commands.showCodingTime"
         name="Show Coding Time"
@@ -59,14 +55,16 @@
         name="Open DevGlobe View"
         categoryId="xyz.devglobe.eclipse.commands.category">
     </command>
+    <command
+        id="xyz.devglobe.eclipse.commands.setStatus"
+        name="Set Status"
+        categoryId="xyz.devglobe.eclipse.commands.category">
+    </command>
   </extension>
 
   <!-- ─── Handlers ──────────────────────────────────────────── -->
   <extension point="org.eclipse.ui.handlers">
-    <handler
-        commandId="xyz.devglobe.eclipse.commands.setStatus"
-        class="xyz.devglobe.eclipse.actions.SetStatusHandler">
-    </handler>
+
     <handler
         commandId="xyz.devglobe.eclipse.commands.showCodingTime"
         class="xyz.devglobe.eclipse.actions.ShowCodingTimeHandler">
@@ -91,6 +89,10 @@
         commandId="xyz.devglobe.eclipse.commands.openView"
         class="xyz.devglobe.eclipse.actions.OpenDevGlobeViewHandler">
     </handler>
+    <handler
+        commandId="xyz.devglobe.eclipse.commands.setStatus"
+        class="xyz.devglobe.eclipse.actions.SetStatusHandler">
+    </handler>
   </extension>
 
   <!-- ─── Menu ──────────────────────────────────────────────── -->
@@ -109,13 +111,14 @@
             visible="true">
         </separator>
         <command
-            commandId="xyz.devglobe.eclipse.commands.showCodingTime"
-            mnemonic="C">
-        </command>
-        <command
             commandId="xyz.devglobe.eclipse.commands.setStatus"
             mnemonic="S">
         </command>
+        <command
+            commandId="xyz.devglobe.eclipse.commands.showCodingTime"
+            mnemonic="C">
+        </command>
+
         <command
             commandId="xyz.devglobe.eclipse.commands.openGlobe"
             mnemonic="G">
@@ -164,17 +167,7 @@
     </menuContribution>
   </extension>
 
-  <!-- ─── Status Line ───────────────────────────────────────── -->
-  <extension point="org.eclipse.ui.menus">
-    <menuContribution locationURI="toolbar:org.eclipse.ui.trim.status">
-      <toolbar id="xyz.devglobe.eclipse.statusbar.toolbar">
-        <control
-            class="xyz.devglobe.eclipse.ui.DevGlobeStatusBarContribution"
-            id="xyz.devglobe.eclipse.statusbar.control">
-        </control>
-      </toolbar>
-    </menuContribution>
-  </extension>
+
 
   <!-- ─── Early Startup ─────────────────────────────────────── -->
   <extension point="org.eclipse.ui.startup">
