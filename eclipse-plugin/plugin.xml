@@ -101,6 +101,14 @@
           label="DevGlobe"
           mnemonic="D">
         <command
+            commandId="xyz.devglobe.eclipse.commands.openView"
+            mnemonic="V">
+        </command>
+        <separator
+            name="xyz.devglobe.eclipse.separator0"
+            visible="true">
+        </separator>
+        <command
             commandId="xyz.devglobe.eclipse.commands.showCodingTime"
             mnemonic="C">
         </command>
@@ -135,10 +143,10 @@
     <menuContribution locationURI="toolbar:org.eclipse.ui.main.toolbar">
       <toolbar id="xyz.devglobe.eclipse.toolbar">
         <command
-            commandId="xyz.devglobe.eclipse.commands.openGlobe"
+            commandId="xyz.devglobe.eclipse.commands.openView"
             icon="icons/devglobe16.png"
             label="DevGlobe"
-            tooltip="Open DevGlobe Globe">
+            tooltip="Open DevGlobe View">
         </command>
       </toolbar>
     </menuContribution>
@@ -173,5 +181,22 @@
     <startup
         class="xyz.devglobe.eclipse.core.DevGlobeStartup"/>
   </extension>
+
+  <!-- ─── Preference Page ────────────────────────────────────── -->
+  <extension point="org.eclipse.ui.preferencePages">
+    <page
+        id="xyz.devglobe.eclipse.preferences"
+        name="DevGlobe"
+        class="xyz.devglobe.eclipse.preferences.DevGlobePreferencePage">
+    </page>
+  </extension>
+
+  <!-- ─── Preferences ────────────────────────────────────────── -->
+  <extension point="org.eclipse.core.runtime.preferences">
+    <initializer
+        class="xyz.devglobe.eclipse.preferences.DevGlobePreferenceInitializer"/>
+  </extension>
+
+
 
 </plugin>

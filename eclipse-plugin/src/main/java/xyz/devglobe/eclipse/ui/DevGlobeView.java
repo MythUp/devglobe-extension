@@ -363,7 +363,7 @@ public class DevGlobeView extends ViewPart {
 
             if (configured) {
                 codingTimeLabel.setText(s.codingTime + " coded today");
-                languageLabel.setText(s.language != null ? s.language : "—");
+                languageLabel.setText(s.language != null && !"null".equals(s.language) ? s.language : "—");
                 offlineLabel.setText(s.offline ? "⚠ Offline" : "✅ Online");
                 offlineLabel.setToolTipText(s.offline
                         ? "Cannot reach the DevGlobe API server"

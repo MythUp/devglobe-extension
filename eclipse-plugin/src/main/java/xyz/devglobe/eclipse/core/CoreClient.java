@@ -205,7 +205,7 @@ public class CoreClient {
         String needle = "\"" + key + "\":\"";
         int start = json.indexOf(needle);
         if (start < 0) {
-            // try without quotes (number or bool)
+            // try without quotes (number, bool, or null literal)
             needle = "\"" + key + "\":";
             start = json.indexOf(needle);
             if (start < 0) return null;
@@ -213,7 +213,10 @@ public class CoreClient {
             int end = json.indexOf(",", start);
             if (end < 0) end = json.indexOf("}", start);
             if (end < 0) end = json.length();
-            return json.substring(start, end).trim();
+            String raw = json.substring(start, end).trim();
+            // JSON null literal → Java null
+            if ("null".equals(raw)) return null;
+            return raw;
         }
         start += needle.length();
         int end = json.indexOf("\"", start);

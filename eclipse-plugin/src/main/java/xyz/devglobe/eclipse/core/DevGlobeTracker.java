@@ -116,6 +116,11 @@ public class DevGlobeTracker {
     public void sendActivity(String filePath, String language) {
         if (client != null && client.isRunning() && state.tracking) {
             client.sendActivity(filePath, language);
+            // Update local language immediately so the UI reflects it
+            // without waiting for the next heartbeat_ok from core
+            if (language != null && !language.isEmpty() && !language.equals(state.language)) {
+                updateState(state.withLanguage(language));
+            }
         }
     }
 
