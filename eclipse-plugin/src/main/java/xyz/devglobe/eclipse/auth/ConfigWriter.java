@@ -94,31 +94,26 @@ public final class ConfigWriter {
     }
 
     /**
-     * Clears the API key by running {@code devglobe-core setup ""} (empty key).
-     * This delegates to the core's own config management.
+     * Clears the API key by removing the {@code api_key} line from config.toml.
+     * This avoids calling {@code devglobe-core setup ""} which doesn't accept
+     * an empty argument.
      */
     public static void clearApiKey() {
         try {
-            File binary = CoreDownloader.getBinaryPath();
-            if (!binary.exists()) {
-                DevGlobePlugin.log("devglobe-core not found, cannot clear API key");
-                return;
-            }
+            File configFile = configPath();
+            if (!configFile.exists()) return;
 
-            ProcessBuilder pb = new ProcessBuilder(
-                    binary.getAbsolutePath(), "setup", "");
-            pb.directory(devglobeDir());
-            pb.redirectErrorStream(true);
+            List<String> lines = new ArrayList<>(Files.readAllLines(configFile.toPath()));
+            int idx = findRootApiKeyIndex(lines);
+            if (idx < 0) return; // no key to clear
 
-            Process process = pb.start();
-            int exitCode = process.waitFor();
-
-            if (exitCode != 0) {
-                String error = new String(process.getInputStream().readAllBytes());
-                DevGlobePlugin.log("devglobe-core setup (clear) failed (exit " + exitCode + "): " + error);
-            }
-        } catch (Exception e) {
-            DevGlobePlugin.log("Failed to clear API key via devglobe-core: " + e.getMessage());
+            lines.remove(idx);
+            String output = String.join("\n", lines).replaceAll("\n{3,}", "\n\n");
+            if (!output.endsWith("\n")) output += "\n";
+            Files.writeString(configFile.toPath(), output);
+            setRestrictivePermissions(configFile);
+        } catch (IOException e) {
+            DevGlobePlugin.log("Failed to clear API key: " + e.getMessage());
         }
     }
 

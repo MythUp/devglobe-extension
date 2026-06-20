@@ -23,9 +23,8 @@ public class SetStatusHandler extends AbstractHandler {
                 "", null);
         if (dialog.open() == Window.OK) {
             String message = dialog.getValue();
-            if (message != null && !message.trim().isEmpty()) {
-                DevGlobeTracker.getInstance().sendSetStatus(message.trim());
-            }
+            // Allow empty message to clear status
+            DevGlobeTracker.getInstance().sendSetStatus(message != null ? message.trim() : "");
         }
         return null;
     }

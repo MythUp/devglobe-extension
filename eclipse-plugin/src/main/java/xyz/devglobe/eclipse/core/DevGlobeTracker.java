@@ -29,6 +29,7 @@ public class DevGlobeTracker {
     private volatile TrackerState state = TrackerState.DEFAULT;
     private final List<Runnable> stateListeners = new ArrayList<>();
     private final AtomicBoolean starting = new AtomicBoolean(false);
+    private final AtomicBoolean intentionalShutdown = new AtomicBoolean(false);
     private CoreClient client;
 
     // ── Public API ───────────────────────────────────────────────────────
@@ -64,7 +65,6 @@ public class DevGlobeTracker {
     public void saveApiKeyAndStart(String apiKey) {
         ConfigWriter.writeApiKey(apiKey);
         start();
-        Notifier.info("Connected!");
     }
 
     public void start() {
@@ -81,7 +81,7 @@ public class DevGlobeTracker {
         if (client != null && client.isRunning()) {
             client.sendPause();
             updateState(state.withTracking(false));
-            Notifier.info("Tracking paused");
+            Notifier.confirm("Tracking paused");
         }
     }
 
@@ -89,7 +89,7 @@ public class DevGlobeTracker {
         if (client != null && client.isRunning()) {
             client.sendResume();
             updateState(state.withTracking(true));
-            Notifier.info("Tracking started");
+            Notifier.confirm("Tracking started");
         }
     }
 
@@ -97,7 +97,6 @@ public class DevGlobeTracker {
         shutdownCore();
         ConfigWriter.clearApiKey();
         updateState(TrackerState.DEFAULT);
-        Notifier.info("Disconnected");
     }
 
     public void sendSetStatus(String message) {
@@ -127,6 +126,7 @@ public class DevGlobeTracker {
     // ── Core management ─────────────────────────────────────────────────
 
     private void ensureCore() {
+        intentionalShutdown.set(false);
         if (client != null && client.isRunning()) {
             // Already running — re-init
             client.sendInit(PLUGIN_VERSION, EDITOR);
@@ -156,10 +156,13 @@ public class DevGlobeTracker {
     }
 
     private void shutdownCore() {
+        intentionalShutdown.set(true);
         if (client != null) {
             client.stop();
             client = null;
         }
+        // Keep intentionalShutdown=true until onProcessDied() has run.
+        // It will be reset at the start of the next ensureCore() call.
     }
 
     // ── State updates ────────────────────────────────────────────────────
@@ -180,7 +183,6 @@ public class DevGlobeTracker {
                 // Set tracking=true so the UI shows the dashboard, but keep offline=true
                 // until the core confirms connectivity via onOnline().
                 updateState(state.withConfigured(true).withTracking(true).withError(null).withOffline(true));
-                Notifier.info("Connected!");
             } else {
                 updateState(state.withConfigured(false).withError("Not configured"));
             }
@@ -221,12 +223,13 @@ public class DevGlobeTracker {
         @Override
         public void onOnline() {
             updateState(state.withOffline(false).withError(null));
+            Notifier.confirm("Connected!");
         }
 
         @Override
         public void onStatusOk() {
             DevGlobePlugin.log("Status set successfully");
-            Notifier.info("Status updated");
+            Notifier.confirm("Status updated");
         }
 
         @Override
@@ -247,9 +250,15 @@ public class DevGlobeTracker {
         @Override
         public void onProcessDied() {
             starting.set(false);
-            DevGlobePlugin.log("Core process died");
-            updateState(state.withTracking(false).withError("Core process died"));
-            Notifier.error("Core process died");
+            if (intentionalShutdown.get()) {
+                // Expected during disconnect/reset - don't show error
+                DevGlobePlugin.log("Core process stopped intentionally");
+            } else {
+                // Unexpected process death
+                DevGlobePlugin.log("Core process died unexpectedly");
+                updateState(state.withError("Core process died").withTracking(false));
+                Notifier.error("Core process died");
+            }
         }
     }
 }

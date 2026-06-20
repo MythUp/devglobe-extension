@@ -18,6 +18,24 @@ import xyz.devglobe.eclipse.core.Notifier;
 import xyz.devglobe.eclipse.core.TrackerState;
 
 /**
+ * Reusable KeyAdapter that triggers a button's Selection event on Enter/Keypad Enter.
+ */
+class EnterKeyAdapter extends KeyAdapter {
+    private final Button targetButton;
+
+    EnterKeyAdapter(Button targetButton) {
+        this.targetButton = targetButton;
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        if (e.keyCode == SWT.CR || e.keyCode == SWT.KEYPAD_CR) {
+            targetButton.notifyListeners(SWT.Selection, new Event());
+        }
+    }
+}
+
+/**
  * DevGlobe sidebar view — shows a polished login form when not configured,
  * and a dashboard with coding time, language, and status when connected.
  * Mirrors the SidebarPanel from the JetBrains plugin.
@@ -80,6 +98,59 @@ public class DevGlobeView extends ViewPart {
         }
     }
 
+    // ── Helper methods ──────────────────────────────────────────────────
+
+    /** Create a centered title label with a larger bold font. */
+    private Label createTitleLabel(Composite parent, String text) {
+        Label label = new Label(parent, SWT.CENTER);
+        label.setText(text);
+        Font baseFont = parent.getDisplay().getSystemFont();
+        FontData[] fd = baseFont.getFontData();
+        for (FontData f : fd) {
+            f.setHeight(f.getHeight() + 4);
+            f.setStyle(SWT.BOLD);
+        }
+        label.setFont(new Font(parent.getDisplay(), fd));
+        label.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
+        return label;
+    }
+
+    /** Create a bold label (same size as base font, but bold). */
+    private Label createBoldLabel(Composite parent, String text) {
+        Label label = new Label(parent, SWT.NONE);
+        label.setText(text);
+        Font baseFont = parent.getDisplay().getSystemFont();
+        FontData[] fd = baseFont.getFontData();
+        for (FontData f : fd) {
+            f.setStyle(SWT.BOLD);
+        }
+        label.setFont(new Font(parent.getDisplay(), fd));
+        return label;
+    }
+
+    /** Create an info row with an icon and a value label. */
+    private Composite createInfoRow(Composite parent, String iconText, String initialText) {
+        Composite row = new Composite(parent, SWT.NONE);
+        row.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        GridLayout layout = new GridLayout(2, false);
+        layout.marginWidth = 0;
+        layout.marginHeight = 0;
+        layout.horizontalSpacing = 8;
+        row.setLayout(layout);
+
+        Label icon = new Label(row, SWT.NONE);
+        icon.setText(iconText);
+        icon.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+
+        Label value = new Label(row, SWT.NONE);
+        value.setText(initialText);
+        value.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+        // Store the value label as row data so callers can retrieve it
+        row.setData(value);
+        return row;
+    }
+
     // ── Login card ──────────────────────────────────────────────────────
 
     private void createLoginCard(Composite parent) {
@@ -92,16 +163,7 @@ public class DevGlobeView extends ViewPart {
         loginCard.setLayout(loginLayout);
 
         // ── Title ─────────────────────────────────────────────────────
-        Label title = new Label(loginCard, SWT.CENTER);
-        title.setText("🌍  DevGlobe");
-        Font baseFont = parent.getDisplay().getSystemFont();
-        FontData[] titleFd = baseFont.getFontData();
-        for (FontData f : titleFd) {
-            f.setHeight(f.getHeight() + 4);
-            f.setStyle(SWT.BOLD);
-        }
-        title.setFont(new Font(parent.getDisplay(), titleFd));
-        title.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
+        createTitleLabel(loginCard, "🌍  DevGlobe");
 
         // ── Subtitle ──────────────────────────────────────────────────
         Label desc = new Label(loginCard, SWT.WRAP | SWT.CENTER);
@@ -120,26 +182,12 @@ public class DevGlobeView extends ViewPart {
         formLayout.verticalSpacing = 8;
         form.setLayout(formLayout);
 
-        Label tokenLabel = new Label(form, SWT.NONE);
-        tokenLabel.setText("API Key");
-        FontData[] labelFd = baseFont.getFontData();
-        for (FontData f : labelFd) {
-            f.setStyle(SWT.BOLD);
-        }
-        tokenLabel.setFont(new Font(parent.getDisplay(), labelFd));
+        createBoldLabel(form, "API Key");
 
         tokenText = new Text(form, SWT.BORDER | SWT.PASSWORD);
         tokenText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         tokenText.setMessage("Enter your DevGlobe API key...");
-        // Allow Enter key to submit
-        tokenText.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.keyCode == SWT.CR || e.keyCode == SWT.KEYPAD_CR) {
-                    connectButton.notifyListeners(SWT.Selection, new Event());
-                }
-            }
-        });
+        tokenText.addKeyListener(new EnterKeyAdapter(connectButton));
 
         // Show/hide toggle
         Button showKeyToggle = new Button(form, SWT.CHECK);
@@ -203,82 +251,29 @@ public class DevGlobeView extends ViewPart {
         dashboardCard.setLayout(dashLayout);
 
         // ── Title ─────────────────────────────────────────────────────
-        Label dashTitle = new Label(dashboardCard, SWT.CENTER);
-        dashTitle.setText("🌍  DevGlobe");
-        Font baseFont = parent.getDisplay().getSystemFont();
-        FontData[] titleFd = baseFont.getFontData();
-        for (FontData f : titleFd) {
-            f.setHeight(f.getHeight() + 4);
-            f.setStyle(SWT.BOLD);
-        }
-        dashTitle.setFont(new Font(parent.getDisplay(), titleFd));
-        dashTitle.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
+        createTitleLabel(dashboardCard, "🌍  DevGlobe");
 
-        // ── Coding time row ───────────────────────────────────────────
-        Composite codingTimeRow = new Composite(dashboardCard, SWT.NONE);
-        codingTimeRow.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        GridLayout rowLayout = new GridLayout(2, false);
-        rowLayout.marginWidth = 0;
-        rowLayout.marginHeight = 0;
-        rowLayout.horizontalSpacing = 8;
-        codingTimeRow.setLayout(rowLayout);
+        // ── Info rows ─────────────────────────────────────────────────
+        Composite codingTimeRow = createInfoRow(dashboardCard, "⏱", "0m coded today");
+        codingTimeLabel = (Label) codingTimeRow.getData();
 
-        Label ctIcon = new Label(codingTimeRow, SWT.NONE);
-        ctIcon.setText("⏱");
-        ctIcon.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-        codingTimeLabel = new Label(codingTimeRow, SWT.NONE);
-        codingTimeLabel.setText("0m coded today");
-        codingTimeLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        Composite languageRow = createInfoRow(dashboardCard, "💻", "—");
+        languageLabel = (Label) languageRow.getData();
 
-        // ── Language row ──────────────────────────────────────────────
-        Composite languageRow = new Composite(dashboardCard, SWT.NONE);
-        languageRow.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        languageRow.setLayout(rowLayout);
-
-        Label langIcon = new Label(languageRow, SWT.NONE);
-        langIcon.setText("💻");
-        langIcon.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-        languageLabel = new Label(languageRow, SWT.NONE);
-        languageLabel.setText("—");
-        languageLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-
-        // ── Status row ────────────────────────────────────────────────
-        Composite statusRow = new Composite(dashboardCard, SWT.NONE);
-        statusRow.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        statusRow.setLayout(rowLayout);
-
-        Label statusIcon = new Label(statusRow, SWT.NONE);
-        statusIcon.setText("📡");
-        statusIcon.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-        offlineLabel = new Label(statusRow, SWT.NONE);
-        offlineLabel.setText("Online");
-        offlineLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        Composite statusRow = createInfoRow(dashboardCard, "📡", "Online");
+        offlineLabel = (Label) statusRow.getData();
 
         // ── Separator ─────────────────────────────────────────────────
         Label sep1 = new Label(dashboardCard, SWT.SEPARATOR | SWT.HORIZONTAL);
         sep1.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
         // ── Status message ────────────────────────────────────────────
-        Label statusTitle = new Label(dashboardCard, SWT.NONE);
-        statusTitle.setText("📝  Status Message");
-        FontData[] labelFd = baseFont.getFontData();
-        for (FontData f : labelFd) {
-            f.setStyle(SWT.BOLD);
-        }
-        statusTitle.setFont(new Font(parent.getDisplay(), labelFd));
+        createBoldLabel(dashboardCard, "📝  Status Message");
 
         statusText = new Text(dashboardCard, SWT.BORDER);
         statusText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         statusText.setMessage("What are you working on?");
-        // Allow Enter key to set status
-        statusText.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.keyCode == SWT.CR || e.keyCode == SWT.KEYPAD_CR) {
-                    setStatusButton.notifyListeners(SWT.Selection, new Event());
-                }
-            }
-        });
+        statusText.addKeyListener(new EnterKeyAdapter(setStatusButton));
 
         setStatusButton = new Button(dashboardCard, SWT.PUSH);
         setStatusButton.setText("Set Status");
