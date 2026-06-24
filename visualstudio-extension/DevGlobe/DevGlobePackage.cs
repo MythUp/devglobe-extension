@@ -39,7 +39,7 @@ namespace DevGlobe
         private ActivityTracker _activityTracker;
         private DevGlobeStatusBar _statusBar;
 
-        private const string PluginVersion = "1.0.0"; // must match source.extension.vsixmanifest
+        private const string PluginVersion = "0.1.0"; // must match source.extension.vsixmanifest
 
         /// <summary>
         /// Returns this package as the async factory for the tool window GUID. Required for

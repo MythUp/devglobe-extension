@@ -4,7 +4,7 @@
                  xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
     <Identity Id="DevGlobe.5f3a9c2e-7b14-4e8a-9d6f-1a2b3c4d5e6f"
-              Version="1.0.0"
+              Version="0.1.0"
               Language="en-US"
               Publisher="devglobe" />
     <DisplayName>DevGlobe</DisplayName>

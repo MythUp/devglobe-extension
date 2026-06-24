@@ -2,7 +2,7 @@
 
 All notable changes to the DevGlobe Visual Studio extension are documented here.
 
-## [1.0.0] - 2026-06-23
+## [0.1.0] - 2026-06-23
 
 ### Added
 

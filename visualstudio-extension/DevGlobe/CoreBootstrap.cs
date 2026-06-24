@@ -20,7 +20,7 @@ namespace DevGlobe
     {
         public const string CoreRepo = "Nako0/devglobe-extension";
         // Pinned; bump manually when a new core is published.
-        public const string CoreTag = "core-v2.0.0";
+        public const string CoreTag = "core-v2.0.1";
         public const string AssetName = "devglobe-core-win-x64.exe";
 
         // Cache subtree under %LOCALAPPDATA%.

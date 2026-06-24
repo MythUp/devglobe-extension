@@ -6,9 +6,9 @@ Only the latest release of each extension receives security updates.
 
 | Extension | Current version | Status |
 |-----------|----------------|--------|
-| VS Code | 0.1.8 | Supported |
-| JetBrains | 0.1.7 | Supported |
-| Visual Studio | 1.0.0 | Supported |
+| VS Code | 2.1.0 | Supported |
+| JetBrains | 2.0.1 | Supported |
+| Visual Studio | 0.1.0 | Supported |
 | Claude Code | 1.0.0 | Supported |
 
 ## Reporting a vulnerability
