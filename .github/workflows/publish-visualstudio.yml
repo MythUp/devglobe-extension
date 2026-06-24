@@ -1,4 +1,4 @@
-name: Publish Visual Studio Extension (GitHub only)
+name: Publish Visual Studio Extension
 
 on:
   push:
@@ -58,3 +58,29 @@ jobs:
             2. Double-click it (or use **Extensions → Manage Extensions → Install from VSIX…**)
             3. Restart Visual Studio
           generate_release_notes: true
+
+      - name: Publish to Visual Studio Marketplace
+        shell: pwsh
+        env:
+          # Réutilise le PAT Azure DevOps déjà utilisé pour VS Code (scope Marketplace › Manage,
+          # compte propriétaire du publisher "devglobe"). Même type de token, même marketplace.
+          MARKETPLACE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          # Locate VsixPublisher.exe (ships with the VS SDK component) via vswhere.
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsRoot = & $vswhere -latest -prerelease -property installationPath
+          $publisher = Join-Path $vsRoot "VSSDK\VisualStudioIntegration\Tools\Bin\VsixPublisher.exe"
+          if (-not (Test-Path $publisher)) {
+            Write-Error "VsixPublisher.exe not found at $publisher"
+            exit 1
+          }
+          Write-Host "Using VsixPublisher: $publisher"
+
+          & $publisher publish `
+            -payload "${{ steps.vsix.outputs.path }}" `
+            -publishManifest "publishManifest.json" `
+            -personalAccessToken $env:MARKETPLACE_PAT
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "VsixPublisher publish failed with exit code $LASTEXITCODE"
+            exit $LASTEXITCODE
+          }
