@@ -79,6 +79,7 @@ If your profile is set to `anonymous`, the server stores no precise coordinates 
 |-----|---------|
 | VS Code | OS keychain via `SecretStorage` (macOS Keychain, Windows Credential Manager, Linux libsecret). Old plaintext entries in `settings.json` are migrated automatically. |
 | JetBrains | OS keychain via `PasswordSafe`. |
+| Visual Studio | Windows Credential Manager. The `devglobe-core` daemon reads the key from `~/.devglobe/config.toml` (written with restrictive permissions). |
 | Zed, NeoVim, Claude Code, Codex, OpenCode | `~/.devglobe/config.toml`, written with `0600` permissions. |
 
 ---

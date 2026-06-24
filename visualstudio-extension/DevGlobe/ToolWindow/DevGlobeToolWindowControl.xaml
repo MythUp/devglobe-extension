@@ -1,0 +1,11 @@
+<UserControl x:Class="DevGlobe.ToolWindow.DevGlobeToolWindowControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:DevGlobe.ToolWindow"
+             xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+             Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}">
+    <Grid>
+        <local:LoginView x:Name="LoginViewControl" Visibility="Visible" />
+        <local:DashboardView x:Name="DashboardViewControl" Visibility="Collapsed" />
+    </Grid>
+</UserControl>

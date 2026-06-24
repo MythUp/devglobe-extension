@@ -1,0 +1,42 @@
+name: CI Build (VSIX)
+
+# Compile l'extension VSIX sur un runner Windows cloud à chaque push.
+# Sert de "compilateur distant" : permet de vérifier que le code compile
+# sans avoir Visual Studio / Windows en local.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build sur Windows
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: visualstudio-extension
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      - name: Restore NuGet packages
+        run: nuget restore DevGlobe.sln
+
+      - name: Build (Release, sans déploiement local)
+        run: msbuild DevGlobe.sln /p:Configuration=Release /p:DeployExtension=false /m /v:minimal
+
+      - name: Upload du VSIX produit
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DevGlobe-vsix
+          path: '**/bin/Release/*.vsix'
+          if-no-files-found: warn

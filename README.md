@@ -16,6 +16,7 @@
 
 <p align="center">
   <a href="#vs-code">VS Code</a> &nbsp;·&nbsp;
+  <a href="#visual-studio">Visual Studio</a> &nbsp;·&nbsp;
   <a href="#jetbrains">JetBrains</a> &nbsp;·&nbsp;
   <a href="#zed">Zed</a> &nbsp;·&nbsp;
   <a href="#neovim">NeoVim</a> &nbsp;·&nbsp;
@@ -90,6 +91,43 @@ Available from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
 
 - VS Code **1.80+** — also works with **Cursor**, **Windsurf**, **VSCodium**, **Positron**, **Antigravity** and other VS Code forks
 - Zero external dependencies
+
+---
+
+### Visual Studio
+
+The full **Visual Studio** IDE on Windows (not to be confused with VS Code).
+
+#### Installation
+
+1. Install from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/) (search **DevGlobe**) or download the `.vsix` from the [Releases](https://github.com/Nako0/devglobe-extension/releases) and install it via **Extensions → Manage Extensions → Install from VSIX…**
+2. Open the **DevGlobe** panel — click the **globe button** in the toolbar, or **View → Other Windows → DevGlobe**
+3. Paste your API key → **Connect**
+
+On first launch, the extension downloads the matching `devglobe-core` binary for Windows from [GitHub Releases](https://github.com/Nako0/devglobe-extension/releases) (one-time) and caches it under `%LOCALAPPDATA%\DevGlobe\core`.
+
+#### Tool window
+
+- **Login** — masked API key field + link to get your key on devglobe.app
+- **Dashboard** — live coding time, active language, status message, start/stop tracking, disconnect
+
+#### Commands
+
+Available under **Tools → DevGlobe**:
+
+| Command | Description |
+|---|---|
+| `Set Status Message` | Set your status message on the globe |
+| `Show Coding Time` | Show your coding time today |
+| `Open Globe` | Open [devglobe.app/space](https://devglobe.app/space) in your browser |
+| `Debug` | Toggle debug logging in `~/.devglobe/devglobe.log` |
+| `Open Log File…` | Open `~/.devglobe/devglobe.log` |
+| `Open Config File…` | Open `~/.devglobe/config.toml` |
+
+#### Compatibility
+
+- **Visual Studio 2022 (17.x)** and **Visual Studio 2026 (18.x)** — Windows only
+- .NET Framework 4.7.2
 
 ---
 
@@ -361,7 +399,7 @@ hide_project_names = false    # omit repo + branch (project-level hiding implies
 
 **Globe visibility** (anonymous mode, repo sharing on the live globe, profile mode) is managed on [devglobe.app/dashboard/settings](https://devglobe.app/dashboard/settings) — not in the extension.
 
-**API keys** are stored in your OS keychain (VS Code SecretStorage, JetBrains PasswordSafe) or in a local config file under `~/.devglobe/` (Zed, NeoVim, Claude Code, Codex, OpenCode). Config files are created with `0600` permissions.
+**API keys** are stored in your OS keychain (VS Code SecretStorage, JetBrains PasswordSafe, Visual Studio Windows Credential Manager) or in a local config file under `~/.devglobe/` (Zed, NeoVim, Claude Code, Codex, OpenCode). Config files are created with `0600` permissions.
 
 **Network:** HTTPS only (TLS 1.2+), no telemetry, no third-party trackers.
 
