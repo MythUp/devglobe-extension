@@ -1,0 +1,60 @@
+name: Publish Visual Studio Extension (GitHub only)
+
+on:
+  push:
+    tags:
+      - "vs-v*"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: visualstudio-extension
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        uses: nuget/setup-nuget@v2
+
+      - name: Restore NuGet packages
+        run: nuget restore DevGlobe.sln
+
+      - name: Build VSIX (Release)
+        run: msbuild DevGlobe.sln /t:Rebuild /p:Configuration=Release /p:DeployExtension=false
+
+      - name: Locate VSIX
+        id: vsix
+        shell: pwsh
+        run: |
+          $vsix = Get-ChildItem -Path . -Recurse -Filter *.vsix |
+            Where-Object { $_.FullName -match 'bin\\Release' } |
+            Select-Object -First 1
+          if (-not $vsix) {
+            Write-Error "No .vsix found under bin\Release"
+            exit 1
+          }
+          Write-Host "Found VSIX: $($vsix.FullName)"
+          "path=$($vsix.FullName)" >> $env:GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.vsix.outputs.path }}
+          body: |
+            ## DevGlobe for Visual Studio
+
+            Built from commit ${{ github.sha }}
+
+            ### Install manually
+            1. Download the `.vsix` file below
+            2. Double-click it (or use **Extensions → Manage Extensions → Install from VSIX…**)
+            3. Restart Visual Studio
+          generate_release_notes: true

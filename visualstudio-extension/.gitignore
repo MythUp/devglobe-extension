@@ -1,0 +1,21 @@
+# .NET / MSBuild build output
+bin/
+obj/
+
+# Visual Studio user / cache files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# VSIX package output
+*.vsix
+
+# ReSharper / Rider
+_ReSharper*/
+*.DotSettings.user
+
+# Test results
+[Tt]est[Rr]esult*/
+*.trx

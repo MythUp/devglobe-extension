@@ -8,6 +8,7 @@ Only the latest release of each extension receives security updates.
 |-----------|----------------|--------|
 | VS Code | 0.1.8 | Supported |
 | JetBrains | 0.1.7 | Supported |
+| Visual Studio | 1.0.0 | Supported |
 | Claude Code | 1.0.0 | Supported |
 
 ## Reporting a vulnerability
@@ -78,7 +79,7 @@ Key design decisions:
 
 - **HTTPS only** — all network requests enforce TLS, no HTTP fallback
 - **Minimal data** — only what is listed in [PRIVACY.md](PRIVACY.md) is sent; source code, file contents, and keystrokes are never accessed
-- **Secure key storage** — OS keychain on VS Code (SecretStorage) and JetBrains (PasswordSafe); `~/.devglobe/config.toml` (mode `0600`) on the other extensions
+- **Secure key storage** — OS keychain on VS Code (SecretStorage), JetBrains (PasswordSafe) and Visual Studio (Windows Credential Manager); `~/.devglobe/config.toml` (mode `0600`) on the other extensions
 - **Content Security Policy** — VS Code webview uses a cryptographic nonce-based CSP
 - **No telemetry** — no third-party analytics or tracking services
 

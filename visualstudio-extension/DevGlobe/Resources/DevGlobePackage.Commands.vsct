@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <!-- Standard VS symbols (IDM_VS_MENU_TOOLS, etc.) -->
+  <Extern href="stdidcmd.h" />
+  <Extern href="vsshlids.h" />
+
+  <!-- VS image catalog: provides ImageCatalogGuid and monikers (Web = globe icon). -->
+  <Include href="KnownImageIds.vsct" />
+
+  <Commands package="guidDevGlobePackage">
+
+    <!-- "DevGlobe" submenu under the Tools menu -->
+    <Menus>
+      <Menu guid="guidDevGlobeCmdSet" id="DevGlobeSubMenu" priority="0x0700" type="Menu">
+        <!-- A submenu must be anchored in a group (IDG_*), not directly on a menu (IDM_*). -->
+        <Parent guid="guidDevGlobeCmdSet" id="DevGlobeToolsGroup" />
+        <Strings>
+          <ButtonText>DevGlobe</ButtonText>
+          <CommandName>DevGlobe</CommandName>
+        </Strings>
+      </Menu>
+
+      <!-- DevGlobe toolbar: persistent access to the panel. Hosts the open-panel button with the globe icon. -->
+      <Menu guid="guidDevGlobeCmdSet" id="DevGlobeToolbar" priority="0x0000" type="Toolbar">
+        <CommandFlag>DefaultDocked</CommandFlag>
+        <Strings>
+          <ButtonText>DevGlobe</ButtonText>
+          <CommandName>DevGlobe</CommandName>
+        </Strings>
+      </Menu>
+    </Menus>
+
+    <!-- Groups: one in Tools (hosts the submenu), one in the submenu (hosts the buttons) -->
+    <Groups>
+      <Group guid="guidDevGlobeCmdSet" id="DevGlobeToolsGroup" priority="0x0700">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
+      </Group>
+      <Group guid="guidDevGlobeCmdSet" id="DevGlobeMenuGroup" priority="0x0600">
+        <Parent guid="guidDevGlobeCmdSet" id="DevGlobeSubMenu" />
+      </Group>
+      <!-- Group hosting the button on the DevGlobe toolbar. -->
+      <Group guid="guidDevGlobeCmdSet" id="DevGlobeToolbarGroup" priority="0x0000">
+        <Parent guid="guidDevGlobeCmdSet" id="DevGlobeToolbar" />
+      </Group>
+    </Groups>
+
+    <!-- Command buttons -->
+    <Buttons>
+      <Button guid="guidDevGlobeCmdSet" id="SetStatusCommandId" priority="0x0100" type="Button">
+        <Parent guid="guidDevGlobeCmdSet" id="DevGlobeMenuGroup" />
+        <Strings>
+          <ButtonText>Set Status Message</ButtonText>
+          <CommandName>DevGlobe.SetStatus</CommandName>
+        </Strings>
+      </Button>
+
+      <Button guid="guidDevGlobeCmdSet" id="ShowCodingTimeCommandId" priority="0x0101" type="Button">
+        <Parent guid="guidDevGlobeCmdSet" id="DevGlobeMenuGroup" />
+        <Strings>
+          <ButtonText>Show Coding Time</ButtonText>
+          <CommandName>DevGlobe.ShowCodingTime</CommandName>
+        </Strings>
+      </Button>
+
+      <Button guid="guidDevGlobeCmdSet" id="OpenGlobeCommandId" priority="0x0102" type="Button">
+        <Parent guid="guidDevGlobeCmdSet" id="DevGlobeMenuGroup" />
+        <Strings>
+          <ButtonText>Open Globe</ButtonText>
+          <CommandName>DevGlobe.OpenGlobe</CommandName>
+        </Strings>
+      </Button>
+
+      <Button guid="guidDevGlobeCmdSet" id="ToggleDebugCommandId" priority="0x0103" type="Button">
+        <Parent guid="guidDevGlobeCmdSet" id="DevGlobeMenuGroup" />
+        <Strings>
+          <ButtonText>Debug</ButtonText>
+          <CommandName>DevGlobe.Debug</CommandName>
+        </Strings>
+      </Button>
+
+      <Button guid="guidDevGlobeCmdSet" id="OpenLogFileCommandId" priority="0x0104" type="Button">
+        <Parent guid="guidDevGlobeCmdSet" id="DevGlobeMenuGroup" />
+        <Strings>
+          <ButtonText>Open Log File…</ButtonText>
+          <CommandName>DevGlobe.OpenLogFile</CommandName>
+        </Strings>
+      </Button>
+
+      <Button guid="guidDevGlobeCmdSet" id="OpenConfigFileCommandId" priority="0x0105" type="Button">
+        <Parent guid="guidDevGlobeCmdSet" id="DevGlobeMenuGroup" />
+        <Strings>
+          <ButtonText>Open Config File…</ButtonText>
+          <CommandName>DevGlobe.OpenConfigFile</CommandName>
+        </Strings>
+      </Button>
+
+      <!-- Opens/shows the tool window. Appears under View > Other Windows.
+           Placed directly in the standard IDG_VS_WNDO_OTRWNDWS1 group. -->
+      <Button guid="guidDevGlobeCmdSet" id="OpenToolWindowCommandId" priority="0x0100" type="Button">
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1" />
+        <Icon guid="ImageCatalogGuid" id="Web" />
+        <CommandFlag>IconIsMoniker</CommandFlag>
+        <Strings>
+          <ButtonText>DevGlobe</ButtonText>
+          <CommandName>DevGlobe.OpenPanel</CommandName>
+        </Strings>
+      </Button>
+    </Buttons>
+
+  </Commands>
+
+  <!-- The open-panel button appears both under View > Other Windows (its Parent)
+       and on the DevGlobe toolbar (additional placement below). -->
+  <CommandPlacements>
+    <CommandPlacement guid="guidDevGlobeCmdSet" id="OpenToolWindowCommandId" priority="0x0000">
+      <Parent guid="guidDevGlobeCmdSet" id="DevGlobeToolbarGroup" />
+    </CommandPlacement>
+  </CommandPlacements>
+
+  <Symbols>
+    <!-- Package GUID (stable) -->
+    <GuidSymbol name="guidDevGlobePackage" value="{5f3a9c2e-7b14-4e8a-9d6f-1a2b3c4d5e6f}" />
+
+    <!-- CommandSet GUID (stable) and all IDs -->
+    <GuidSymbol name="guidDevGlobeCmdSet" value="{7b5c1e40-9d36-40ac-bf8b-3c4d5e6f7081}">
+      <IDSymbol name="DevGlobeToolsGroup"        value="0x1010" />
+      <IDSymbol name="DevGlobeSubMenu"           value="0x1020" />
+      <IDSymbol name="DevGlobeMenuGroup"         value="0x1030" />
+      <IDSymbol name="DevGlobeToolbar"           value="0x1050" />
+      <IDSymbol name="DevGlobeToolbarGroup"      value="0x1060" />
+      <IDSymbol name="SetStatusCommandId"        value="0x0101" />
+      <IDSymbol name="ShowCodingTimeCommandId"   value="0x0102" />
+      <IDSymbol name="OpenGlobeCommandId"        value="0x0103" />
+      <IDSymbol name="ToggleDebugCommandId"      value="0x0104" />
+      <IDSymbol name="OpenLogFileCommandId"      value="0x0105" />
+      <IDSymbol name="OpenConfigFileCommandId"   value="0x0106" />
+      <IDSymbol name="OpenToolWindowCommandId"   value="0x0107" />
+    </GuidSymbol>
+  </Symbols>
+
+</CommandTable>
