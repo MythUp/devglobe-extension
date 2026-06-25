@@ -1,6 +1,7 @@
 package xyz.devglobe.eclipse.core;
 
 import java.io.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * JSON-line IPC client for the devglobe-core subprocess.
@@ -42,7 +43,6 @@ public class CoreClient {
         try {
             ProcessBuilder pb = new ProcessBuilder(binaryPath, "daemon");
             pb.redirectErrorStream(false);
-            pb.environment().remove("RUST_LOG"); // don't pollute
 
             process = pb.start();
             writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
@@ -61,12 +61,20 @@ public class CoreClient {
     }
 
     public synchronized void stop() {
-        running = false;
         try {
             if (writer != null) {
                 sendShutdown();
-                writer.close();
+                writer.flush();
             }
+        } catch (IOException ignored) {}
+        running = false;
+        try {
+            if (process != null) process.waitFor(1, TimeUnit.SECONDS);
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        }
+        try {
+            if (writer != null) writer.close();
         } catch (IOException ignored) {}
         if (process != null) process.destroyForcibly();
         if (readerThread != null) readerThread.interrupt();

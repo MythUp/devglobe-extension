@@ -41,8 +41,8 @@ public final class CoreDownloader {
             platform = arch.contains("aarch64") || arch.contains("arm")
                     ? "linux-arm64" : "linux-x64";
         } else if (os.contains("win")) {
-            platform = arch.contains("aarch64") || arch.contains("arm")
-                    ? "win-arm64" : "win-x64";
+            // Only win-x64 is published; it runs under emulation on Windows ARM.
+            platform = "win-x64";
         } else {
             platform = "linux-x64"; // fallback
         }

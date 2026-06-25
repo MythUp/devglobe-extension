@@ -2,12 +2,17 @@ package xyz.devglobe.eclipse.ui;
 
 import java.util.Map;
 
+import org.eclipse.jface.text.DocumentEvent;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.texteditor.IDocumentProvider;
+import org.eclipse.ui.texteditor.ITextEditor;
 
 import xyz.devglobe.eclipse.core.DevGlobeTracker;
 
@@ -18,7 +23,6 @@ import xyz.devglobe.eclipse.core.DevGlobeTracker;
 public class DocumentTracker {
 
     private static final long DEDUP_WINDOW_MS = 2000;
-    private static final long ACTIVITY_TIMEOUT_MS = 60000;
 
     /** File-extension → language display name (mirrors JetBrains LanguageService). */
     private static final Map<String, String> EXTENSION_MAP = Map.ofEntries(
@@ -98,6 +102,9 @@ public class DocumentTracker {
     private String lastActivityFile = "";
     private IPartListener2 partListener;
     private IWorkbenchWindow window;
+    private IEditorPart trackedEditor;
+    private IDocument trackedDocument;
+    private IDocumentListener documentListener;
 
     public void start() {
         try {
@@ -129,7 +136,12 @@ public class DocumentTracker {
                 trackActiveEditor();
             }
 
-            @Override public void partClosed(IWorkbenchPartReference ref) {}
+            @Override public void partClosed(IWorkbenchPartReference ref) {
+                if (ref.getPart(false) == trackedEditor) {
+                    detachDocumentListener();
+                    trackedEditor = null;
+                }
+            }
             @Override public void partDeactivated(IWorkbenchPartReference ref) {}
             @Override public void partHidden(IWorkbenchPartReference ref) {}
             @Override public void partVisible(IWorkbenchPartReference ref) {}
@@ -143,6 +155,8 @@ public class DocumentTracker {
         if (window != null && partListener != null) {
             window.getPartService().removePartListener(partListener);
         }
+        detachDocumentListener();
+        trackedEditor = null;
     }
 
     private void trackActiveEditor() {
@@ -151,6 +165,11 @@ public class DocumentTracker {
                 ? window.getActivePage().getActiveEditor()
                 : null;
         if (editor == null) return;
+
+        if (editor != trackedEditor) {
+            attachDocumentListener(editor);
+            trackedEditor = editor;
+        }
 
         IEditorInput input = editor.getEditorInput();
         if (input == null) return;
@@ -177,6 +196,44 @@ public class DocumentTracker {
         sendActivity(filePath, language);
     }
 
+    /**
+     * Attaches a document listener to the given editor so that keystrokes —
+     * not just editor switches — keep the activity stream alive. The core stops
+     * emitting heartbeats after {@code ACTIVITY_TIMEOUT_MS} without an activity
+     * message, so editing a single file must report activity as the user types.
+     */
+    private void attachDocumentListener(IEditorPart editor) {
+        detachDocumentListener();
+        if (!(editor instanceof ITextEditor)) return;
+        ITextEditor textEditor = (ITextEditor) editor;
+        IDocumentProvider provider = textEditor.getDocumentProvider();
+        if (provider == null) return;
+        IDocument document = provider.getDocument(textEditor.getEditorInput());
+        if (document == null) return;
+
+        documentListener = new IDocumentListener() {
+            @Override
+            public void documentAboutToBeChanged(DocumentEvent event) {}
+
+            @Override
+            public void documentChanged(DocumentEvent event) {
+                trackActiveEditor();
+            }
+        };
+        document.addDocumentListener(documentListener);
+        trackedDocument = document;
+    }
+
+    private void detachDocumentListener() {
+        if (trackedDocument != null && documentListener != null) {
+            try {
+                trackedDocument.removeDocumentListener(documentListener);
+            } catch (Exception ignored) {}
+        }
+        trackedDocument = null;
+        documentListener = null;
+    }
+
     /** Detect language from file extension, mirroring JetBrains LanguageService. */
     static String detectLanguage(String filePath) {
         int dot = filePath.lastIndexOf('.');
@@ -189,14 +246,8 @@ public class DocumentTracker {
     private void sendActivity(String filePath, String language) {
         long now = System.currentTimeMillis();
 
-        // Dedup: skip if same file within DEDUP_WINDOW_MS
         if (filePath.equals(lastActivityFile) && (now - lastActivityTime) < DEDUP_WINDOW_MS) {
             return;
-        }
-
-        // Activity timeout: skip if too recent with different file
-        if (!filePath.equals(lastActivityFile) && (now - lastActivityTime) < ACTIVITY_TIMEOUT_MS) {
-            // Still send — different file
         }
 
         lastActivityTime = now;

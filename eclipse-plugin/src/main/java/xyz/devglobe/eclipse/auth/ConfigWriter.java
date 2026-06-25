@@ -8,13 +8,13 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import xyz.devglobe.eclipse.core.CoreDownloader;
 import xyz.devglobe.eclipse.core.DevGlobePlugin;
 
 /**
  * Reads and writes the DevGlobe config.toml file (~/.devglobe/config.toml).
- * API key writes delegate to {@code devglobe-core setup <key>} so the config
- * format always matches what the core expects.
+ * The API key is written directly into the TOML root so setup works before
+ * the core binary has been downloaded, and the key never appears on a process
+ * command line.
  */
 public final class ConfigWriter {
 
@@ -37,32 +37,38 @@ public final class ConfigWriter {
     // ── API Key ──────────────────────────────────────────────────────────
 
     /**
-     * Writes the API key by running {@code devglobe-core setup <key>}.
-     * This ensures the config format always matches what the core expects.
+     * Writes the API key into the {@code api_key} root entry of config.toml,
+     * preserving any other settings and sections. Written with 0600 permissions.
      */
     public static void writeApiKey(String apiKey) {
         try {
-            File binary = CoreDownloader.getBinaryPath();
-            if (!binary.exists()) {
-                DevGlobePlugin.log("devglobe-core not found, cannot write API key");
-                return;
+            File dir = devglobeDir();
+            if (!dir.exists()) dir.mkdirs();
+
+            File configFile = configPath();
+            List<String> lines = configFile.exists()
+                    ? new ArrayList<>(Files.readAllLines(configFile.toPath()))
+                    : new ArrayList<>();
+
+            String keyLine = "api_key = \"" + escapeToml(apiKey) + "\"";
+            int idx = findRootApiKeyIndex(lines);
+            if (idx >= 0) {
+                lines.set(idx, keyLine);
+            } else {
+                lines.add(0, keyLine);
             }
 
-            ProcessBuilder pb = new ProcessBuilder(
-                    binary.getAbsolutePath(), "setup", apiKey);
-            pb.directory(devglobeDir());
-            pb.redirectErrorStream(true);
-
-            Process process = pb.start();
-            int exitCode = process.waitFor();
-
-            if (exitCode != 0) {
-                String error = new String(process.getInputStream().readAllBytes());
-                DevGlobePlugin.log("devglobe-core setup failed (exit " + exitCode + "): " + error);
-            }
-        } catch (Exception e) {
-            DevGlobePlugin.log("Failed to write API key via devglobe-core: " + e.getMessage());
+            String output = String.join("\n", lines).replaceAll("\n{3,}", "\n\n");
+            if (!output.endsWith("\n")) output += "\n";
+            Files.writeString(configFile.toPath(), output);
+            setRestrictivePermissions(configFile);
+        } catch (IOException e) {
+            DevGlobePlugin.log("Failed to write API key: " + e.getMessage());
         }
+    }
+
+    private static String escapeToml(String s) {
+        return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     public static boolean hasApiKey() {

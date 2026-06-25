@@ -39,7 +39,6 @@ Visibility settings (anonymous mode, repo sharing, profile mode) are managed on 
 | **Platform detection** | Sends your OS (macOS, Windows or Linux) alongside each heartbeat so it appears on your profile. |
 | **Git integration** | Detects your repo from the git remote. Commit data is never read or sent by the plugin. |
 | **Status message** | Write what you're working on — visible on your globe profile. Supports empty to clear. |
-| **Status bar** | Displays your coding time for today (e.g. `2h 15m`) in the Eclipse status bar. |
 | **Notifications** | Toast notifications in the Eclipse status line for connection events, errors, and status changes. |
 
 ### Sidebar
@@ -188,10 +187,9 @@ eclipse-plugin/
     │   ├── TrackerState.java         # Immutable state data class
     │   └── LanguageService.java      # File extension → language mapping
     ├── auth/
-    │   └── ConfigWriter.java         # Spawns devglobe-core setup subprocess
+    │   └── ConfigWriter.java         # Reads/writes ~/.devglobe/config.toml
     ├── ui/
     │   ├── DevGlobeView.java             # Sidebar ViewPart (login + dashboard)
-    │   ├── DevGlobeStatusBarContribution.java  # Status bar widget
     │   ├── DocumentTracker.java          # Editor activity listener
     │   └── Notifier.java                 # Toast notifications via status line
     └── actions/

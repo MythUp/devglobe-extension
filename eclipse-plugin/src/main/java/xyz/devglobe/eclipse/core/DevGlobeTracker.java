@@ -30,7 +30,7 @@ public class DevGlobeTracker {
     private final List<Runnable> stateListeners = new ArrayList<>();
     private final AtomicBoolean starting = new AtomicBoolean(false);
     private final AtomicBoolean intentionalShutdown = new AtomicBoolean(false);
-    private CoreClient client;
+    private volatile CoreClient client;
 
     // ── Public API ───────────────────────────────────────────────────────
 
@@ -74,7 +74,11 @@ public class DevGlobeTracker {
             starting.set(false);
             return;
         }
-        ensureCore();
+        // ensureCore() may download the core binary (blocking HTTP), so it must
+        // never run on the UI thread.
+        Thread worker = new Thread(this::ensureCore, "DevGlobe-Start");
+        worker.setDaemon(true);
+        worker.start();
     }
 
     public void pause() {

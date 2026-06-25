@@ -46,12 +46,12 @@ public final class Notifier {
     }
 
     /**
-     * Show a confirmation notification that the user is guaranteed to see.
-     * Uses the status line if available, but always falls back to a dialog
-     * if the status line cannot be reached.
+     * Show a confirmation notification in the status line. Routine confirmations
+     * (paused, resumed, reconnected, status updated) should not interrupt with a
+     * modal dialog — only errors do.
      */
     public static void confirm(String message) {
-        show(Severity.INFO, message, true);
+        show(Severity.INFO, message, false);
     }
 
     // ── Implementation ───────────────────────────────────────────────────
@@ -195,25 +195,14 @@ public final class Notifier {
         }
     }
 
-    /** Clear the status-line message after a short delay. */
+    /** Clear the status-line message after a short delay, on the UI thread. */
     private static void scheduleClear(Display display, StatusLineManager slm) {
-        Thread clearer = new Thread(() -> {
+        if (display == null || display.isDisposed()) return;
+        display.timerExec(5_000, () -> {
             try {
-                Thread.sleep(5_000);
-            } catch (InterruptedException ignored) {}
-            // Check if display is still valid before using it
-            Display currentDisplay = PlatformUI.isWorkbenchRunning() ? PlatformUI.getWorkbench().getDisplay() : null;
-            if (currentDisplay == null || currentDisplay.isDisposed()) {
-                return;
-            }
-            currentDisplay.asyncExec(() -> {
-                try {
-                    slm.setMessage(null);
-                    slm.setErrorMessage(null);
-                } catch (Exception ignored) {}
-            });
-        }, "DevGlobe-Notifier-Clear");
-        clearer.setDaemon(true);
-        clearer.start();
+                slm.setMessage(null);
+                slm.setErrorMessage(null);
+            } catch (Exception ignored) {}
+        });
     }
 }
