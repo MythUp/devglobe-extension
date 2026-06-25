@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>xyz.devglobe</groupId>
+  <artifactId>xyz.devglobe.eclipse</artifactId>
+  <version>2.0.1-SNAPSHOT</version>
+  <packaging>eclipse-plugin</packaging>
+
+  <name>DevGlobe Eclipse Plugin</name>
+  <description>Track your coding activity on a live 3D globe at devglobe.app</description>
+
+  <properties>
+    <tycho.version>4.0.8</tycho.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <eclipse.target>2024-06</eclipse.target>
+    <java.version>17</java.version>
+  </properties>
+
+  <repositories>
+    <repository>
+      <id>eclipse-release</id>
+      <url>https://download.eclipse.org/releases/${eclipse.target}/</url>
+      <layout>p2</layout>
+    </repository>
+    <repository>
+      <id>eclipse-sdk</id>
+      <url>https://download.eclipse.org/eclipse/updates/4.32/</url>
+      <layout>p2</layout>
+    </repository>
+  </repositories>
+
+  <build>
+    <plugins>
+      <!-- Tycho must be enabled as a build extension to understand eclipse-plugin packaging -->
+      <plugin>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>tycho-maven-plugin</artifactId>
+        <version>${tycho.version}</version>
+        <extensions>true</extensions>
+      </plugin>
+
+      <!-- Tycho packaging -->
+      <plugin>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>tycho-packaging-plugin</artifactId>
+        <version>${tycho.version}</version>
+      </plugin>
+
+      <!-- Tycho compiler -->
+      <plugin>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>tycho-compiler-plugin</artifactId>
+        <version>${tycho.version}</version>
+        <configuration>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
+        </configuration>
+      </plugin>
+
+      <!-- Target platform -->
+      <plugin>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>target-platform-configuration</artifactId>
+        <version>${tycho.version}</version>
+        <configuration>
+          <target>
+            <environment>
+              <os>win32</os>
+              <ws>win32</ws>
+              <arch>x86_64</arch>
+            </environment>
+            <environment>
+              <os>linux</os>
+              <ws>gtk</ws>
+              <arch>x86_64</arch>
+            </environment>
+            <environment>
+              <os>macosx</os>
+              <ws>cocoa</ws>
+              <arch>x86_64</arch>
+            </environment>
+            <environment>
+              <os>macosx</os>
+              <ws>cocoa</ws>
+              <arch>aarch64</arch>
+            </environment>
+          </target>
+        </configuration>
+      </plugin>
+
+      <!-- Tycho surefire (tests) -->
+      <plugin>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>tycho-surefire-plugin</artifactId>
+        <version>${tycho.version}</version>
+      </plugin>
+    </plugins>
+  </build>
+</project>

@@ -1,0 +1,27 @@
+# Maven / Tycho build output
+target/
+
+# Eclipse PDE metadata
+.settings/
+.classpath
+.project
+bin/
+
+# Compiled class files
+*.class
+
+# Package files
+*.jar
+*.war
+
+# Maven
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+*.swp
+*.swo
+*~
